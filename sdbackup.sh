@@ -1,9 +1,8 @@
 #!/bin/bash
 #
-# Scrappy SD card backup script. Use with caution. Not
-# recommended to use without reading the source code.
-#
-# Only works on Linux (not OSX) because of fs issues.
+# Very simple SD card backup script. Puts the content of the boot and root
+# partitions into .tar files. Only works on Linux (not OSX) because of the
+# filesystem types.
 #
 # Partition recognition:
 # - if mounted: filesystem type ('vfat' and 'ext4')
@@ -16,46 +15,31 @@
 # /dev/sdb2            3202        7298      131104   82  Linux swap / Solaris
 # /dev/sdb3            7299      242560     7528384   83  Linux
 #
+# To restore a backup, create the partitions and the filesystems, then
+# simply extract the backup .tar files.
+#
+# Author: Chris Hager <chris@linuxuser.at>
+# License: New BSD (see /LICENSE.txt)
 
 # Change these to your needs
-BACKUPDIR="/home/chris/shared/raspberry"
+BACKUPDIR="/tmp/raspberry-backup"
 DEVICE_DEFAULT="/dev/sdb"
 
 # Only change if you know what you are doing
-EXCLUDE_ROOT_DIRS="boot/ dev/ lost+found/ mnt/ proc/ tmp/"
 MOUNTPOINT="/mnt/rpi_sdcard"
-
-# Don't change these
-CMD_TAR="tar -pcf"
-DATESTR=`date +%Y-%m-%d_%H:%M`
 BACKUPDIR="${BACKUPDIR}/backup_${DATESTR}"
+DATESTR=`date +%Y-%m-%d_%H:%M`
+CMD_TAR="tar -pcf"
 
 function backup {
     # use: backup <boot_mntpoint> <root_mntpoint>
-    DIR_BOOT=$1
-    DIR_ROOT=$2
-
     mkdir -p $BACKUPDIR
 
     echo "Backing up 'boot'. This will take a moment..."
-    cd $DIR_BOOT
-    $CMD_TAR "${BACKUPDIR}/boot.tar" *
+    cd $1 && $CMD_TAR "${BACKUPDIR}/boot.tar" *
 
     echo "Backing up 'root'. This will take a while..."
-    cd $DIR_ROOT
-    $CMD_TAR "${BACKUPDIR}/root.tar" *
-
-#    for dir in `ls -d */`;  do
-#        if [[ "$EXCLUDE_ROOT_DIRS" == *"$dir"* ]]; then
-#            echo "- skipping '$dir'"
-#        else
-#            # Remove trailing slash
-#            dname=`echo $dir | sed 's/[/]$//'`
-#            tarfile="${BACKUPDIR}/${dname}.tar"
-#            echo "- backing up '$dir' into '$tarfile'..."
-#            $CMD_TAR $tarfile $dname
-#        fi
-#    done
+    cd $2 && $CMD_TAR "${BACKUPDIR}/root.tar" *
 }
 
 function search_mounts {
