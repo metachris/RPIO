@@ -1,6 +1,6 @@
-This is a set of Python tools to simplify working with the GPIO
-port (in particular for the Raspberry Pi, but generally applicable).
-These are the main components:
+Python tools to simplify working with the Raspberry Pi and it's GPIO port. All source code in
+this repository is released under the new BSD License, which basically means 
+you can do with it whatever you want. Here's whats inside:
 
 
 **GPIO2.py**
@@ -12,8 +12,9 @@ Extension of RPi.GPIO which can handle interrupts.
 
 Socket daemon which can handle scheduled task management (run a command in n
 seconds. eg if you want to turn something off again), and accepts user defined
-commands (eg. `led on` instead of `set 17 HIGH`). Custom commands and pin 
-setup are defined in `config.yaml`. The deamon listens on port 9101.
+commands (eg. `led on` instead of `set 17 HIGH`). Custom commands and pin
+setup are defined in `config.yaml`. The deamon listens on port 9101. Requires
+the [tornado](http://pypi.python.org/pypi/tornado) module.
 
 
 **rpi\_detect\_model.py**
@@ -31,31 +32,9 @@ Interrupts
 Interrupts can be used to receive notifications from the kernel when GPIO state 
 changes occur. This has the advantages of requiring almost zero cpu consumption
 and very fast notification times, as well as allowing to easily monitor
-specific transitions via `edge='rising|falling|both'`. Here is an example
-of how this works with a traditional delay-loop compared to interrupt-driven:
+specific transitions via `edge='rising|falling|both'`. Here is an example:
 
-***Example 1a - Wait for input with a delay-loop:***
-
-    import RPi.GPIO as GPIO
-    
-    GPIO.setup(23, GPIO.IN)
-    GPIO.setup(24, GPIO.IN)
-    GPIO.setup(25, GPIO.IN)
-    
-    def do_something(gpio_id, val):
-        print "New value for GPIO %s: %s" % (gpio_id, val)
-
-    while True:
-        if (GPIO.input(23) == False):
-            do_something(23, False)
-        if (GPIO.input(24) == True):
-            do_something(24, True)
-        if (GPIO.input(25)== False):
-            pass
-
-        time.sleep(0.1)
-
-***Example 1b - With interrupts and GPIO2:***
+***Example: Interrupts and GPIO2***
 
     import GPIO2
 
@@ -70,7 +49,7 @@ of how this works with a traditional delay-loop compared to interrupt-driven:
 GPIO2 can also start the callback inside a Thread; just set the parameter
 `threaded_callback` to True when adding an interrupt-callback:
 
-    GPIO2.add_interrupt_callback(23, do_something, edge='rising', threaded_callback=True)
+    GPIO2.add_interrupt_callback(23, handle_interrupt, edge='rising', threaded_callback=True)
 
 If an interrupt occurs while your callback function does something blocking
 (like `time.sleep()` outside a thread), events will not arrive until you
@@ -82,9 +61,9 @@ On the Raspberry Pi interrupts work via the `/sys/class/gpio` kernel
 interface, waiting for value changes with `epoll`. 
 
 
-TODO
+Todo
 ----
-* `GPIO.input(...)` can set a pullup/pulldown resistor, which is not yet part
+- [ ] `GPIO.input(...)` can set a pullup/pulldown resistor, which is not yet part
 of this interrupt extension (since there is no option for it in /sys/class/gpio/...).
 Note to self: A possible solution is to replicate the function from `RPi.GPIO.input()`. 
 
@@ -93,9 +72,9 @@ Links
 -----
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.kernel.org/doc/Documentation/gpio.txt
-* (Raspberry Pi Revision Identification)[http://www.raspberrypi.org/phpBB3/viewtopic.php?f=63&t=32733]
+* [Raspberry Pi Revision Identification](http://www.raspberrypi.org/phpBB3/viewtopic.php?f=63&t=32733)
 
 
 Feedback 
 --------
-chris@metachris.org
+Chris Hager (<chris@linuxuser.at>)
