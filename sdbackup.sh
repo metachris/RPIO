@@ -19,20 +19,21 @@
 # simply extract the backup .tar files.
 #
 # Author: Chris Hager <chris@linuxuser.at>
-# License: New BSD (see /LICENSE.txt)
+# License: MIT (see /LICENSE.txt)
 
-# Change these to your needs
+# Change this to your needs
 BACKUPDIR="/tmp/raspberry-backup"
-DEVICE_DEFAULT="/dev/sdb"
 
-# Only change if you know what you are doing
+# Only change these if you know what you are doing
+DEVICE_DEFAULT="/dev/sdb"
 MOUNTPOINT="/mnt/rpi_sdcard"
-BACKUPDIR="${BACKUPDIR}/backup_${DATESTR}"
 DATESTR=`date +%Y-%m-%d_%H:%M`
+BACKUPDIR="${BACKUPDIR}/backup_${DATESTR}"
 CMD_TAR="tar -pcf"
 
 function backup {
-    # use: backup <boot_mntpoint> <root_mntpoint>
+    # Perform a backup of the boot and root partition
+    # usage: `backup <boot_mntpoint> <root_mntpoint>`
     mkdir -p $BACKUPDIR
 
     echo "Backing up 'boot'. This will take a moment..."
@@ -44,6 +45,7 @@ function backup {
 
 function search_mounts {
     # Test for mounted partitions
+    # usage: `search_mounts <device>` (eg. `search_mounts /dev/sdb`)
     dir_boot=`mount | grep "^$1" | grep "type vfat" | awk '{ print $3 }'`
     dev_boot=`mount | grep "^$1" | grep "type vfat" | awk '{ print $1 }'`
     dir_root=`mount | grep "^$1" | grep "type ext4" | awk '{ print $3 }'`
@@ -65,13 +67,13 @@ function search_mounts {
             SKIPDEVICE="1"
         fi
     else
-        echo "- no mounted linux partitions"
+        echo "- no mounted linux partitions found on $1"
     fi
 }
 
 function mountbackup {
-    # mount - backup - umount
-    # usage: `devmount <dev_boot> <dev_root>`
+    # mount > backup > unmount
+    # usage: `mountbackup <dev_boot> <dev_root>`
     dev_boot = $1
     dev_root = $2
 
@@ -97,11 +99,13 @@ function mountbackup {
 }
 
 function search_device {
-    # Test unmounted partitions
-    # 1. type 'c' (W95 FAT32 (LBA))
+    # Search device for unmounted boot/root partitions
+    # usage: `search_device <device>` (eg. `search_device /dev/sdb`)
+
+    # 1. Search for boot partition: type 'c' (W95 FAT32 (LBA))
     dev_boot=`fdisk -l $1 | grep "^/dev" | awk '{ print $1" "$5 }' | grep " c" | awk '{ print $1 }'`
 
-    # 2. type '83' (Linux)
+    # 2. Search for root partition: type '83' (Linux)
     dev_root=`fdisk -l $1 | grep "^/dev" | awk '{ print $1" "$5 }' | grep " 83" | awk '{ print $1 }'`
 
     if [ -n "$dev_boot" ] && [ -n "$dev_root" ]; then
@@ -121,8 +125,8 @@ function search_device {
 }
 
 function _search {
-    # `search <device>` (eg. `search /dev/sdb`)
-    # Try to find partitions on this device
+    # Try to find boot/root partitions on this device (mounted or unmounted)
+    # usage: `_search <device>` (eg. `_search /dev/sdb`)
     echo "Checking '$1'..."
     SKIPDEVICE=""
     search_mounts $1
@@ -158,4 +162,3 @@ _search $DEVICE_DEFAULT
 # Nothing found there; ask user for device
 ask_device
 _search $DEVICE_CUSTOM
-
