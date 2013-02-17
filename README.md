@@ -1,6 +1,5 @@
 Python tools to simplify working with the Raspberry Pi and it's GPIO port. All source code in
-this repository is released under the new BSD License, which basically means 
-you can do with it whatever you want. Here's whats inside:
+this repository is released under the MIT license. Here's whats inside:
 
 
 **GPIO2.py**

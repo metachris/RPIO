@@ -1,12 +1,12 @@
 """
 GPIO2 extends RPi.GPIO with interrupt handling. Importing this also sets
-the default mode to GPIO.BCM (the same numbering system the kernel uses, 
+the default mode to GPIO.BCM (the same numbering system the kernel uses,
 as opposed to the pin ids (GPIO.BOARD)).
 
-You can use GPIO2 the same way as RPi.GPIO (eg. GPIO2.setmode(...), 
+You can use GPIO2 the same way as RPi.GPIO (eg. GPIO2.setmode(...),
 GPIO2.input(...)), as well as access the new interrupt handling methods.
-The following example shows how to react on events on 3 pins by using interrupts, 
-each with different edge detections:
+The following example shows how to react on events on 3 pins by using
+interrupts, each with different edge detections:
 
     import GPIO2
 
@@ -22,12 +22,16 @@ If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
-    GPIO2.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
+    GPIO2.add_interrupt_callback(17, do_something, edge='rising',
+            threaded_callback=True)
 
-To remove all callbacks from a certain gpio pin, use 
+To remove all callbacks from a certain gpio pin, use
 `GPIO2.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
 loop you can either set `GPIO2.is_waiting_for_interrupts` to `False`, or call
 `GPOP2.stop_waiting_for_interrupts()`.
+
+Author: Chris Hager <chris@linuxuser.at>
+License: MIT
 """
 import select
 import os.path
@@ -55,13 +59,16 @@ gpio_kernel_interfaces_created = []
 # can manually set this to False to stop `wait_for_interrupts()`.
 is_waiting_for_interrupts = False
 
+
 def _threaded_callback(callback, *args):
     """ Internal wrapper to start a callback in threaded mode """
     Thread(target=callback, args=args).start()
 
-def add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=False):
-    """ 
-    Add a callback to be executed when the value on 'gpio_id' changes to the 
+
+def add_interrupt_callback(gpio_id, callback, edge='both',
+        threaded_callback=False):
+    """
+    Add a callback to be executed when the value on 'gpio_id' changes to the
     edge specified via the 'edge' parameter (default='both').
 
     If threaded_callback is True, the callback will be started inside a Thread.
@@ -83,7 +90,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=Fal
         f.write(edge)
 
     print "Kernel interface configured for GPIO %s" % gpio_id
-        
+
     # Open the gpio value stream
     f = open(path_gpio + "value", 'r')
 
@@ -93,7 +100,8 @@ def add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=Fal
     map_gpioid_to_fileno[gpio_id] = f.fileno()
 
     # Add callback to map (wrapped if it should be threaded)
-    cb = partial(_threaded_callback, callback) if threaded_callback else callback
+    cb = callback if not threaded_callback else \
+            partial(_threaded_callback, callback)
     if gpio_id in map_gpioid_to_callbacks:
         map_gpioid_to_callbacks[gpio_id].append(cb)
     else:
@@ -101,6 +109,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=Fal
 
     # Add to epoll
     epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLET)
+
 
 def del_interrupt_callback(gpio_id):
     """ Delete all interrupt callbacks from a certain gpio """
@@ -119,6 +128,7 @@ def del_interrupt_callback(gpio_id):
     del map_gpioid_to_fileno[gpio_id]
     del map_gpioid_to_callbacks[gpio_id]
 
+
 def _handle_interrupt(fileno, val):
     """ Internally distributes interrupts to all attached callbacks """
     gpio_id = map_fileno_to_gpioid[fileno]
@@ -127,9 +137,10 @@ def _handle_interrupt(fileno, val):
             # Start the callback!
             cb(gpio_id, val)
 
+
 def wait_for_interrupts(epoll_timeout=1):
     """
-    Blocking loop to listen for GPIO interrupts and distribute them to 
+    Blocking loop to listen for GPIO interrupts and distribute them to
     associated callbacks. epoll_timeout is an easy way to shutdown the
     blocking function. Per default the timeout is set to 1 second; if
     `is_waiting_for_interrupts` is set to False the loop will exit.
@@ -140,9 +151,11 @@ def wait_for_interrupts(epoll_timeout=1):
         for fileno, event in events:
             if event & select.EPOLLPRI:
                 f = map_fileno_to_file[fileno]
-                val = f.read().strip()  # readline is workaround for not getting new values
+                # read() is workaround for not getting new values with read(1)
+                val = f.read().strip()
                 f.seek(0)
                 _handle_interrupt(fileno, val)
+
 
 def stop_waiting_for_interrupts():
     """
@@ -150,6 +163,7 @@ def stop_waiting_for_interrupts():
     which depends on the `epoll_timeout` (per default its 1 second).
     """
     is_waiting_for_interrupts = False
+
 
 def cleanup_interfaces():
     """
