@@ -1,29 +1,31 @@
 Python tools to simplify working with the Raspberry Pi and it's GPIO port. All source code in
-this repository is released under the MIT license. Here's whats inside:
+this repository is released under the MIT license.
 
 
 **GPIO2.py**
 
-Extension of RPi.GPIO which can handle interrupts.
+Extension of [RPi.GPIO](http://pypi.python.org/pypi/RPi.GPIO) which can handle interrupts.
 
 
 **gpiodaemon.py**
 
-Socket daemon which can handle scheduled task management (run a command in n
-seconds. eg if you want to turn something off again), and accepts user defined
-commands (eg. `led on` instead of `set 17 HIGH`). Custom commands and pin
-setup are defined in `config.yaml`. The deamon listens on port 9101. Requires
-the [tornado](http://pypi.python.org/pypi/tornado) module.
+Socket daemon which can handle scheduled task management (run a command in <n>
+seconds, eg. to turn something off after a certain amount of time), and
+accepts user defined commands (eg. `led on` instead of `set 17 HIGH`). Custom
+commands and pin setup are defined in `config.yaml`. The deamon listens on
+port 9101. Requires the [tornado](http://pypi.python.org/pypi/tornado) and
+[pyyaml](http://pypi.python.org/pypi/PyYAML).
 
 
 **rpi\_detect\_model.py**
 
-Detects a Raspberry's model and manufacturer.
+Detects a Raspberry's model and manufacturer, and makes the attributes
+easily accessible.
 
 
 **sdbackup.sh**
 
-Backup linux SD card content into tar files.
+Backup boot and root partition of a linux SD card into .tar files.
 
 
 Interrupts

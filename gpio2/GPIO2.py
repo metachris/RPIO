@@ -32,6 +32,7 @@ loop you can either set `GPIO2.is_waiting_for_interrupts` to `False`, or call
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
+URL: https://github.com/metachris/raspberrypi-utils
 """
 import select
 import os.path

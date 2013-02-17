@@ -1,37 +1,72 @@
 """
-This script detects a Raspberry Pi's model and manufacturer based on the
-revision number in /proc/cpuinfo.
+This script detects a Raspberry Pi's model, manufacturer and mb ram, based
+on the cpu revision number. Data source:
+http://www.raspberrypi.org/phpBB3/viewtopic.php?f=63&t=32733
 
-Data source: http://www.raspberrypi.org/phpBB3/viewtopic.php?f=63&t=32733
+You can instantiate the ModelInfo class either with a parameter `rev_hex`
+(eg. `m = ModelInfo("000f")`), or without a parameter
+(eg. `m = ModelInfo()`) in which case it will try to detect it via
+`/proc/cpuinfo`. Accessible attributes:
+
+    class ModelInfo:
+        model = ''     # 'A' or 'B'
+        revision = ''  # '1.0' or '2.0'
+        ram_mb = 0     # integer value representing ram in mb
+        maker = ''     # manufacturer (eg. 'Qisda')
+        info = ''      # additional info (eg. 'D14' removed)
+
+Author: Chris Hager <chris@linuxuser.at>
+License: MIT
+URL: https://github.com/metachris/raspberrypi-utils
 """
 import re
 
 model_data = {
-    '0002': ('Model B Revision 1.0', '?'),
-    '0003': ('Model B Revision 1.0 + Fuses mod and D14 removed', '?'),
-    '0004': ('Model B Revision 2.0 256MB', 'Sony'),
-    '0005': ('Model B Revision 2.0 256MB', 'Qisda'),
-    '0006': ('Model B Revision 2.0 256MB', 'Egoman'),
-    '0007': ('Model A Revision 2.0 256MB', 'Egoman'),
-    '0008': ('Model A Revision 2.0 256MB', 'Sony'),
-    '0009': ('Model A Revision 2.0 256MB', 'Qisda'),
-    '000d': ('Model B Revision 2.0 512MB', 'Egoman'),
-    '000e': ('Model B Revision 2.0 512MB', 'Sony'),
-    '000f': ('Model B Revision 2.0 512MB', 'Qisda')
+    '0002': ('B', '1.0', 256, '?', ''),
+    '0003': ('B', '1.0', 256, '?', 'Fuses mod and D14 removed'),
+    '0004': ('B', '2.0', 256, 'Sony', ''),
+    '0005': ('B', '2.0', 256, 'Qisda', ''),
+    '0006': ('B', '2.0', 256, 'Egoman', ''),
+    '0007': ('A', '2.0', 256, 'Egoman', ''),
+    '0008': ('A', '2.0', 256, 'Sony', ''),
+    '0009': ('A', '2.0', 256, 'Qisda', ''),
+    '000d': ('B', '2.0', 512, 'Egoman', ''),
+    '000e': ('B', '2.0', 512, 'Sony', ''),
+    '000f': ('B', '2.0', 512, 'Qisda', '')
 }
 
-# Read cpuinfo to get the revision data
-with open("/proc/cpuinfo") as f:
-    cpuinfo = f.read()
 
-# Find the revision with a regular expression
-revision = re.search(r"(?<=\nRevision)[ |:|\t]*\w+", cpuinfo) \
-        .group().strip(" :\t")
+class ModelInfo(object):
+    """
+    You can instantiate ModelInfo either with a parameter `rev_hex`
+    (eg. `m = ModelInfo("000f")`), or without a parameter
+    (eg. `m = ModelInfo()`) in which case it will try to detect it via
+    `/proc/cpuinfo`
+    """
+    model = ''
+    revision = ''
+    ram_mb = 0
+    maker = ''
+    info = ''
 
-# Get model and maker information
-model, maker = model_data[revision]
+    def __init__(self, rev_hex=None):
+        if not rev_hex:
+            with open("/proc/cpuinfo") as f:
+                cpuinfo = f.read()
+            rev_hex = re.search(r"(?<=\nRevision)[ |:|\t]*\w+", cpuinfo) \
+                    .group().strip(" :\t")
 
-# Output results
-print("Revision: %s" % revision)
-print("Model: %s" % model)
-print("Maker: %s" % maker)
+        self.revision_hex = rev_hex
+        self.model, self.revision, self.ram_mb, self.maker, self.info = \
+                model_data[rev_hex]
+
+    def __repr__(self):
+        s = "%s: Model %s, Revision %s, RAM: %s MB, Maker: %s%s" % ( \
+                self.revision_hex, self.model, self.revision, self.ram_mb, \
+                self.maker, ", %s" % self.info if self.info else "")
+        return s
+
+
+if __name__ == "__main__":
+    m = ModelInfo()
+    print(m)

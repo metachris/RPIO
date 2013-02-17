@@ -20,6 +20,7 @@
 #
 # Author: Chris Hager <chris@linuxuser.at>
 # License: MIT (see /LICENSE.txt)
+# URL: https://github.com/metachris/raspberrypi-utils
 
 # Change this to your needs
 BACKUPDIR="/tmp/raspberry-backup"
