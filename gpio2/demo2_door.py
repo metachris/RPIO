@@ -5,15 +5,13 @@ someone rings twice within 0.5 seconds.
 """
 from time import sleep
 from time import time
-
 from urllib import urlopen
 from threading import Thread
 
 import logging
 logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
         datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
-
-import RPi.GPIO2 as GPIO2
+import RPIO
 
 # GPIO-22 goes to a relay which unlocks the door
 GPIO2.setup(22, GPIO2.OUT)

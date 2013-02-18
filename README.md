@@ -2,7 +2,7 @@ Python tools to simplify working with the Raspberry Pi and it's GPIO port. All s
 this repository is released under the MIT license.
 
 
-**RPi.GPIO2**
+**RPIO**
 
 Extension of [RPi.GPIO](http://pypi.python.org/pypi/RPi.GPIO) which can handle interrupts.
 Works with Python 2.x and 3.x.

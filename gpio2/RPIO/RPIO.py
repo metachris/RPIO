@@ -1,30 +1,30 @@
 """
-GPIO2 extends RPi.GPIO with interrupt handling. Importing this also sets
+RPIO extends RPi.GPIO with interrupt handling. Importing this also sets
 the default mode to GPIO.BCM (the same numbering system the kernel uses,
 as opposed to the pin ids (GPIO.BOARD)).
 
-You can use GPIO2 the same way as RPi.GPIO (eg. GPIO2.setmode(...),
-GPIO2.input(...)), as well as access the new interrupt handling methods.
+You can use RPIO the same way as RPi.GPIO (eg. RPIO.setmode(...),
+RPIO.input(...)), as well as access the new interrupt handling methods.
 The following example shows how to react on events on 3 pins by using
 interrupts, each with different edge detections:
 
     import logging
     logging.basicConfig(level=logging.DEBUG)
-    import RPi.GPIO2 as GPIO2
+    import RPIO
 
     def do_something(gpio_id, value):
         print("New value for GPIO %s: %s" % (gpio_id, value))
 
-    GPIO2.add_interrupt_callback(17, do_something, edge='rising')
-    GPIO2.add_interrupt_callback(18, do_something, edge='falling')
-    GPIO2.add_interrupt_callback(19, do_something, edge='both')
-    GPIO2.wait_for_interrupts()
+    RPIO.add_interrupt_callback(17, do_something, edge='rising')
+    RPIO.add_interrupt_callback(18, do_something, edge='falling')
+    RPIO.add_interrupt_callback(19, do_something, edge='both')
+    RPIO.wait_for_interrupts()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
-    GPIO2.add_interrupt_callback(17, do_something, edge='rising',
+    RPIO.add_interrupt_callback(17, do_something, edge='rising',
             threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
@@ -32,9 +32,9 @@ is not necessarily corresponding to the edge (eg. 0 may come in as value,
 even if edge="rising").
 
 To remove all callbacks from a certain gpio pin, use
-`GPIO2.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
-loop you can either set `GPIO2.is_waiting_for_interrupts` to `False`, or call
-`GPOP2.stop_waiting_for_interrupts()`.
+`RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
+loop you can either set `RPIO.is_waiting_for_interrupts` to `False`, or call
+`RPIO.stop_waiting_for_interrupts()`.
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
