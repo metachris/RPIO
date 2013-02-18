@@ -1,9 +1,10 @@
-RPIO is an extension of RPi.GPIO to easily handle interrupts.
-
+RPIO is an extension of RPi.GPIO which includes proper interrupt handling.
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). Here is a very simple example:
+(`'rising|falling|both'`). This is an example of how to use RPIO:
+
+::
 
     import logging
     logging.basicConfig(level=logging.DEBUG)
@@ -20,6 +21,8 @@ notification times, and the ability to trigger on specific edge transitions
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
+
+::
 
     RPIO.add_interrupt_callback(17, do_something, edge='rising',
             threaded_callback=True)
@@ -39,10 +42,12 @@ subsequent reads. RPIO uses `epoll` to receive interrupts from the kernel.
 
 
 RPi.GPIO
---------
-You can use all of RPi.GPIO's functionality through RPIO. 
+========
 
-    # RPIO uses GPIO.BCM pin numbering by default
+You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GPIO.BCM pin numbering by default
+
+::
+
     import RPIO
 
     # set up GPIO output channel
@@ -88,19 +93,21 @@ You can use all of RPi.GPIO's functionality through RPIO.
 
 
 Links
------
+=====
 * https://github.com/metachris/raspberrypi-utils
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.kernel.org/doc/Documentation/gpio.txt
 
 
 Feedback 
---------
+========
 Chris Hager (<chris@linuxuser.at>)
 
 License
--------
-This is free software, released under the MIT license.
+=======
+RPIO is free software, released under the MIT license.
+
+::
 
     Copyright (c) 2013 Chris Hager <chris@linuxuser.at>
 

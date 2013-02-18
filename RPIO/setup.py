@@ -28,7 +28,7 @@ setup(
         "Topic :: Utilities",
         "Topic :: Software Development",
         "Topic :: Home Automation",
-        "Topic :: System :: Hardware"
+        "Topic :: System :: Hardware",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
     ],
