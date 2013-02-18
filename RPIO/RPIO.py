@@ -47,8 +47,9 @@ from threading import Thread
 from functools import partial
 
 from RPi.GPIO import *
+from RPi.GPIO import cleanup as _cleanup_orig
 
-VERSION = "0.1.6
+VERSION = "0.1.6"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -209,3 +210,13 @@ def cleanup_interfaces():
             f.write("%s" % gpio_id)
 
     _gpio_kernel_interfaces_created = []
+
+
+def cleanup():
+    """
+    Clean up by resetting all GPIO channels that have been used by this
+    program to INPUT with no pullup/pulldown and no event detection. Also
+    unexports the interfaces that have been set up for interrupts.
+    """
+    cleanup_interfaces()
+    _cleanup_orig()
