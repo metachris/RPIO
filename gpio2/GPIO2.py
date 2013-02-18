@@ -25,6 +25,10 @@ callback. Here is an example:
     GPIO2.add_interrupt_callback(17, do_something, edge='rising',
             threaded_callback=True)
 
+Make sure to double-check the value returned from the interrupt, since it
+is not necessarily corresponding to the edge (eg. 0 may come in as value,
+even if edge="rising").
+
 To remove all callbacks from a certain gpio pin, use
 `GPIO2.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
 loop you can either set `GPIO2.is_waiting_for_interrupts` to `False`, or call
