@@ -1,4 +1,5 @@
-RPIO is an extension of RPi.GPIO which includes proper interrupt handling.
+RPIO extends RPi.GPIO with easy interrupt handling.
+
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
