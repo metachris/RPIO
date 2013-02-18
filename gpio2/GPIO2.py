@@ -11,7 +11,7 @@ interrupts, each with different edge detections:
     import GPIO2
 
     def do_something(gpio_id, value):
-        print "New value for GPIO %s: %s" % (gpio_id, value)
+        print("New value for GPIO %s: %s" % (gpio_id, value))
 
     GPIO2.add_interrupt_callback(17, do_something, edge='rising')
     GPIO2.add_interrupt_callback(18, do_something, edge='falling')
@@ -36,14 +36,25 @@ URL: https://github.com/metachris/raspberrypi-utils
 """
 import select
 import os.path
+import logging
+
+from logging import info, warn, error
 from threading import Thread
 from functools import partial
 
 from RPi.GPIO import *
 
+# Loglevel DEBUG by default
+LOGLEVEL = logging.DEBUG
+
+# Logging setup with some pretty log formatting
+logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
+        datefmt='%m/%d/%Y %I:%M:%S %p', level=LOGLEVEL)
+
 # BCM numbering mode by default
 setmode(BCM)
 
+# Internals
 SYS_GPIO_ROOT = '/sys/class/gpio/'
 epoll = select.epoll()
 
@@ -74,6 +85,8 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
     If threaded_callback is True, the callback will be started inside a Thread.
     """
+    info("Adding callback for GPIO %s" % gpio_id)
+
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \
             partial(_threaded_callback, callback)
@@ -84,7 +97,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(SYS_GPIO_ROOT + "export", "w") as f:
             f.write("%s" % gpio_id)
         gpio_kernel_interfaces_created.append(gpio_id)
-        print "Kernel interface created for GPIO %s" % gpio_id
+        info("- kernel interface created for GPIO %s" % gpio_id)
 
     # If initial callback for this GPIO then set everything up. Else make sure
     # the edge detection is the same and add this to the callback list.
@@ -97,7 +110,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
                         " edge detection '%s'.") % (gpio_id, edge, e))
 
         # Check whether edge is the same, else throw Exception
-        print "Kernel interface already configured for GPIO %s" % gpio_id
+        info("- kernel interface already configured for GPIO %s" % gpio_id)
         map_gpioid_to_callbacks[gpio_id].append(cb)
 
     else:
@@ -109,12 +122,12 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "w") as f:
             f.write(edge)
 
-        print "Kernel interface configured for GPIO %s" % gpio_id
+        info("- kernel interface configured for GPIO %s" % gpio_id)
 
-        # Open the gpio value stream
+        # Open the gpio value stream and read the initial value
         f = open(path_gpio + "value", 'r')
-        val = f.read().strip()
-        print "- inital gpio value: %s" % val
+        val_initial = f.read().strip()
+        info("- inital gpio value: %s" % val_initial)
 
         # Add callback info to the mapping dictionaries
         map_fileno_to_file[f.fileno()] = f
