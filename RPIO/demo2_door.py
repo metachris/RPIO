@@ -19,9 +19,14 @@ GPIO2.setup(22, GPIO2.OUT)
 # Memory for time when bell rang last
 last_bell_ring = None
 
+
 def handle_door_bell_ring(gpio_id, val):
     # We don't need the gpio_id and val the callback provides since we get
     # notified only on rising edges anyway.
+    if not val:
+        # filter out 0 (we want 1 only)
+        return
+
     t = time()
     print "Someone rang the door bell."
 
@@ -29,11 +34,12 @@ def handle_door_bell_ring(gpio_id, val):
     global last_bell_ring
     if last_bell_ring:
         time_since_last_bell_ring_sec = t - last_bell_ring
-        print "- time since last ring: %.2f seconds" % time_since_last_bell_ring_sec
+        print "- time since last ring: %.2f seconds" % \
+                time_since_last_bell_ring_sec
         if time_since_last_bell_ring_sec <= 0.5:
             print "- unlocking for 5 seconds"
             GPIO2.output(22, GPIO2.HIGH)
-            sleep(5)
+            sleep(3)
             GPIO2.output(22, GPIO2.LOW)
 
             # Add log entry via http-request to local webserver
@@ -44,8 +50,10 @@ def handle_door_bell_ring(gpio_id, val):
     last_bell_ring = t
 
 # Main loop. Blocks at `wait_for_interrupts()`.
-def start():
-    GPIO2.add_interrupt_callback(23, handle_door_bell_ring, edge='rising')
-    GPIO2.wait_for_interrupts()
+GPIO2.add_interrupt_callback(23, handle_door_bell_ring, edge='rising')
 
-start()
+try:
+    RPIO.wait_for_interrupts()
+
+except KeyboardInterrupt:
+    RPIO.cleanup()

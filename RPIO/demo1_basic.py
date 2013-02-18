@@ -1,7 +1,6 @@
 """
-Example of using interrupts and RPIO to react to state-changes on
-gpio pins 23, 24 and 25. Setting up logging before importing RPIO
-enables log output of the module.
+Example of using interrupts and RPIO to react to state-changes on gpio pins.
+Setting up logging before importing RPIO enables its log output.
 """
 import logging
 logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
@@ -10,14 +9,16 @@ import RPIO
 
 
 def handle_interrupt(gpio_id, val):
-    print("New value for GPIO %s: %s" % (gpio_id, val))
+    logging.info("New value for GPIO %s: %s" % (gpio_id, val))
 
 
-def start():
-    RPIO.add_interrupt_callback(23, handle_interrupt, edge='rising')
-    RPIO.add_interrupt_callback(24, handle_interrupt, edge='falling')
-    RPIO.add_interrupt_callback(25, handle_interrupt, edge='both')
+RPIO.add_interrupt_callback(23, handle_interrupt, edge='rising')
+RPIO.add_interrupt_callback(24, handle_interrupt, edge='falling')
+RPIO.add_interrupt_callback(25, handle_interrupt, edge='both',
+        threaded_callback=True)
+
+try:
     RPIO.wait_for_interrupts()
 
-
-start()
+except KeyboardInterrupt:
+    RPIO.cleanup()

@@ -13,7 +13,7 @@ setup(
     version="0.1.5",
     description=("An extension of RPi.GPIO to easily use interrupts on the "
             "Raspberry Pi"),
-    long_description=read('README'),
+    long_description=read('README.txt'),
     url="https://github.com/metachris/raspberrypi-utils",
 
     author="Chris Hager",
