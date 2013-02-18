@@ -1,1 +1,1 @@
-from GPIO2 import *
+from RPIO import *
