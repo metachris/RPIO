@@ -9,7 +9,7 @@ def read(fname):
 setup(
     install_requires=['RPi.GPIO'],
     name="RPi.GPIO2",
-    packages=['RPi.GPIO2'],
+    packages=['RPi', 'RPi.GPIO2'],
     version="0.2",
     description="An extension of RPi.GPIO to easily use interrupts on the Raspberry Pi",
     long_description=read('README.md'),
