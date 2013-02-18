@@ -74,6 +74,10 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
     If threaded_callback is True, the callback will be started inside a Thread.
     """
+    # Prepare the callback (wrap in Thread if needed)
+    cb = callback if not threaded_callback else \
+            partial(_threaded_callback, callback)
+
     # Check if /sys/class/gpio/gpioN interface exists; else create it
     path_gpio = "%sgpio%s/" % (SYS_GPIO_ROOT, gpio_id)
     if not os.path.exists(path_gpio):
@@ -82,36 +86,44 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         gpio_kernel_interfaces_created.append(gpio_id)
         print "Kernel interface created for GPIO %s" % gpio_id
 
-    # Configure gpio as input
-    with open(path_gpio + "direction", "w") as f:
-        f.write("in")
-
-    # Configure gpio edge detection
-    with open(path_gpio + "edge", "w") as f:
-        f.write(edge)
-
-    print "Kernel interface configured for GPIO %s" % gpio_id
-
-    # Open the gpio value stream
-    f = open(path_gpio + "value", 'r')
-    val = f.read().strip()
-    print "- inital gpio value: %s" % val
-
-    # Add callback info to the mapping dictionaries
-    map_fileno_to_file[f.fileno()] = f
-    map_fileno_to_gpioid[f.fileno()] = gpio_id
-    map_gpioid_to_fileno[gpio_id] = f.fileno()
-
-    # Add callback to map (wrapped if it should be threaded)
-    cb = callback if not threaded_callback else \
-            partial(_threaded_callback, callback)
+    # If initial callback for this GPIO then set everything up. Else make sure
+    # the edge detection is the same and add this to the callback list.
     if gpio_id in map_gpioid_to_callbacks:
+        with open(path_gpio + "edge", "r") as f:
+            e = f.read().strip()
+            if e != edge:
+                raise AttributeError(("Cannot add callback for gpio %s:"
+                        " edge detection '%s' not compatible with existing"
+                        " edge detection '%s'.") % (gpio_id, edge, e))
+
+        # Check whether edge is the same, else throw Exception
+        print "Kernel interface already configured for GPIO %s" % gpio_id
         map_gpioid_to_callbacks[gpio_id].append(cb)
+
     else:
+        # Configure gpio as input
+        with open(path_gpio + "direction", "w") as f:
+            f.write("in")
+
+        # Configure gpio edge detection
+        with open(path_gpio + "edge", "w") as f:
+            f.write(edge)
+
+        print "Kernel interface configured for GPIO %s" % gpio_id
+
+        # Open the gpio value stream
+        f = open(path_gpio + "value", 'r')
+        val = f.read().strip()
+        print "- inital gpio value: %s" % val
+
+        # Add callback info to the mapping dictionaries
+        map_fileno_to_file[f.fileno()] = f
+        map_fileno_to_gpioid[f.fileno()] = gpio_id
+        map_gpioid_to_fileno[gpio_id] = f.fileno()
         map_gpioid_to_callbacks[gpio_id] = [cb]
 
-    # Add to epoll
-    epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLET)
+        # Add to epoll
+        epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLET)
 
 
 def del_interrupt_callback(gpio_id):
