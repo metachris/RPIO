@@ -94,6 +94,8 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
     # Open the gpio value stream
     f = open(path_gpio + "value", 'r')
+    val = f.read().strip()
+    print "- inital gpio value: %s" % val
 
     # Add callback info to the mapping dictionaries
     map_fileno_to_file[f.fileno()] = f
@@ -153,9 +155,9 @@ def wait_for_interrupts(epoll_timeout=1):
         for fileno, event in events:
             if event & select.EPOLLPRI:
                 f = map_fileno_to_file[fileno]
+                f.seek(0)
                 # read() is workaround for not getting new values with read(1)
                 val = f.read().strip()
-                f.seek(0)
                 _handle_interrupt(fileno, val)
 
 
