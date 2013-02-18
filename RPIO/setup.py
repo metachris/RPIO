@@ -10,7 +10,7 @@ setup(
     install_requires=['RPi.GPIO'],
     name="RPIO",
     py_modules=["RPIO"],
-    version="0.1.6",
+    version="0.1.7",
     description=("An extension of RPi.GPIO to easily use interrupts on the "
             "Raspberry Pi"),
     long_description=read('README.txt'),

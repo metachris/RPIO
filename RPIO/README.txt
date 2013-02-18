@@ -7,8 +7,6 @@ notification times, and the ability to trigger on specific edge transitions
 
 ::
 
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
     import RPIO
 
     def do_something(gpio_id, value):
@@ -25,8 +23,7 @@ callback. Here is an example:
 
 ::
 
-    RPIO.add_interrupt_callback(17, do_something, edge='rising',
-            threaded_callback=True)
+    RPIO.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
@@ -103,6 +100,14 @@ Links
 Feedback 
 ========
 Chris Hager (<chris@linuxuser.at>)
+
+
+Todo
+====
+- [ ] `GPIO.input(...)` can set a pullup/pulldown resistor, which is not yet part
+of this interrupt extension (since there is no option for it in /sys/class/gpio/...).
+Note to self: A possible solution is to replicate the function from `RPi.GPIO.input()`.
+
 
 License
 =======

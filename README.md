@@ -2,10 +2,12 @@ Python tools to simplify working with the Raspberry Pi and it's GPIO port. All s
 this repository is released under the MIT license.
 
 
-**RPIO**
+**[RPIO](https://github.com/metachris/raspberrypi-utils/tree/master/RPIO)**
 
 Extension of [RPi.GPIO](http://pypi.python.org/pypi/RPi.GPIO) which can handle interrupts.
-Works with Python 2.x and 3.x.
+Works with Python 2.x and 3.x. The easiest way to install RPIO is via pip:
+
+    sudo pip install RPIO
 
 
 **gpiodaemon.py**
@@ -36,38 +38,15 @@ changes occur. This has the advantages of requiring almost zero cpu consumption
 and very fast notification times, as well as allowing to easily monitor
 specific transitions via `edge='rising|falling|both'`. Here is an example:
 
-***Example: Interrupts and GPIO2***
+    import RPIO
 
-    import GPIO2
-
-    def handle_interrupt(gpio_id, value):
+    def do_something(gpio_id, value):
         print("New value for GPIO %s: %s" % (gpio_id, value))
 
-    GPIO2.add_interrupt_callback(23, handle_interrupt, edge='rising')
-    GPIO2.add_interrupt_callback(24, handle_interrupt, edge='falling')
-    GPIO2.add_interrupt_callback(25, handle_interrupt, edge='both')
-    GPIO2.wait_for_interrupts()
-
-GPIO2 can also start the callback inside a Thread; just set the parameter
-`threaded_callback` to True when adding an interrupt-callback:
-
-    GPIO2.add_interrupt_callback(23, handle_interrupt, edge='rising', threaded_callback=True)
-
-If an interrupt occurs while your callback function does something blocking
-(like `time.sleep()` outside a thread), events will not arrive until you
-release the block. Only one process can receive interrupts for a specific GPIO
-pin, since the read on `/sys/class/gpio/gpio<N>/value` destroys the value for
-subsequent reads. 
-
-On the Raspberry Pi interrupts work via the `/sys/class/gpio` kernel 
-interface, waiting for value changes with `epoll`. 
-
-
-Todo
-----
-- [ ] `GPIO.input(...)` can set a pullup/pulldown resistor, which is not yet part
-of this interrupt extension (since there is no option for it in /sys/class/gpio/...).
-Note to self: A possible solution is to replicate the function from `RPi.GPIO.input()`. 
+    RPIO.add_interrupt_callback(17, do_something, edge='rising')
+    RPIO.add_interrupt_callback(18, do_something, edge='falling')
+    RPIO.add_interrupt_callback(19, do_something, edge='both')
+    RPIO.wait_for_interrupts()
 
 
 Links

@@ -49,7 +49,7 @@ from functools import partial
 from RPi.GPIO import *
 from RPi.GPIO import cleanup as _cleanup_orig
 
-VERSION = "0.1.6"
+VERSION = "0.1.7"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -198,7 +198,7 @@ def stop_waiting_for_interrupts():
     _is_waiting_for_interrupts = False
 
 
-def cleanup_interfaces():
+def _cleanup_interfaces():
     """
     Remove all /sys/class/gpio/gpioN interfaces that this script created.
     Does not usually need to be used.
@@ -218,5 +218,5 @@ def cleanup():
     program to INPUT with no pullup/pulldown and no event detection. Also
     unexports the interfaces that have been set up for interrupts.
     """
-    cleanup_interfaces()
+    _cleanup_interfaces()
     _cleanup_orig()
