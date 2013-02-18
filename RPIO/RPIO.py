@@ -48,7 +48,7 @@ from functools import partial
 
 from RPi.GPIO import *
 
-VERSION = 0.1.6
+VERSION = "0.1.6
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -68,6 +68,7 @@ _is_waiting_for_interrupts = False
 
 # Internals
 _SYS_GPIO_ROOT = '/sys/class/gpio/'
+_epoll = select.epoll()
 
 
 def _threaded_callback(callback, *args):
@@ -137,7 +138,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         _map_gpioid_to_callbacks[gpio_id] = [cb]
 
         # Add to epoll
-        epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLERR)
+        _epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLERR)
 
 
 def del_interrupt_callback(gpio_id):
@@ -145,7 +146,7 @@ def del_interrupt_callback(gpio_id):
     fileno = _map_gpioid_to_fileno[gpio_id]
 
     # 1. Remove from epoll
-    epoll.unregister(fileno)
+    _epoll.unregister(fileno)
 
     # 2. Close the open file
     f = _map_fileno_to_file[fileno]
@@ -174,11 +175,10 @@ def wait_for_interrupts(epoll_timeout=1):
     blocking function. Per default the timeout is set to 1 second; if
     `_is_waiting_for_interrupts` is set to False the loop will exit.
     """
-    epoll = select.epoll()
     global _is_waiting_for_interrupts
     _is_waiting_for_interrupts = True
     while _is_waiting_for_interrupts:
-        events = epoll.poll(epoll_timeout)
+        events = _epoll.poll(epoll_timeout)
         for fileno, event in events:
             if event & select.EPOLLPRI:
                 f = _map_fileno_to_file[fileno]
