@@ -33,8 +33,7 @@ even if edge="rising").
 
 To remove all callbacks from a certain gpio pin, use
 `RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
-loop you can either set `RPIO.is_waiting_for_interrupts` to `False`, or call
-`RPIO.stop_waiting_for_interrupts()`.
+loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
@@ -49,25 +48,26 @@ from functools import partial
 
 from RPi.GPIO import *
 
+VERSION = 0.1.6
+
 # BCM numbering mode by default
 setmode(BCM)
 
-# Internals
-SYS_GPIO_ROOT = '/sys/class/gpio/'
-epoll = select.epoll()
-
 # Interrupt callback maps
-map_fileno_to_file = {}
-map_fileno_to_gpioid = {}
-map_gpioid_to_fileno = {}
-map_gpioid_to_callbacks = {}
+_map_fileno_to_file = {}
+_map_fileno_to_gpioid = {}
+_map_gpioid_to_fileno = {}
+_map_gpioid_to_callbacks = {}
 
 # Keep track of created kernel interfaces for later cleanup
-gpio_kernel_interfaces_created = []
+_gpio_kernel_interfaces_created = []
 
 # Whether to continue the epoll loop or quit at next chance. You
 # can manually set this to False to stop `wait_for_interrupts()`.
-is_waiting_for_interrupts = False
+_is_waiting_for_interrupts = False
+
+# Internals
+_SYS_GPIO_ROOT = '/sys/class/gpio/'
 
 
 def _threaded_callback(callback, *args):
@@ -92,16 +92,16 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
             partial(_threaded_callback, callback)
 
     # Check if /sys/class/gpio/gpioN interface exists; else create it
-    path_gpio = "%sgpio%s/" % (SYS_GPIO_ROOT, gpio_id)
+    path_gpio = "%sgpio%s/" % (_SYS_GPIO_ROOT, gpio_id)
     if not os.path.exists(path_gpio):
-        with open(SYS_GPIO_ROOT + "export", "w") as f:
+        with open(_SYS_GPIO_ROOT + "export", "w") as f:
             f.write("%s" % gpio_id)
-        gpio_kernel_interfaces_created.append(gpio_id)
+        _gpio_kernel_interfaces_created.append(gpio_id)
         info("- kernel interface created for GPIO %s" % gpio_id)
 
     # If initial callback for this GPIO then set everything up. Else make sure
     # the edge detection is the same and add this to the callback list.
-    if gpio_id in map_gpioid_to_callbacks:
+    if gpio_id in _map_gpioid_to_callbacks:
         with open(path_gpio + "edge", "r") as f:
             e = f.read().strip()
             if e != edge:
@@ -111,7 +111,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
         # Check whether edge is the same, else throw Exception
         info("- kernel interface already configured for GPIO %s" % gpio_id)
-        map_gpioid_to_callbacks[gpio_id].append(cb)
+        _map_gpioid_to_callbacks[gpio_id].append(cb)
 
     else:
         # Configure gpio as input
@@ -131,10 +131,10 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         f.seek(0)
 
         # Add callback info to the mapping dictionaries
-        map_fileno_to_file[f.fileno()] = f
-        map_fileno_to_gpioid[f.fileno()] = gpio_id
-        map_gpioid_to_fileno[gpio_id] = f.fileno()
-        map_gpioid_to_callbacks[gpio_id] = [cb]
+        _map_fileno_to_file[f.fileno()] = f
+        _map_fileno_to_gpioid[f.fileno()] = gpio_id
+        _map_gpioid_to_fileno[gpio_id] = f.fileno()
+        _map_gpioid_to_callbacks[gpio_id] = [cb]
 
         # Add to epoll
         epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLERR)
@@ -142,27 +142,27 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
 def del_interrupt_callback(gpio_id):
     """ Delete all interrupt callbacks from a certain gpio """
-    fileno = map_gpioid_to_fileno[gpio_id]
+    fileno = _map_gpioid_to_fileno[gpio_id]
 
     # 1. Remove from epoll
     epoll.unregister(fileno)
 
     # 2. Close the open file
-    f = map_fileno_to_file[fileno]
+    f = _map_fileno_to_file[fileno]
     f.close()
 
     # 3. Remove from maps
-    del map_fileno_to_file[fileno]
-    del map_fileno_to_gpioid[fileno]
-    del map_gpioid_to_fileno[gpio_id]
-    del map_gpioid_to_callbacks[gpio_id]
+    del _map_fileno_to_file[fileno]
+    del _map_fileno_to_gpioid[fileno]
+    del _map_gpioid_to_fileno[gpio_id]
+    del _map_gpioid_to_callbacks[gpio_id]
 
 
 def _handle_interrupt(fileno, val):
     """ Internally distributes interrupts to all attached callbacks """
-    gpio_id = map_fileno_to_gpioid[fileno]
-    if gpio_id in map_gpioid_to_callbacks:
-        for cb in map_gpioid_to_callbacks[gpio_id]:
+    gpio_id = _map_fileno_to_gpioid[fileno]
+    if gpio_id in _map_gpioid_to_callbacks:
+        for cb in _map_gpioid_to_callbacks[gpio_id]:
             # Start the callback!
             cb(gpio_id, val)
 
@@ -172,15 +172,16 @@ def wait_for_interrupts(epoll_timeout=1):
     Blocking loop to listen for GPIO interrupts and distribute them to
     associated callbacks. epoll_timeout is an easy way to shutdown the
     blocking function. Per default the timeout is set to 1 second; if
-    `is_waiting_for_interrupts` is set to False the loop will exit.
+    `_is_waiting_for_interrupts` is set to False the loop will exit.
     """
-    global is_waiting_for_interrupts
-    is_waiting_for_interrupts = True
-    while is_waiting_for_interrupts:
+    epoll = select.epoll()
+    global _is_waiting_for_interrupts
+    _is_waiting_for_interrupts = True
+    while _is_waiting_for_interrupts:
         events = epoll.poll(epoll_timeout)
         for fileno, event in events:
             if event & select.EPOLLPRI:
-                f = map_fileno_to_file[fileno]
+                f = _map_fileno_to_file[fileno]
                 # read() is workaround for not getting new values with read(1)
                 val = f.read().strip()
                 f.seek(0)
@@ -192,8 +193,8 @@ def stop_waiting_for_interrupts():
     Ends the blocking `wait_for_interrupts()` loop the next time it can,
     which depends on the `epoll_timeout` (per default its 1 second).
     """
-    global is_waiting_for_interrupts
-    is_waiting_for_interrupts = False
+    global _is_waiting_for_interrupts
+    _is_waiting_for_interrupts = False
 
 
 def cleanup_interfaces():
@@ -201,10 +202,10 @@ def cleanup_interfaces():
     Remove all /sys/class/gpio/gpioN interfaces that this script created.
     Does not usually need to be used.
     """
-    global gpio_kernel_interfaces_created
-    for gpio_id in gpio_kernel_interfaces_created:
+    global _gpio_kernel_interfaces_created
+    for gpio_id in _gpio_kernel_interfaces_created:
         # Remove the kernel GPIO interface
-        with open(SYS_GPIO_ROOT + "unexport", "w") as f:
+        with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
             f.write("%s" % gpio_id)
 
-    gpio_kernel_interfaces_created = []
+    _gpio_kernel_interfaces_created = []

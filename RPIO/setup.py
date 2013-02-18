@@ -9,9 +9,10 @@ def read(fname):
 setup(
     install_requires=['RPi.GPIO'],
     name="RPIO",
-    packages=['RPIO'],
+    py_modules=["RPIO"],
     version="0.1.5",
-    description="An extension of RPi.GPIO to easily use interrupts on the Raspberry Pi",
+    description=("An extension of RPi.GPIO to easily use interrupts on the "
+            "Raspberry Pi"),
     long_description=read('README'),
     url="https://github.com/metachris/raspberrypi-utils",
 
