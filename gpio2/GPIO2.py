@@ -146,6 +146,7 @@ def wait_for_interrupts(epoll_timeout=1):
     blocking function. Per default the timeout is set to 1 second; if
     `is_waiting_for_interrupts` is set to False the loop will exit.
     """
+    global is_waiting_for_interrupts
     is_waiting_for_interrupts = True
     while is_waiting_for_interrupts:
         events = epoll.poll(epoll_timeout)
@@ -163,6 +164,7 @@ def stop_waiting_for_interrupts():
     Ends the blocking `wait_for_interrupts()` loop the next time it can,
     which depends on the `epoll_timeout` (per default its 1 second).
     """
+    global is_waiting_for_interrupts
     is_waiting_for_interrupts = False
 
 
