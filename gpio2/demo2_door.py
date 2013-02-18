@@ -13,7 +13,7 @@ import logging
 logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
         datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
 
-import GPIO2
+import RPi.GPIO2 as GPIO2
 
 # GPIO-22 goes to a relay which unlocks the door
 GPIO2.setup(22, GPIO2.OUT)

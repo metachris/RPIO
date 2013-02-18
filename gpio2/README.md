@@ -7,7 +7,7 @@ notification times, and the ability to trigger on specific edge transitions
 
     import logging
     logging.basicConfig(level=logging.DEBUG)
-    import GPIO2
+    import RPi.GPIO2 as GPIO2
 
     def do_something(gpio_id, value):
         print("New value for GPIO %s: %s" % (gpio_id, value))

@@ -6,7 +6,7 @@ enables log output of the GPIO2 module.
 import logging
 logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
         datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
-import GPIO2
+import RPi.GPIO2 as GPIO2
 
 
 def handle_interrupt(gpio_id, val):
