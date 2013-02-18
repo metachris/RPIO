@@ -9,6 +9,10 @@ from time import time
 from urllib import urlopen
 from threading import Thread
 
+import logging
+logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
+        datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
+
 import GPIO2
 
 # GPIO-22 goes to a relay which unlocks the door

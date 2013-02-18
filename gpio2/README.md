@@ -5,6 +5,8 @@ changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
 (`'rising|falling|both'`). Here is a very simple example:
 
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     import GPIO2
 
     def do_something(gpio_id, value):

@@ -1,5 +1,11 @@
-# Example of using interrupts and GPIO2 to react to state-changes on
-# gpio pins 23, 24 and 25
+"""
+Example of using interrupts and GPIO2 to react to state-changes on
+gpio pins 23, 24 and 25. Setting up logging before importing GPIO2
+enables log output of the GPIO2 module.
+"""
+import logging
+logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
+        datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
 import GPIO2
 
 

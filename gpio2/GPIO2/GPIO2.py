@@ -8,6 +8,8 @@ GPIO2.input(...)), as well as access the new interrupt handling methods.
 The following example shows how to react on events on 3 pins by using
 interrupts, each with different edge detections:
 
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     import GPIO2
 
     def do_something(gpio_id, value):
@@ -40,18 +42,12 @@ URL: https://github.com/metachris/raspberrypi-utils
 """
 import select
 import os.path
-import logging
 
 from logging import info, warn, error
 from threading import Thread
 from functools import partial
 
 from RPi.GPIO import *
-
-# If logging.basicConfig(...) is enabled, GPIO2 will always show log messages.
-# Alternatively you disable this and setup logging before importing GPIO2.
-logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
-        datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
 
 # BCM numbering mode by default
 setmode(BCM)
