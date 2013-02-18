@@ -44,12 +44,10 @@ from functools import partial
 
 from RPi.GPIO import *
 
-# Loglevel DEBUG by default
-LOGLEVEL = logging.DEBUG
-
-# Logging setup with some pretty log formatting
+# If logging.basicConfig(...) is enabled, GPIO2 will always show log messages.
+# Alternatively you disable this and setup logging before importing GPIO2.
 logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
-        datefmt='%m/%d/%Y %I:%M:%S %p', level=LOGLEVEL)
+        datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
 
 # BCM numbering mode by default
 setmode(BCM)

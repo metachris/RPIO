@@ -5,6 +5,7 @@ this repository is released under the MIT license.
 **GPIO2.py**
 
 Extension of [RPi.GPIO](http://pypi.python.org/pypi/RPi.GPIO) which can handle interrupts.
+Compatible with Python 2.x and 3.x.
 
 
 **gpiodaemon.py**
@@ -40,7 +41,7 @@ specific transitions via `edge='rising|falling|both'`. Here is an example:
     import GPIO2
 
     def handle_interrupt(gpio_id, value):
-        print "New value for GPIO %s: %s" % (gpio_id, value)
+        print("New value for GPIO %s: %s" % (gpio_id, value))
 
     GPIO2.add_interrupt_callback(23, handle_interrupt, edge='rising')
     GPIO2.add_interrupt_callback(24, handle_interrupt, edge='falling')
