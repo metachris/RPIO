@@ -84,6 +84,8 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     If threaded_callback is True, the callback will be started inside a Thread.
     """
     info("Adding callback for GPIO %s" % gpio_id)
+    if not edge in ["falling", "rising", "both", "none"]:
+        raise AttributeError("'%s' is not a valid edge.")
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \
@@ -126,6 +128,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         f = open(path_gpio + "value", 'r')
         val_initial = f.read().strip()
         info("- inital gpio value: %s" % val_initial)
+        f.seek(0)
 
         # Add callback info to the mapping dictionaries
         map_fileno_to_file[f.fileno()] = f
@@ -134,7 +137,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         map_gpioid_to_callbacks[gpio_id] = [cb]
 
         # Add to epoll
-        epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLET)
+        epoll.register(f.fileno(), select.EPOLLPRI | select.EPOLLERR)
 
 
 def del_interrupt_callback(gpio_id):
@@ -178,9 +181,9 @@ def wait_for_interrupts(epoll_timeout=1):
         for fileno, event in events:
             if event & select.EPOLLPRI:
                 f = map_fileno_to_file[fileno]
-                f.seek(0)
                 # read() is workaround for not getting new values with read(1)
                 val = f.read().strip()
+                f.seek(0)
                 _handle_interrupt(fileno, val)
 
 
