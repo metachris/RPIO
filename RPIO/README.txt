@@ -29,8 +29,7 @@ Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
 even if edge="rising"). To remove all callbacks from a certain gpio pin, use
 `RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
-loop you can either set `RPIO.is_waiting_for_interrupts` to `False`, or call
-`RPIO.stop_waiting_for_interrupts()`.
+loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
 If an interrupt occurs while your callback function does something blocking
 (like `time.sleep()` outside a thread), events will not arrive until you
@@ -52,7 +51,7 @@ You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GP
     RPIO.setup(17, RPIO.OUT)
 
     # set gpio 17 to high
-    RPIO.output(17, RPIO.HIGH)
+    RPIO.output(17, True)
 
     # set up output channel with an initial state
     RPIO.setup(18, RPIO.OUT, initial=RPIO.LOW)
@@ -64,29 +63,10 @@ You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GP
     # read input from gpio 19
     input_value = RPIO.input(19)
 
-    # set up rising edge detection (EXPERIMENTAL)
-    set_rising_event(19)
+    # change to BOARD GPIO numbering
+    RPIO.setmode(RPIO.BOARD)
 
-    # check for an event (EXPERIMENTAL)
-    if RPIO.event_detected(19):
-        print('Rising edge detected!')
-
-    # set up falling edge detection (EXPERIMENTAL)
-    RPIO.set_rising_event(19, enable=False)  # disable rising edge detection (as set above)
-    RPIO.set_falling_event(19)
-
-    # set up high detection (EXPERIMENTAL)
-    RPIO.set_falling_event(19, enable=False)  # disable falling edge detection (as set above)
-    RPIO.set_high_event(19)
-
-    # set up low detection (EXPERIMENTAL)
-    RPIO.set_high_event(19, enable=False)  # disable high detection (as set above)
-    RPIO.set_low_event(19)
-
-    # to change to BCM RPIO numbering
-    RPIO.setmode(RPIO.BCM)
-
-    # to reset every channel that has been set up by this program to INPUT with no pullup/pulldown and no event detection
+    # reset every channel that has been set up by this program. and unexport gpio interfaces
     RPIO.cleanup()
 
 
