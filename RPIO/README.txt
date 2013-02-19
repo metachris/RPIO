@@ -7,10 +7,13 @@ notification times, and the ability to trigger on specific edge transitions
 
 ::
 
+    import logging
+    log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
+    logging.basicConfig(format=log_format, level=logging.DEBUG)
     import RPIO
 
     def do_something(gpio_id, value):
-        print("New value for GPIO %s: %s" % (gpio_id, value))
+        logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
     RPIO.add_interrupt_callback(17, do_something, edge='rising')
     RPIO.add_interrupt_callback(18, do_something, edge='falling')

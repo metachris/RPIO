@@ -9,8 +9,8 @@ from urllib import urlopen
 from threading import Thread
 
 import logging
-logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
-        datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
+log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
+logging.basicConfig(format=log_format, level=logging.DEBUG)
 import RPIO
 
 # GPIO-22 goes to a relay which unlocks the door
@@ -43,7 +43,8 @@ def handle_door_bell_ring(gpio_id, val):
             GPIO2.output(22, GPIO2.LOW)
 
             # Add log entry via http-request to local webserver
-            # url_log = "http://127.0.0.1/log_add_event?type=door_bell_twice&value=on"
+            # url_log = ("http://127.0.0.1/log_add_event?"
+            #        "type=door_bell_twice&value=on")
             # Thread(taget=urlopen, args=(url_log,)).start()
 
     # Save time of last ring

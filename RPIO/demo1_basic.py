@@ -3,8 +3,8 @@ Example of using interrupts and RPIO to react to state-changes on gpio pins.
 Setting up logging before importing RPIO enables its log output.
 """
 import logging
-logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', \
-        datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
+log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
+logging.basicConfig(format=log_format, level=logging.DEBUG)
 import RPIO
 
 
