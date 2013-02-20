@@ -273,6 +273,49 @@ static PyObject *py_output_gpio(PyObject *self, PyObject *args)
    return Py_None;
 }
 
+
+// python function output(channel, value) without direction check
+static PyObject *py_forceoutput_gpio(PyObject *self, PyObject *args)
+{
+   int gpio, channel, value;
+
+   if (!PyArg_ParseTuple(args, "ii", &channel, &value))
+      return NULL;
+
+   if (gpio_mode != BOARD && gpio_mode != BCM)
+   {
+      PyErr_SetString(ModeNotSetException, "Please set mode using GPIO.setmode(GPIO.BOARD) or GPIO.setmode(GPIO.BCM)");
+      return NULL;
+   }
+
+   if ( (gpio_mode == BCM && (channel < 0 || channel > 53))
+     || (gpio_mode == BOARD && (channel < 1 || channel > 26)) )
+   {
+      PyErr_SetString(InvalidChannelException, "The channel sent is invalid on a Raspberry Pi");
+      return NULL;
+   }
+
+   if (gpio_mode == BOARD)
+   {
+      gpio = *(*pin_to_gpio+channel);
+      if (gpio == -1)
+      {
+         PyErr_SetString(InvalidChannelException, "The channel sent is invalid on a Raspberry Pi");
+         return NULL;
+      }
+   }
+   else // gpio_mode == BCM
+   {
+      gpio = channel;
+   }
+
+//   printf("Output GPIO %d value %d\n", gpio, value);
+   output_gpio(gpio, value);
+
+   Py_INCREF(Py_None);
+   return Py_None;
+}
+
 // python function value = input(channel)
 static PyObject *py_input_gpio(PyObject *self, PyObject *args)
 {
@@ -285,6 +328,21 @@ static PyObject *py_input_gpio(PyObject *self, PyObject *args)
         return NULL;
    
    //   printf("Input GPIO %d\n", gpio);
+   if (input_gpio(gpio))
+      Py_RETURN_TRUE;
+   else
+      Py_RETURN_FALSE;
+}
+
+// python function value = input(channel) without direction check
+static PyObject *py_forceinput_gpio(PyObject *self, PyObject *args)
+{
+   int gpio;
+
+   if (!PyArg_ParseTuple(args, "i", &gpio))
+      return NULL;
+
+   //printf("Input GPIO %d\n", gpio);
    if (input_gpio(gpio))
       Py_RETURN_TRUE;
    else
@@ -433,7 +491,9 @@ PyMethodDef rpi_gpio_methods[] = {
    {"setup", (PyCFunction)py_setup_channel, METH_VARARGS | METH_KEYWORDS, "Set up the GPIO channel, direction and (optional) pull/up down control\nchannel   - Either: RPi board pin number (not BCM GPIO 00..nn number).  Pins start from 1\n            or    : BCM GPIO number\ndirection - INPUT or OUTPUT\n[pull_up_down] - PUD_OFF (default), PUD_UP or PUD_DOWN\n[initial]      - Initial value for an output channel"},
    {"cleanup", py_cleanup, METH_VARARGS, "Clean up by resetting all GPIO channels that have been used by this program to INPUT with no pullup/pulldown and no event detection"},
    {"output", py_output_gpio, METH_VARARGS, "Output to a GPIO channel"},
+   {"forceoutput", py_forceoutput_gpio, METH_VARARGS, "Force output to a GPIO channel,\nignoring whether it has been set up before."},
    {"input", py_input_gpio, METH_VARARGS, "Input from a GPIO channel"},
+   {"forceinput", py_forceinput_gpio, METH_VARARGS, "Force read input from a GPIO channel,\nignoring whether it was set up before."},
    {"setmode", setmode, METH_VARARGS, "Set up numbering mode to use for channels.\nBOARD - Use Raspberry Pi board numbers\nBCM   - Use Broadcom GPIO 00..nn numbers"},
    {"set_rising_event", (PyCFunction)py_set_rising_event, METH_VARARGS | METH_KEYWORDS, "EXPERIMENTAL.  Set rising edge detection\nchannel   - Either: RPi board pin number (not BCM GPIO 00..nn number).  Pins start from 1\n            or    : BCM GPIO number\n[enable] - True (default) or False"},
    {"set_falling_event", (PyCFunction)py_set_falling_event, METH_VARARGS | METH_KEYWORDS, "EXPERIMENTAL.  Set falling edge detection\nchannel   - Either: RPi board pin number (not BCM GPIO 00..nn number).  Pins start from 1\n            or    : BCM GPIO number\n[enable] - True (default) or False"},
