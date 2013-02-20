@@ -43,7 +43,7 @@ URL: https://github.com/metachris/raspberrypi-utils
 import select
 import os.path
 
-from logging import info, warn, error
+from logging import debug, info, warn, error
 from threading import Thread
 from functools import partial
 
@@ -86,7 +86,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
     If threaded_callback is True, the callback will be started inside a Thread.
     """
-    info("Adding callback for GPIO %s" % gpio_id)
+    debug("Adding callback for GPIO %s" % gpio_id)
     if not edge in ["falling", "rising", "both", "none"]:
         raise AttributeError("'%s' is not a valid edge.")
 
@@ -100,7 +100,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(_SYS_GPIO_ROOT + "export", "w") as f:
             f.write("%s" % gpio_id)
         _gpio_kernel_interfaces_created.append(gpio_id)
-        info("- kernel interface created for GPIO %s" % gpio_id)
+        debug("- kernel interface created for GPIO %s" % gpio_id)
 
     # If initial callback for this GPIO then set everything up. Else make sure
     # the edge detection is the same and add this to the callback list.
@@ -113,7 +113,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
                         " edge detection '%s'.") % (gpio_id, edge, e))
 
         # Check whether edge is the same, else throw Exception
-        info("- kernel interface already configured for GPIO %s" % gpio_id)
+        debug("- kernel interface already configured for GPIO %s" % gpio_id)
         _map_gpioid_to_callbacks[gpio_id].append(cb)
 
     else:
@@ -125,12 +125,12 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "w") as f:
             f.write(edge)
 
-        info("- kernel interface configured for GPIO %s" % gpio_id)
+        debug("- kernel interface configured for GPIO %s" % gpio_id)
 
         # Open the gpio value stream and read the initial value
         f = open(path_gpio + "value", 'r')
         val_initial = f.read().strip()
-        info("- inital gpio value: %s" % val_initial)
+        debug("- inital gpio value: %s" % val_initial)
         f.seek(0)
 
         # Add callback info to the mapping dictionaries
