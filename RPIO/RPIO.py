@@ -47,10 +47,10 @@ from logging import info, warn, error
 from threading import Thread
 from functools import partial
 
-from RPi.GPIO import *
-from RPi.GPIO import cleanup as _cleanup_orig
+from GPIO import *
+from GPIO import cleanup as _cleanup_orig
 
-VERSION = "0.1.7"
+VERSION = "0.1.8"
 
 # BCM numbering mode by default
 setmode(BCM)

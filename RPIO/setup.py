@@ -12,7 +12,7 @@ setup(
     ext_modules=[Extension('GPIO', ['source/py_gpio.c', 'source/c_gpio.c',
             'source/cpuinfo.c'])],  # headers are included via MANIFEST.in
 
-    version="0.1.7",
+    version="0.1.8",
     description=("An extension of RPi.GPIO to easily use interrupts on the "
             "Raspberry Pi"),
     long_description=read('README.txt'),
