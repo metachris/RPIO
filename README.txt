@@ -1,4 +1,12 @@
-RPIO extends RPi.GPIO with easy interrupt handling.
+RPIO extends RPi.GPIO with easy interrupt handling, and provides a command
+line tool `rpio` which allows you to inspect and manipulate gpio's even if
+they are owned by another process.
+
+The easiest way to get RPIO is with pip or easy_install:
+
+::
+
+    sudo pip install RPIO
 
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
