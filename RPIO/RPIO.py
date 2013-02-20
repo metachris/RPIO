@@ -88,7 +88,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     """
     debug("Adding callback for GPIO %s" % gpio_id)
     if not edge in ["falling", "rising", "both", "none"]:
-        raise AttributeError("'%s' is not a valid edge.")
+        raise AttributeError("'%s' is not a valid edge." % edge)
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \

@@ -11,7 +11,7 @@ Commands which will not change a gpio setup (eg. from OUTPUT to INPUT):
         $ RPIO_cmd.py --show 17,18,19
         $ RPIO_cmd.py --show 2-24
 
-        # Example output for `$ PIO_cmd.py -r 4-10`
+        # Example output for `PIO_cmd.py -s 4-10`
         GPIO 4 : INPUT   [0]
         GPIO 5 : ALT0    [0]
         GPIO 6 : OUTPUT  [1]
