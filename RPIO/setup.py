@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, Extension
 
 
 def read(fname):
@@ -7,9 +7,11 @@ def read(fname):
 
 
 setup(
-    install_requires=['RPi.GPIO'],
     name="RPIO",
     py_modules=["RPIO"],
+    ext_modules=[Extension('GPIO', ['source/py_gpio.c', 'source/c_gpio.c',
+            'source/cpuinfo.c'])],  # headers are included via MANIFEST.in
+
     version="0.1.7",
     description=("An extension of RPi.GPIO to easily use interrupts on the "
             "Raspberry Pi"),
