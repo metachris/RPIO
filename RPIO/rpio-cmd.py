@@ -1,7 +1,7 @@
 """
 Command-line interface to RPIO. This script takes uses new functions
 in py_gpio.c, namely `forceinput()` and `forceoutput()`. To use those
-you'll need the new sources (TODO: quick howto make).
+you'll need at least RPIO v0.1.8 (`sudo pip install --upgrade RPIO`).
 
 Commands which will not change a gpio setup (eg. from OUTPUT to INPUT):
 
@@ -52,7 +52,19 @@ from optparse import OptionParser
 import logging
 from logging import debug, info, warn, error
 
+RPIO_VERSION_MIN = "0.1.8"
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
+
+
+def error_gpio_outdated():
+        print(("Please update RPIO to a newer version (eg. "
+                "`sudo pip install --upgrade RPIO`)."))
+        exit(1)
+
+
+def interrupt_callback(gpio_id, value):
+    logging.info("GPIO %s interrupt: value=%s" % (gpio_id, value))
+
 
 # Optional: Command line interface
 if __name__ == "__main__":
@@ -97,6 +109,8 @@ if __name__ == "__main__":
         log_format = '%(message)s'
     logging.basicConfig(format=log_format, level=log_level)
     import RPIO
+    if RPIO.VERSION < RPIO_VERSION_MIN:
+        error_gpio_outdated()
 
     # Process startup argument
     if options.show:
@@ -125,6 +139,29 @@ if __name__ == "__main__":
             error(("Cannot output to GPIO %s, because it is setup as %s. Use "
                     "--setoutput %s first.") % (gpio_id_str, \
                     GPIO_FUNCTIONS[f], gpio_id))
+
+    elif options.interrupt:
+        # gpio-ids can either be a single value, comma separated or a range
+        if "-" in options.interrupt:
+            # eg 2-20
+            n1, n2 = options.interrupt.split("-")
+            gpio_ids = [n for n in xrange(int(n1), int(n2) + 1)]
+        else:
+            gpio_ids = options.interrupt.split(",")
+
+        for gpio_id_str in gpio_ids:
+            parts = gpio_id_str.split(":")
+            gpio_id = int(parts[0])
+            edge = "both" if len(parts) == 1 else parts[1]
+            RPIO.add_interrupt_callback(gpio_id, interrupt_callback, edge=edge)
+            info("GPIO %s interrupt setup complete (edge detection='%s')" % \
+                    (gpio_id, edge))
+        info("Waiting for interrupts (exit with Ctrl+C) ...")
+        try:
+            RPIO.wait_for_interrupts()
+
+        except KeyboardInterrupt:
+            RPIO.cleanup()
 
     elif options.setoutput:
         gpio_id = int(options.setoutput)
