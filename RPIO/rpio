@@ -1,17 +1,22 @@
+#!/usr/bin/python
 """
-Command-line interface to RPIO. This script takes uses new functions
-in py_gpio.c, namely `forceinput()` and `forceoutput()`. To use those
-you'll need at least RPIO v0.1.8 (`sudo pip install --upgrade RPIO`).
+Command-line interface to RPIO. Really a swiss army knife which allows you to
+inspect GPIO's system wide; including reading values from output-gpios used
+by other processes.
 
-Commands which will not change a gpio setup (eg. from OUTPUT to INPUT):
+This script uses two new functions in py_gpio.c, namely `forceinput()` and
+`forceoutput()`. To use those you'll need at least RPIO v0.1.8
+(`sudo pip install --upgrade RPIO`).
 
-    Show the function and state of gpios (with -s/--show):
+Examples:
 
-        $ RPIO_cmd.py --show 17
-        $ RPIO_cmd.py --show 17,18,19
-        $ RPIO_cmd.py --show 2-24
+    Inspect the function and state of gpios (with -i/--inspect):
 
-        # Example output for `PIO_cmd.py -s 4-10`
+        $ RPIO_cmd.py -i 17
+        $ RPIO_cmd.py -i 17,18,19
+        $ RPIO_cmd.py -i 2-24
+
+        # Example output for `PIO_cmd.py -i 4-10`
         GPIO 4 : INPUT   [0]
         GPIO 5 : ALT0    [0]
         GPIO 6 : OUTPUT  [1]
@@ -20,14 +25,14 @@ Commands which will not change a gpio setup (eg. from OUTPUT to INPUT):
         GPIO 9 : INPUT   [0]
         GPIO 10: INPUT   [1]
 
-    Set a GPIO to either `0` or `1` (with -w/--write):
+    Set GPIO 17 to either `0` or `1` (with -s/--set):
 
-        $ RPIO_cmd.py --write 17:1
+        $ RPIO_cmd.py --set 17:1
 
-        You can only write to pins that have been set up as OUTPUT; else you
-        will need to set it yourself (eg. `--setoutput 17`).
+        You can only write to pins that have been set up as OUTPUT. You can 
+        set this yourself with `--setoutput <gpio-id>`.
 
-    Show interrupt events on GPIOs (with -i/--interrupt; default edge='both'):
+    Show interrupt events on GPIOs (with -r/--interrupt; default edge='both'):
 
         $ RPIO_cmd.py --interrupt 17
         $ RPIO_cmd.py --interrupt 17:rising,18:falling,19
@@ -37,13 +42,13 @@ Commands which will change a pin setup (eg. from OUT to IN):
 
     Setup a pin as INPUT (optionally with pullup or -down resistor):
 
-        RPIO_cmd.py --setinput 17
-        RPIO_cmd.py --setinput 17:pullup
-        RPIO_cmd.py --setinput 17:pulldown
+        $ RPIO_cmd.py --setinput 17
+        $ RPIO_cmd.py --setinput 17:pullup
+        $ RPIO_cmd.py --setinput 17:pulldown
 
     Setup a pin as OUTPUT:
 
-        RPIO_cmd.py --setoutput 18
+        $ RPIO_cmd.py --setoutput 18
 
 Author: Chris Hager <chris@linuxuser.at>
 URL: https://github.com/metachris/raspberrypi-utils
@@ -70,30 +75,32 @@ def interrupt_callback(gpio_id, value):
 if __name__ == "__main__":
     # Prepare help and options
     usage = """usage: %prog options"""
-    desc = """RPIO command line interface"""
+    desc = ("GPIO Swiss Army Knife for the Raspberry Pi. See "
+            "https://github.com/metachris/raspberrypi-utils for more info.")
     parser = OptionParser(usage=usage, description=desc)
-    parser.add_option("-s", "--show", dest="show",
-            help=("Show GPIO function (IN/OUT/ALT0) and state. For multiple "
-                "GPIO's, separate the ids with a comma (eg. `-r 17,18,19`) "
-                "or specify a range (eg. `-r 2-20`)"), metavar="gpio-id")
 
-    parser.add_option("-i", "--interrupt", dest="interrupt",
+    parser.add_option("-i", "--inspect", dest="show",
+            help=("Show GPIO function (IN/OUT/ALT0) and state. For multiple "
+                "GPIOs separate ids with commas (eg. `-i 17,18,19`) "
+                "or specify a range (eg. `-i 2-20`)"), metavar="gpio-id")
+
+    parser.add_option("-w", "--wait_for_interrupts", dest="interrupt",
             help=("Show interrupt events on specified gpio-id:edge (eg. "
                 "`17:both`). For multiple GPIO's, separate the ids with a "
-                "comma (eg. -i 17:both,18:falling) or specify a range (eg. "
+                "comma (eg. -r 17:both,18:falling) or specify a range (eg. "
                 "`-r 2-20`)"), metavar="gpio-id")
 
-    parser.add_option("-w", "--write", dest="write",
-            help=("Set a GPIO output to either 1 or 0. Eg. `--write 17:0`"),
+    parser.add_option("-s", "--set", dest="write",
+            help=("Set GPIO output to either 1 or 0. Eg. `--set 17:0`"),
             metavar="gpio-id")
 
-    parser.add_option("--setoutput", dest="setoutput",
-            help="Setup GPIO as OUTPUT.", metavar="gpio-id")
-
     parser.add_option("--setinput", dest="setinput",
-            help=("Setup GPIO as OUTPUT. To specify a pullup or -down resistor"
-                ", add `pullup` or `pulldown` after the gpio-id (eg. "
+            help=("Setup a GPIO as INPUT. To specify a pullup or -down "
+                "resistor, add `pullup` or `pulldown` after the gpio-id (eg. "
                 "`--setinput 17:pulldown`)"), metavar="gpio-id")
+
+    parser.add_option("--setoutput", dest="setoutput",
+            help="Setup a GPIO as OUTPUT", metavar="gpio-id")
 
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true")
 

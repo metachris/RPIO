@@ -8,11 +8,12 @@ def read(fname):
 
 setup(
     name="RPIO",
+    version="0.1.8",
     py_modules=["RPIO"],
     ext_modules=[Extension('GPIO', ['source/py_gpio.c', 'source/c_gpio.c',
             'source/cpuinfo.c'])],  # headers are included via MANIFEST.in
+    data_files=[('/sbin', ['rpio'])],
 
-    version="0.1.8",
     description=("An extension of RPi.GPIO to easily use interrupts on the "
             "Raspberry Pi"),
     long_description=read('README.txt'),
