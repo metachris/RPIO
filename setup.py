@@ -14,7 +14,6 @@ setup(
     py_modules=["RPIO"],
     ext_modules=[Extension('GPIO', ['source/c_gpio/py_gpio.c', \
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
-    #data_files=[('/sbin', ['source/rpio'])],
     scripts=["source/rpio"],
 
     description=("An extension of RPi.GPIO to easily use interrupts on the "
