@@ -1,13 +1,13 @@
-Visit http://pythonhosted.org/RPIO for a pretty, pythonic documentation.
+**Visit [pythonhosted.org/RPIO](http://pythonhosted.org/RPIO) for a pretty version of this documentation :)**
 
-RPIO consists of two main parts:
+RPIO is a Raspberry Pi GPIO toolbox:
 
 * **rpio**, a command-line multitool for inspecting and manipulating GPIOs
-* **RPIO.py**, a module which extends RPi.GPIO with interrupt handling and other good stuff
+* **RPIO.py**, a Python module which extends RPi.GPIO with interrupt handling and other good stuff
 
-The easiest way to install RPIO on a Raspberry Pi is either with `pip` or `easy_install`:
+The easiest way to install/update RPIO on a Raspberry Pi is either with `easy_install -U RPIO` or 
+`pip install -U RPIO`:
 
-    $ sudo pip install -U RPIO
     $ sudo easy_install -U RPIO
 
 (The parameter '-U' will update RPIO if a newer version is available.) Another way to
@@ -17,9 +17,8 @@ get RPIO is directly from the Github repository:
     $ cd RPIO
     $ sudo python setup.py install
 
-After the installation you can use `import RPIO` as well as use the command-line tool
-`rpio`.
-
+After the installation you can use `import RPIO` as well as the command-line tool
+`rpio`. RPIO uses the BCM gpio numbering scheme.
 
 Interrupts
 ==========
@@ -27,11 +26,14 @@ Interrupts
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). This is an example of how to use RPIO:
+(`'rising|falling|both'`). This is an example of how to use RPIO for this:
 
+    # Enable logging
     import logging
     log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
     logging.basicConfig(format=log_format, level=logging.DEBUG)
+
+    # Get started
     import RPIO
 
     def do_something(gpio_id, value):
@@ -64,7 +66,7 @@ subsequent reads. RPIO uses `epoll` to receive interrupts from the kernel.
 RPi.GPIO
 ========
 
-You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GPIO.BCM pin numbering by default:
+You can use all of RPi.GPIO's functionality through RPIO:
 
     import RPIO
 
@@ -83,9 +85,6 @@ You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GP
 
     # read input from gpio 19
     input_value = RPIO.input(19)
-
-    # change to BOARD GPIO numbering
-    RPIO.setmode(RPIO.BOARD)
 
     # reset every channel that has been set up by this program. and unexport gpio interfaces
     RPIO.cleanup()
