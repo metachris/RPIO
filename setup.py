@@ -15,8 +15,8 @@ setup(
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
     scripts=["source/rpio"],
 
-    description=("Extension of RPi.GPIO with interrupts, and command line "
-            "GPIO multitool for the Raspberry Pi"),
+    description=(("Raspberry Pi GPIO toolbox with an interrupt-extension of"
+            "RPi.GPIO, and a command line interface")),
     long_description=read('README.txt'),
     url="https://github.com/metachris/RPIO",
 
@@ -24,7 +24,7 @@ setup(
     author_email="chris@linuxuser.at",
 
     license="MIT",
-    keywords=["raspberry", "raspberry pi", "interrupts", "gpio", "gpio2"],
+    keywords=["raspberry", "raspberry pi", "interrupts", "gpio", "rpio"],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Programming Language :: Python",
@@ -35,6 +35,8 @@ setup(
         "Topic :: Home Automation",
         "Topic :: System :: Hardware",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
+        ("License :: OSI Approved :: "
+                "GNU General Public License v3 or later (GPLv3+)"),
+        "License :: Other/Proprietary License",
     ],
 )

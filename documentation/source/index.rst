@@ -32,13 +32,18 @@ After the installation you can use `import RPIO` as well as the command-line too
 
 .. _ref-rpio-cmd:
 
-**rpio**, the command line tool
+`rpio`, the command line tool
 ===============================
 
-`rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes. 
-The BCM GPIO numbering scheme is used by default.
+`rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
+`rpio` needs to run with superuser privileges (root), else it will restart using `sudo`. The BCM GPIO numbering
+scheme is used by default. Here are a few examples of using `rpio`:
 
 ::
+
+    Show the help page:
+
+        $ rpio -h
 
     Inspect the function and state of gpios (with -i/--inspect):
 
@@ -80,21 +85,28 @@ The BCM GPIO numbering scheme is used by default.
         $ rpio --setoutput 18
 
 
-`rpio` was introduced in version 0.5.0. You can update RPIO with `sudo easy_install -U RPIO`.
+`rpio` can install (and update) its manpage::
+
+    $ sudo rpio --update-man
+    $ man rpio
+
+`rpio` was introduced in version 0.5.1.
 
 .. _ref-rpio-py:
 
-**RPIO**, the Python module
-===========================
+`RPIO.py`, the Python module
+============================
 
 RPIO extends RPi.GPIO with interrupt handling and a few other goodies.
 
-Interrupts are used to receive notifications from the kernel when GPIO state 
+Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This 
-is an example of how to use RPIO to react on events on 3 pins by using 
-interrupts, each with different edge detections::
+(`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This
+is an example of how to use RPIO to react on events on 3 pins by using
+interrupts, each with different edge detections:
+
+::
 
     # Setup logging
     import logging
@@ -103,7 +115,7 @@ interrupts, each with different edge detections::
 
     # Get started
     import RPIO
-    
+
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
@@ -114,7 +126,9 @@ interrupts, each with different edge detections::
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
-callback. Here is an example::
+callback. Here is an example:
+
+::
 
     RPIO.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
 
@@ -124,7 +138,9 @@ even if edge="rising"). To remove all callbacks from a certain gpio pin, use
 `RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
 loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
-Besides the interrupt handling, you can use RPIO just as RPi.GPIO::
+Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
+
+::
 
     import RPIO
 
@@ -150,7 +166,9 @@ Besides the interrupt handling, you can use RPIO just as RPi.GPIO::
     # reset every channel that has been set up by this program. and unexport gpio interfaces
     RPIO.cleanup()
 
-You can use RPIO as a drop-in replacement for your existing code like this::
+You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this:
+
+::
 
     import RPIO as GPIO  # (if you've previously used `import RPi.GPIO as GPIO`)
 
@@ -167,3 +185,19 @@ Links
 * https://github.com/metachris/RPIO
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.kernel.org/doc/Documentation/gpio.txt
+
+
+License
+=======
+
+::
+
+    RPIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    RPIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.

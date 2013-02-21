@@ -49,6 +49,7 @@ Examples:
         $ rpio --setoutput 18
 
 Author: Chris Hager <chris@linuxuser.at>
+License: GPLv3
 URL: https://github.com/metachris/RPIO
 """
 import os
@@ -66,7 +67,6 @@ def interrupt_callback(gpio_id, value):
     logging.info("GPIO %s interrupt: value=%s" % (gpio_id, value))
 
 
-# Optional: Command line interface
 if __name__ == "__main__":
     # Automatically invoke sudo if non-root
     if os.geteuid() != 0:

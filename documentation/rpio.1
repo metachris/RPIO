@@ -31,7 +31,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" Man page generated from reStructuredText.
 .
 .sp
-RPIO consists of two main parts:
+RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 .INDENT 0.0
 .IP \(bu 2
 \fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs
@@ -39,21 +39,20 @@ RPIO consists of two main parts:
 \fI\%RPIO.py\fP, a module which extends RPi.GPIO with interrupt handling and other good stuff
 .UNINDENT
 .sp
-The easiest way to install RPIO on a Raspberry Pi is either with \fIpip\fP or \fIeasy_install\fP:
+The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
-$ sudo pip install \-U RPIO
 $ sudo easy_install \-U RPIO
+$ sudo pip install \-U RPIO
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-The parameter \(aq\-U\(aq updates RPIO if a newer version is available. Alternatively
-you can get RPIO from the Github repository:
+Another way to get RPIO is directly from the Github repository:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -67,20 +66,21 @@ $ sudo python setup.py install
 .UNINDENT
 .UNINDENT
 .sp
-After the installation you can \fIimport RPIO\fP as well as use the command\-line tool
+After the installation you can use \fIimport RPIO\fP as well as the command\-line tool
 \fIrpio\fP.
 .sp
-\fIrpio\fP is a command\-line multitool which allows you to inspect and manipulate GPIO\(aqs
-system wide; including gpios used by other processes. rpio uses two new
-functions in py_gpio.c, namely \fIforceinput()\fP and
-\fIforceoutput()\fP; to use those you\(aqll need at least RPIO v0.1.8
-(\fIsudo pip install \-\-upgrade RPIO\fP). Note that rpio uses the BCM gpio
-numbering scheme. Here are some examples of how to use \fIrpio\fP:
+\fIrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
+\fIrpio\fP needs to run with superuser privileges (root), else it will restart using \fIsudo\fP. The BCM GPIO numbering
+scheme is used by default.
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
+Show the help page:
+
+    $ rpio \-h
+
 Inspect the function and state of gpios (with \-i/\-\-inspect):
 
     $ rpio \-i 17
@@ -124,22 +124,40 @@ Setup a pin as OUTPUT:
 .UNINDENT
 .UNINDENT
 .sp
-RPIO extends RPi.GPIO with interrupt handling. RPIO uses \fIGPIO.BCM\fP as default
-GPIO numbering system, as opposed to the pin ids (\fIGPIO.BOARD\fP).
-.sp
-Interrupts are used to receive notifications from the kernel when GPIO state
-changes occur. Advantages include minimized cpu consumption, very fast
-notification times, and the ability to trigger on specific edge transitions
-(\fI\(aqrising|falling|both\(aq\fP). This is an example of how to use RPIO to react on
-events on 3 pins by using interrupts, each with different edge detections:
+\fIrpio\fP can install (and update) its manpage:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
+$ sudo rpio \-\-update\-man
+$ man rpio
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fIrpio\fP was introduced in version 0.5.1.
+.sp
+RPIO extends RPi.GPIO with interrupt handling and a few other goodies.
+.sp
+Interrupts are used to receive notifications from the kernel when GPIO state
+changes occur. Advantages include minimized cpu consumption, very fast
+notification times, and the ability to trigger on specific edge transitions
+(\fI\(aqrising|falling|both\(aq\fP). RPIO uses the BCM GPIO numbering scheme by default. This
+is an example of how to use RPIO to react on events on 3 pins by using
+interrupts, each with different edge detections:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+# Setup logging
 import logging
 log_format = \(aq%(levelname)s | %(asctime)\-15s | %(message)s\(aq
 logging.basicConfig(format=log_format, level=logging.DEBUG)
+
+# Get started
 import RPIO
 
 def do_something(gpio_id, value):
@@ -203,6 +221,18 @@ RPIO.setmode(RPIO.BOARD)
 
 # reset every channel that has been set up by this program. and unexport gpio interfaces
 RPIO.cleanup()
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+You can use RPIO as a drop\-in replacement for RPi.GPIO in your existing code like this:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+import RPIO as GPIO  # (if you\(aqve previously used \(gaimport RPi.GPIO as GPIO\(ga)
 .ft P
 .fi
 .UNINDENT
