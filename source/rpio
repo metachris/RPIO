@@ -75,7 +75,7 @@ def interrupt_callback(gpio_id, value):
 
 def main():
     # Prepare help and options
-    usage = """usage: %prog options"""
+    usage = """usage: %prog [options]"""
     desc = ("Inspect and modify GPIOs on the Raspberry Pi. See "
             "https://github.com/metachris/RPIO for more info.")
     parser = OptionParser(usage=usage, description=desc)
@@ -106,6 +106,10 @@ def main():
     parser.add_option("--setoutput", dest="setoutput",
             help="Setup a GPIO as OUTPUT", metavar="gpio-id")
 
+    parser.add_option("--sysinfo", dest="sysinfo",
+            help="Show model, revision, mb-ram and maker of this Raspberry",
+            action="store_true")
+
     #parser.add_option("--update-rpio", dest="update_rpio",
     #        help="Update rpio to the latest version", action="store_true")
 
@@ -134,7 +138,44 @@ def main():
         exit(1)
 
     # Process startup argument
+    show_help = True
+
+    if options.version:
+        show_help = False
+        info("RPIO v%s" % RPIO.VERSION)
+
+    if options.setoutput:
+        show_help = False
+        gpio_id = int(options.setoutput)
+        if not RPIO.is_valid_gpio_id(gpio_id):
+            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+            exit(5)
+        RPIO.setup(gpio_id, RPIO.OUT)
+
+    if options.setinput:
+        show_help = False
+        parts = options.setinput.split(":")
+        gpio_id = int(parts[0])
+        if not RPIO.is_valid_gpio_id(gpio_id):
+            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+            exit(5)
+        if len(parts) == 1:
+            RPIO.setup(gpio_id, RPIO.IN)
+            debug("GPIO %s setup as INPUT" % gpio_id)
+        else:
+            if parts[1] == "pullup":
+                RPIO.setup(gpio_id, RPIO.IN, pull_up_down=RPIO.PUD_UP)
+                debug("GPIO %s setup as INPUT with PULLUP resistor" % gpio_id)
+            elif parts[1] == "pulldown":
+                RPIO.setup(gpio_id, RPIO.IN, pull_up_down=RPIO.PUD_DOWN)
+                debug("GPIO %s setup as INPUT with PULLDOWN resistor" % \
+                        gpio_id)
+            else:
+                raise ValueError("Error: %s is not `pullup` or `pulldown`" % \
+                        gpio_id)
+
     if options.show or options.inspect_all:
+        show_help = False
         ids = options.show
         if options.inspect_all:
             board_rev = RPIO.get_rpi_sysinfo()[1]
@@ -164,7 +205,8 @@ def main():
                 if show_nonexists:
                     error("GPIO %s: does not exist" % gpio_id)
 
-    elif options.write:
+    if options.write:
+        show_help = False
         gpio_id_str, value_str = options.write.split(":")
         gpio_id = int(gpio_id_str)
         if not RPIO.is_valid_gpio_id(gpio_id):
@@ -180,7 +222,8 @@ def main():
                     "--setoutput %s first.") % (gpio_id_str, \
                     RPIO.GPIO_FUNCTIONS[f], gpio_id))
 
-    elif options.interrupt:
+    if options.interrupt:
+        show_help = False
         # gpio-ids can either be a single value, comma separated or a range
         if "-" in options.interrupt:
             # eg 2-20
@@ -218,35 +261,8 @@ def main():
             RPIO.cleanup()
             raise
 
-    elif options.setoutput:
-        gpio_id = int(options.setoutput)
-        if not RPIO.is_valid_gpio_id(gpio_id):
-            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
-            exit(5)
-        RPIO.setup(gpio_id, RPIO.OUT)
-
-    elif options.setinput:
-        parts = options.setinput.split(":")
-        gpio_id = int(parts[0])
-        if not RPIO.is_valid_gpio_id(gpio_id):
-            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
-            exit(5)
-        if len(parts) == 1:
-            RPIO.setup(gpio_id, RPIO.IN)
-            debug("GPIO %s setup as INPUT" % gpio_id)
-        else:
-            if parts[1] == "pullup":
-                RPIO.setup(gpio_id, RPIO.IN, pull_up_down=RPIO.PUD_UP)
-                debug("GPIO %s setup as INPUT with PULLUP resistor" % gpio_id)
-            elif parts[1] == "pulldown":
-                RPIO.setup(gpio_id, RPIO.IN, pull_up_down=RPIO.PUD_DOWN)
-                debug("GPIO %s setup as INPUT with PULLDOWN resistor" % \
-                        gpio_id)
-            else:
-                raise ValueError("Error: %s is not `pullup` or `pulldown`" % \
-                        gpio_id)
-
-    elif options.update_manpage:
+    if options.update_manpage:
+        show_help = False
         url = "https://raw.github.com/metachris/RPIO/master/documentation/rpio.1"
         mandir = "/usr/local/man/man1"
         manfile = "%s/rpio.1" % mandir
@@ -259,10 +275,14 @@ def main():
         info("Manpage successfully installed into '%s'." % manfile)
         info("You can now use `man rpio`.")
 
-    elif options.version:
-        info("RPIO v%s" % RPIO.VERSION)
+    # All other parts have exited by now
+    if options.sysinfo:
+        show_help = False
+        s = "Model %s, Revision %s, RAM: %s MB, Maker: %s" % \
+                RPIO.get_rpi_sysinfo()
+        info(s)
 
-    else:
+    if show_help:
         parser.print_help()
 
 

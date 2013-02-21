@@ -71,18 +71,8 @@ _is_waiting_for_interrupts = False
 # Internals
 _epoll = select.epoll()
 _SYS_GPIO_ROOT = '/sys/class/gpio/'
+_RPI_SYSINFO = None
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
-RPI_SYSINFO = None
-
-# Pin layout with GPIO numbers (pin-id range is 1 - 26)
-_DC5V = -1
-_DC3V3 = -2
-_GND = -3
-PIN_TO_GPIO_LAYOUT_REV1 = (_DC3V3, _DC5V, 0, 5, 1, _GND, 4, 14, _GND, 15, \
-        17, 18, 21, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
-PIN_TO_GPIO_LAYOUT_REV2 = (_DC3V3, _DC5V, 2, _DC5V, 3, _GND, 4, 14, _GND, 15, \
-        17, 18, 27, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
-
 MODEL_DATA = {
     '0002': ('B', '1.0', 256, '?'),
     '0003': ('B', '1.0', 256, '?'),
@@ -97,20 +87,29 @@ MODEL_DATA = {
     '000f': ('B', '2.0', 512, 'Qisda')
 }
 
+# Pin layout with GPIO numbers (pin-id range is 1 - 26)
+_DC5V = -1
+_DC3V3 = -2
+_GND = -3
+PIN_TO_GPIO_LAYOUT_REV1 = (_DC3V3, _DC5V, 0, 5, 1, _GND, 4, 14, _GND, 15, \
+        17, 18, 21, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
+PIN_TO_GPIO_LAYOUT_REV2 = (_DC3V3, _DC5V, 2, _DC5V, 3, _GND, 4, 14, _GND, 15, \
+        17, 18, 27, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
+
 
 def get_rpi_sysinfo():
     """ Returns (model, revision, mb-ram and maker) for this raspberry """
-    global RPI_SYSINFO
-    if RPI_SYSINFO:
-        return RPI_SYSINFO
+    global _RPI_SYSINFO
+    if _RPI_SYSINFO:
+        return _RPI_SYSINFO
 
     import re
     with open("/proc/cpuinfo") as f:
         cpuinfo = f.read()
     rev_hex = re.search(r"(?<=\nRevision)[ |:|\t]*\w+", cpuinfo) \
             .group().strip(" :\t")
-    RPI_SYSINFO = MODEL_DATA[rev_hex]
-    return RPI_SYSINFO
+    _RPI_SYSINFO = MODEL_DATA[rev_hex]
+    return _RPI_SYSINFO
 
 
 def is_valid_gpio_id(gpio_id, board_rev=None):
