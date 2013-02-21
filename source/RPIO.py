@@ -72,15 +72,16 @@ _is_waiting_for_interrupts = False
 _epoll = select.epoll()
 _SYS_GPIO_ROOT = '/sys/class/gpio/'
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
+RPI_SYSINFO = None
 
 # Pin layout with GPIO numbers (pin-id range is 1 - 26)
 _DC5V = -1
 _DC3V3 = -2
 _GND = -3
-PIN_TO_GPIO_LAYOUT_REV1 = (DC3V3, DC5V, 0, 5, 1, GND, 4, 14, GND, 15, \
-        17, 18, 21, GND, 22, 23, DC3V3, 24, 10, GND, 9, 25, 11, 8, GND, 7)
-PIN_TO_GPIO_LAYOUT_REV2 = (DC3V3, DC5V, 2, DC5V, 3, GND, 4, 14, GND, 15, \
-        17, 18, 27, GND, 22, 23, DC3V3, 24, 10, GND, 9, 25, 11, 8 GND, 7)
+PIN_TO_GPIO_LAYOUT_REV1 = (_DC3V3, _DC5V, 0, 5, 1, _GND, 4, 14, _GND, 15, \
+        17, 18, 21, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
+PIN_TO_GPIO_LAYOUT_REV2 = (_DC3V3, _DC5V, 2, _DC5V, 3, _GND, 4, 14, _GND, 15, \
+        17, 18, 27, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
 
 MODEL_DATA = {
     '0002': ('B', '1.0', 256, '?'),
@@ -96,8 +97,6 @@ MODEL_DATA = {
     '000f': ('B', '2.0', 512, 'Qisda')
 }
 
-RPI_SYSINFO = None
-
 
 def get_rpi_sysinfo():
     """ Returns (model, revision, mb-ram and maker) for this raspberry """
@@ -110,7 +109,7 @@ def get_rpi_sysinfo():
         cpuinfo = f.read()
     rev_hex = re.search(r"(?<=\nRevision)[ |:|\t]*\w+", cpuinfo) \
             .group().strip(" :\t")
-    RPI_SYSINFO = model_data[rev_hex]
+    RPI_SYSINFO = MODEL_DATA[rev_hex]
     return RPI_SYSINFO
 
 
@@ -120,7 +119,7 @@ def is_valid_gpio_id(gpio_id, board_rev=None):
     the current board. board_rev is either '1.0' or '2.0'
     """
     if not board_rev:
-        board_rev = get_rpi_sysinfo[1]
+        board_rev = get_rpi_sysinfo()[1]
     return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV2 \
             if board_rev == "2.0" else PIN_TO_GPIO_LAYOUT_REV1)
 
@@ -142,11 +141,16 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     if not edge in ["falling", "rising", "both", "none"]:
         raise AttributeError("'%s' is not a valid edge." % edge)
 
+    # Make sure the gpio_id is valid
+    if not is_valid_gpio_id(gpio_id):
+        raise AttributeError("GPIO %s is not a valid gpio-id for this board." \
+                % gpio_id)
+
     # Require INPUT pin setup
     if gpio_function(int(gpio_id)) != 1:
         raise IOError(("GPIO %s cannot be used for interrupts because it's "
-            "setup as %s instead of INPUT. Use `--setinput %s`.") % \
-            (gpio_id, GPIO_FUNCTIONS[gpio_function(int(gpio_id))], gpio_id))
+                "setup as %s instead of INPUT.") % (gpio_id, \
+                GPIO_FUNCTIONS[gpio_function(int(gpio_id))]))
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \

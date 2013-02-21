@@ -85,6 +85,9 @@ def main():
                 "GPIOs separate ids with commas (eg. `-i 17,18,19`) "
                 "or specify a range (eg. `-i 2-20`)"), metavar="gpio-id")
 
+    parser.add_option("-I", "--inspect-all", dest="inspect_all", 
+            help="Inspect all available GPIOs", action="store_true")
+
     parser.add_option("-w", "--wait_for_interrupts", dest="interrupt",
             help=("Show interrupt events on specified gpio-id:edge (eg. "
                 "`17:both`). For multiple GPIO's, separate the ids with a "
@@ -131,14 +134,25 @@ def main():
         exit(1)
 
     # Process startup argument
-    if options.show:
+    if options.show or options.inspect_all:
+        ids = options.show
+        if options.inspect_all:
+            board_rev = RPIO.get_rpi_sysinfo()[1]
+            pins = RPIO.PIN_TO_GPIO_LAYOUT_REV1 if board_rev == "1.0" \
+                    else RPIO.PIN_TO_GPIO_LAYOUT_REV2
+            id_list = list(pins)
+            id_list.sort()
+            ids = ",".join([str(gpio) for gpio in id_list if gpio >= 0])
+
         # gpio-ids can either be a single value, comma separated or a range
-        if "-" in options.show:
+        show_nonexists = True
+        if "-" in ids:
             # eg 2-20
-            n1, n2 = options.show.split("-")
+            n1, n2 = ids.split("-")
             gpio_ids = [n for n in xrange(int(n1), int(n2) + 1)]
+            show_nonexists = False
         else:
-            gpio_ids = options.show.split(",")
+            gpio_ids = ids.split(",")
 
         for gpio_id_str in gpio_ids:
             gpio_id = int(gpio_id_str)
@@ -147,7 +161,8 @@ def main():
                 info("GPIO %s: %-6s (%s)" % (gpio_id, RPIO.GPIO_FUNCTIONS[f], \
                         1 if RPIO.forceinput(gpio_id) else 0))
             else:
-                error("GPIO %s: does not exist")
+                if show_nonexists:
+                    error("GPIO %s: does not exist" % gpio_id)
 
     elif options.write:
         gpio_id_str, value_str = options.write.split(":")
@@ -179,13 +194,15 @@ def main():
             gpio_id = int(parts[0])
             if not RPIO.is_valid_gpio_id(gpio_id):
                 error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+                RPIO.cleanup()
+                exit(5)
 
             edge = "both" if len(parts) == 1 else parts[1]
             try:
                 RPIO.add_interrupt_callback(gpio_id, interrupt_callback, edge=edge)
                 info("GPIO %s interrupt setup complete (edge detection='%s')" % \
                         (gpio_id, edge))
-            except IOError as e:
+            except Exception as e:
                 error(e)
                 RPIO.cleanup()
                 exit(3)
@@ -197,13 +214,23 @@ def main():
         except KeyboardInterrupt:
             RPIO.cleanup()
 
+        except:
+            RPIO.cleanup()
+            raise
+
     elif options.setoutput:
         gpio_id = int(options.setoutput)
+        if not RPIO.is_valid_gpio_id(gpio_id):
+            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+            exit(5)
         RPIO.setup(gpio_id, RPIO.OUT)
 
     elif options.setinput:
         parts = options.setinput.split(":")
         gpio_id = int(parts[0])
+        if not RPIO.is_valid_gpio_id(gpio_id):
+            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+            exit(5)
         if len(parts) == 1:
             RPIO.setup(gpio_id, RPIO.IN)
             debug("GPIO %s setup as INPUT" % gpio_id)
@@ -233,7 +260,7 @@ def main():
         info("You can now use `man rpio`.")
 
     elif options.version:
-        info(RPIO.VERSION)
+        info("RPIO v%s" % RPIO.VERSION)
 
     else:
         parser.print_help()
