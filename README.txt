@@ -1,19 +1,31 @@
 RPIO extends RPi.GPIO with easy interrupt handling, and provides a command
 line tool `rpio` which allows you to inspect and manipulate gpio's even if
-they are owned by another process.
+they are owned by another process. The easiest way to install RPIO on a 
+Raspberry Pi is either with `pip`::
 
-The easiest way to get RPIO is with pip or easy_install:
+    $ sudo pip install RPIO
 
-::
+or `easy_install`::
 
-    sudo pip install RPIO
+    $ sudo easy_install RPIO
+
+You can also clone the repository from Github and build it yourself:::
+
+    $ git clone https://github.com/metachris/RPIO.git
+    $ cd RPIO
+    $ sudo python setup.py install
+
+After the installation you can `import RPIO` as well as use the command-line tool
+`rpio`.
+
+
+Interrupts
+==========
 
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). This is an example of how to use RPIO:
-
-::
+(`'rising|falling|both'`). This is an example of how to use RPIO::
 
     import logging
     log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
@@ -30,9 +42,7 @@ notification times, and the ability to trigger on specific edge transitions
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
-callback. Here is an example:
-
-::
+callback. Here is an example:::
 
     RPIO.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
 
@@ -52,9 +62,7 @@ subsequent reads. RPIO uses `epoll` to receive interrupts from the kernel.
 RPi.GPIO
 ========
 
-You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GPIO.BCM pin numbering by default
-
-::
+You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GPIO.BCM pin numbering by default::
 
     import RPIO
 
@@ -81,12 +89,10 @@ You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GP
     RPIO.cleanup()
 
 
-Command Line Multitool
-======================
+rpio, the command-line multitool
+================================
 The RPIO package includes a command line tool called `rpio` which allows you to
-inspect and manipulate GPIO's system wide; including gpios used by other processes:
-
-::
+inspect and manipulate GPIO's system wide; including gpios used by other processes:::
 
     Inspect the function and state of gpios (with -i/--inspect):
 
@@ -130,7 +136,7 @@ inspect and manipulate GPIO's system wide; including gpios used by other process
 
 Links
 =====
-* https://github.com/metachris/raspberrypi-utils
+* https://github.com/metachris/RPIO
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.kernel.org/doc/Documentation/gpio.txt
 
@@ -146,31 +152,4 @@ Todo
 of the interrupt extension (since there is no option for it in /sys/class/gpio/...).
 Note to self: A possible solution is to replicate the function from `RPi.GPIO.input()`.
 
-- [ ] BCM numbering scheme is not yet supported for interrupts
-
-
-License
-=======
-RPIO is free software, released under the MIT license.
-
-::
-
-    Copyright (c) 2013 Chris Hager <chris@linuxuser.at>
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy of
-    this software and associated documentation files (the "Software"), to deal in
-    the Software without restriction, including without limitation the rights to
-    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-    of the Software, and to permit persons to whom the Software is furnished to do
-    so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+- [ ] BCM numbering scheme is used by default, BOARD is not supported for interrupts

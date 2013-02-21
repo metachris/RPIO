@@ -74,7 +74,7 @@ def interrupt_callback(gpio_id, value):
 if __name__ == "__main__":
     # Automatically invoke sudo if non-root
     if os.geteuid() != 0:
-        print "Script not started as root. Running sudo.."
+        print("Script not started as root. Running sudo...")
         args = ['sudo', sys.executable] + sys.argv + [os.environ]
         # the next line replaces the currently-running process with the sudo
         os.execlpe('sudo', *args)
