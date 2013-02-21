@@ -1,3 +1,2 @@
 graft source/c_gpio
 include source/rpio
-include documentation/build/man/rpio.1

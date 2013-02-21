@@ -15,15 +15,13 @@ RPIO consists of two main parts:
 Installation
 ============
 
-The easiest way to install RPIO on a Raspberry Pi is either with `pip`::
+The easiest way to install RPIO on a Raspberry Pi is either with `pip` or `easy_install`::
 
-    $ sudo pip install RPIO
+    $ sudo pip install -U RPIO
+    $ sudo easy_install -U RPIO
 
-or `easy_install`::
-
-    $ sudo easy_install RPIO
-
-You can also clone the repository from Github and build it yourself:::
+The parameter '-U' updates RPIO if a newer version is available. Alternatively 
+you can get RPIO from the Github repository::
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
@@ -114,7 +112,7 @@ events on 3 pins by using interrupts, each with different edge detections::
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
-callback. Here is an example:::
+callback. Here is an example::
 
     RPIO.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
 
@@ -124,7 +122,7 @@ even if edge="rising"). To remove all callbacks from a certain gpio pin, use
 `RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
 loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
-Besides the interrupt handling, you can use RPIO just as RPi.GPIO:::
+Besides the interrupt handling, you can use RPIO just as RPi.GPIO::
 
     import RPIO
 

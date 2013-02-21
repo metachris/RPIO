@@ -1,21 +1,23 @@
-RPIO extends RPi.GPIO with easy interrupt handling, and provides a command
-line tool `rpio` which allows you to inspect and manipulate gpio's even if
-they are owned by another process. The easiest way to install RPIO on a 
-Raspberry Pi is either with `pip`::
+Visit http://pythonhosted.org/RPIO for a pretty, pythonic documentation.
 
-    $ sudo pip install RPIO
+RPIO consists of two main parts:
 
-or `easy_install`::
+* **rpio**, a command-line multitool for inspecting and manipulating GPIOs
+* **RPIO.py**, a module which extends RPi.GPIO with interrupt handling and other good stuff
 
-    $ sudo easy_install RPIO
+The easiest way to install RPIO on a Raspberry Pi is either with `pip` or `easy_install`:
 
-You can also clone the repository from Github and build it yourself:::
+    $ sudo pip install -U RPIO
+    $ sudo easy_install -U RPIO
+
+(The parameter '-U' will update RPIO if a newer version is available.) Another way to
+get RPIO is directly from the Github repository:
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
     $ sudo python setup.py install
 
-After the installation you can `import RPIO` as well as use the command-line tool
+After the installation you can use `import RPIO` as well as use the command-line tool
 `rpio`.
 
 
@@ -25,7 +27,7 @@ Interrupts
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). This is an example of how to use RPIO::
+(`'rising|falling|both'`). This is an example of how to use RPIO:
 
     import logging
     log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
@@ -42,7 +44,7 @@ notification times, and the ability to trigger on specific edge transitions
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
-callback. Here is an example:::
+callback. Here is an example:
 
     RPIO.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
 
@@ -62,7 +64,7 @@ subsequent reads. RPIO uses `epoll` to receive interrupts from the kernel.
 RPi.GPIO
 ========
 
-You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GPIO.BCM pin numbering by default::
+You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GPIO.BCM pin numbering by default:
 
     import RPIO
 
@@ -92,7 +94,7 @@ You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GP
 rpio, the command-line multitool
 ================================
 The RPIO package includes a command line tool called `rpio` which allows you to
-inspect and manipulate GPIO's system wide; including gpios used by other processes:::
+inspect and manipulate GPIO's system wide; including gpios used by other processes:
 
     Inspect the function and state of gpios (with -i/--inspect):
 
