@@ -157,6 +157,8 @@ Feedback
 
 Chris Hager (chris@linuxuser.at)
 
+If you've encountered a bug, please let me know via Github: https://github.com/metachris/RPIO/issues.
+
 
 Links
 =====
