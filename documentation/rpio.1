@@ -71,7 +71,7 @@ After the installation you can use \fIimport RPIO\fP as well as the command\-lin
 .sp
 \fIrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
 \fIrpio\fP needs to run with superuser privileges (root), else it will restart using \fIsudo\fP. The BCM GPIO numbering
-scheme is used by default.
+scheme is used by default. Here are a few examples of using \fIrpio\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -239,6 +239,8 @@ import RPIO as GPIO  # (if you\(aqve previously used \(gaimport RPi.GPIO as GPIO
 .UNINDENT
 .sp
 Chris Hager (\fI\%chris@linuxuser.at\fP)
+.sp
+If you\(aqve encountered a bug, please let me know via Github: \fI\%https://github.com/metachris/RPIO/issues\fP.
 .INDENT 0.0
 .IP \(bu 2
 \fI\%https://github.com/metachris/RPIO\fP
@@ -246,6 +248,24 @@ Chris Hager (\fI\%chris@linuxuser.at\fP)
 \fI\%http://pypi.python.org/pypi/RPi.GPIO\fP
 .IP \(bu 2
 \fI\%http://www.kernel.org/doc/Documentation/gpio.txt\fP
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+RPIO is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+RPIO is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.ft P
+.fi
+.UNINDENT
 .UNINDENT
 .SH AUTHOR
 Chris Hager <chris@linuxuser.at>
