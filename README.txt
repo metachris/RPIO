@@ -81,6 +81,53 @@ You can use all of RPi.GPIO's functionality through RPIO. Note that RPIO uses GP
     RPIO.cleanup()
 
 
+Command Line Multitool
+======================
+The RPIO package includes a command line tool called `rpio` which allows you to
+inspect and manipulate GPIO's system wide; including gpios used by other processes:
+
+::
+
+    Inspect the function and state of gpios (with -i/--inspect):
+
+        $ rpio -i 17
+        $ rpio -i 17,18,19
+        $ rpio -i 2-24
+
+        # Example output for `rpio -i 4-10`
+        GPIO 4 : INPUT   [0]
+        GPIO 5 : ALT0    [0]
+        GPIO 6 : OUTPUT  [1]
+        GPIO 7 : INPUT   [0]
+        GPIO 8 : INPUT   [0]
+        GPIO 9 : INPUT   [0]
+        GPIO 10: INPUT   [1]
+
+    Set GPIO 17 to either `0` or `1` (with -s/--set):
+
+        $ rpio -s 17:1
+
+        You can only write to pins that have been set up as OUTPUT. You can
+        set this yourself with `--setoutput <gpio-id>`.
+
+    Show interrupt events on GPIOs (with -w/--wait_for_interrupts;
+    default edge='both'):
+
+        $ rpio -w 17
+        $ rpio -w 17:rising,18:falling,19
+        $ rpio -w 17-24
+
+    Setup a pin as INPUT (optionally with pullup or -down resistor):
+
+        $ rpio --setinput 17
+        $ rpio --setinput 17:pullup
+        $ rpio --setinput 17:pulldown
+
+    Setup a pin as OUTPUT:
+
+        $ rpio --setoutput 18
+
+
 Links
 =====
 * https://github.com/metachris/raspberrypi-utils
@@ -96,8 +143,10 @@ Chris Hager (<chris@linuxuser.at>)
 Todo
 ====
 - [ ] `GPIO.input(...)` can set a pullup/pulldown resistor, which is not yet part
-of this interrupt extension (since there is no option for it in /sys/class/gpio/...).
+of the interrupt extension (since there is no option for it in /sys/class/gpio/...).
 Note to self: A possible solution is to replicate the function from `RPi.GPIO.input()`.
+
+- [ ] BCM numbering scheme is not yet supported for interrupts
 
 
 License

@@ -1,8 +1,7 @@
 #!python
 """
-Command-line interface to RPIO. Really a swiss army knife which allows you to
-inspect GPIO's system wide; including reading values from output-gpios used
-by other processes.
+Command-line interface to RPIO. Its a multitool which allows you to inspect
+and manipulate GPIO's system wide; including gpios used by other processes.
 
 This script uses two new functions in py_gpio.c, namely `forceinput()` and
 `forceoutput()`. To use those you'll need at least RPIO v0.1.8
@@ -12,11 +11,11 @@ Examples:
 
     Inspect the function and state of gpios (with -i/--inspect):
 
-        $ RPIO_cmd.py -i 17
-        $ RPIO_cmd.py -i 17,18,19
-        $ RPIO_cmd.py -i 2-24
+        $ rpio -i 17
+        $ rpio -i 17,18,19
+        $ rpio -i 4-10
 
-        # Example output for `PIO_cmd.py -i 4-10`
+        # Example output for `rpio -i 4-10`
         GPIO 4 : INPUT   [0]
         GPIO 5 : ALT0    [0]
         GPIO 6 : OUTPUT  [1]
@@ -27,31 +26,30 @@ Examples:
 
     Set GPIO 17 to either `0` or `1` (with -s/--set):
 
-        $ RPIO_cmd.py --set 17:1
+        $ rpio -s 17:1
 
-        You can only write to pins that have been set up as OUTPUT. You can 
+        You can only write to pins that have been set up as OUTPUT. You can
         set this yourself with `--setoutput <gpio-id>`.
 
-    Show interrupt events on GPIOs (with -r/--interrupt; default edge='both'):
+    Show interrupt events on GPIOs (with -w/--wait_for_interrupts;
+    default edge='both'):
 
-        $ RPIO_cmd.py --interrupt 17
-        $ RPIO_cmd.py --interrupt 17:rising,18:falling,19
-        $ RPIO_cmd.py --interrupt 17-24:rising
-
-Commands which will change a pin setup (eg. from OUT to IN):
+        $ rpio -w 17
+        $ rpio -w 17:rising,18:falling,19
+        $ rpio -w 17-24
 
     Setup a pin as INPUT (optionally with pullup or -down resistor):
 
-        $ RPIO_cmd.py --setinput 17
-        $ RPIO_cmd.py --setinput 17:pullup
-        $ RPIO_cmd.py --setinput 17:pulldown
+        $ rpio --setinput 17
+        $ rpio --setinput 17:pullup
+        $ rpio --setinput 17:pulldown
 
     Setup a pin as OUTPUT:
 
-        $ RPIO_cmd.py --setoutput 18
+        $ rpio --setoutput 18
 
 Author: Chris Hager <chris@linuxuser.at>
-URL: https://github.com/metachris/raspberrypi-utils
+URL: https://github.com/metachris/RPIO
 """
 from optparse import OptionParser
 import logging

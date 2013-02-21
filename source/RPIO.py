@@ -38,7 +38,7 @@ loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
 Author: Chris Hager <chris@linuxuser.at>
 License: MIT
-URL: https://github.com/metachris/raspberrypi-utils
+URL: https://github.com/metachris/RPIO
 """
 import select
 import os.path
