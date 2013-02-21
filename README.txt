@@ -46,14 +46,13 @@ After the installation you can use `import RPIO` as well as the command-line too
         $ rpio -i 17,18,19
         $ rpio -i 4-10
 
-        # Example output for `rpio -i 4-10`
-        GPIO 4 : INPUT   [0]
-        GPIO 5 : ALT0    [0]
-        GPIO 6 : OUTPUT  [1]
-        GPIO 7 : INPUT   [0]
-        GPIO 8 : INPUT   [0]
-        GPIO 9 : INPUT   [0]
-        GPIO 10: INPUT   [1]
+        # Example output for `rpio -i 4-9`
+        GPIO 4: INPUT  (0)
+        GPIO 5: ALT0   (0)
+        GPIO 6: OUTPUT (1)
+        GPIO 7: INPUT  (0)
+        GPIO 8: INPUT  (0)
+        GPIO 9: INPUT  (0)
 
     Set GPIO 17 to either `0` or `1` (with -s/--set):
 

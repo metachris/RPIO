@@ -15,14 +15,13 @@ Examples:
         $ rpio -i 17,18,19
         $ rpio -i 4-10
 
-        # Example output for `rpio -i 4-10`
-        GPIO 4 : INPUT   [0]
-        GPIO 5 : ALT0    [0]
-        GPIO 6 : OUTPUT  [1]
-        GPIO 7 : INPUT   [0]
-        GPIO 8 : INPUT   [0]
-        GPIO 9 : INPUT   [0]
-        GPIO 10: INPUT   [1]
+        # Example output for `rpio -i 4-9`
+        GPIO 4: INPUT  (0)
+        GPIO 5: ALT0   (0)
+        GPIO 6: OUTPUT (1)
+        GPIO 7: INPUT  (0)
+        GPIO 8: INPUT  (0)
+        GPIO 9: INPUT  (0)
 
     Set GPIO 17 to either `0` or `1` (with -s/--set):
 
@@ -54,6 +53,14 @@ URL: https://github.com/metachris/RPIO
 """
 import os
 import sys
+# Automatically invoke sudo if non-root
+if os.geteuid() != 0:
+    print("Script not started as root. Running sudo...")
+    args = ['sudo', sys.executable] + sys.argv + [os.environ]
+    # the next line replaces the currently-running process with the sudo
+    os.execlpe('sudo', *args)
+    exit(-1)
+
 import urllib2
 import logging
 from logging import debug, info, warn, error
@@ -66,15 +73,7 @@ def interrupt_callback(gpio_id, value):
     logging.info("GPIO %s interrupt: value = %s" % (gpio_id, value))
 
 
-if __name__ == "__main__":
-    # Automatically invoke sudo if non-root
-    if os.geteuid() != 0:
-        print("Script not started as root. Running sudo...")
-        args = ['sudo', sys.executable] + sys.argv + [os.environ]
-        # the next line replaces the currently-running process with the sudo
-        os.execlpe('sudo', *args)
-        exit(-1)
-
+def main():
     # Prepare help and options
     usage = """usage: %prog options"""
     desc = ("Inspect and modify GPIOs on the Raspberry Pi. See "
@@ -89,8 +88,8 @@ if __name__ == "__main__":
     parser.add_option("-w", "--wait_for_interrupts", dest="interrupt",
             help=("Show interrupt events on specified gpio-id:edge (eg. "
                 "`17:both`). For multiple GPIO's, separate the ids with a "
-                "comma (eg. -r 17:both,18:falling) or specify a range (eg. "
-                "`-r 2-20`)"), metavar="gpio-id")
+                "comma (eg. -w 17:both,18:falling) or specify a range (eg. "
+                "`-w 17-19`)"), metavar="gpio-id")
 
     parser.add_option("-s", "--set", dest="write",
             help=("Set GPIO output to either 1 or 0. Eg. `--set 17:0`"),
@@ -143,13 +142,20 @@ if __name__ == "__main__":
 
         for gpio_id_str in gpio_ids:
             gpio_id = int(gpio_id_str)
-            f = RPIO.gpio_function(gpio_id)
-            info("GPIO %s: %-6s (%s)" % (gpio_id, RPIO.GPIO_FUNCTIONS[f], 1 if \
-                    RPIO.forceinput(gpio_id) else 0))
+            if RPIO.is_valid_gpio_id(gpio_id):
+                f = RPIO.gpio_function(gpio_id)
+                info("GPIO %s: %-6s (%s)" % (gpio_id, RPIO.GPIO_FUNCTIONS[f], \
+                        1 if RPIO.forceinput(gpio_id) else 0))
+            else:
+                error("GPIO %s: does not exist")
 
     elif options.write:
         gpio_id_str, value_str = options.write.split(":")
         gpio_id = int(gpio_id_str)
+        if not RPIO.is_valid_gpio_id(gpio_id):
+            error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+            exit(5)
+
         f = RPIO.gpio_function(gpio_id)
         if f == 0:
             RPIO.forceoutput(gpio_id, int(value_str))
@@ -171,6 +177,9 @@ if __name__ == "__main__":
         for gpio_id_str in gpio_ids:
             parts = gpio_id_str.split(":")
             gpio_id = int(parts[0])
+            if not RPIO.is_valid_gpio_id(gpio_id):
+                error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
+
             edge = "both" if len(parts) == 1 else parts[1]
             try:
                 RPIO.add_interrupt_callback(gpio_id, interrupt_callback, edge=edge)
@@ -228,3 +237,6 @@ if __name__ == "__main__":
 
     else:
         parser.print_help()
+
+
+main()

@@ -69,9 +69,60 @@ _gpio_kernel_interfaces_created = []
 _is_waiting_for_interrupts = False
 
 # Internals
-_SYS_GPIO_ROOT = '/sys/class/gpio/'
 _epoll = select.epoll()
+_SYS_GPIO_ROOT = '/sys/class/gpio/'
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
+
+# Pin layout with GPIO numbers (pin-id range is 1 - 26)
+_DC5V = -1
+_DC3V3 = -2
+_GND = -3
+PIN_TO_GPIO_LAYOUT_REV1 = (DC3V3, DC5V, 0, 5, 1, GND, 4, 14, GND, 15, \
+        17, 18, 21, GND, 22, 23, DC3V3, 24, 10, GND, 9, 25, 11, 8, GND, 7)
+PIN_TO_GPIO_LAYOUT_REV2 = (DC3V3, DC5V, 2, DC5V, 3, GND, 4, 14, GND, 15, \
+        17, 18, 27, GND, 22, 23, DC3V3, 24, 10, GND, 9, 25, 11, 8 GND, 7)
+
+MODEL_DATA = {
+    '0002': ('B', '1.0', 256, '?'),
+    '0003': ('B', '1.0', 256, '?'),
+    '0004': ('B', '2.0', 256, 'Sony'),
+    '0005': ('B', '2.0', 256, 'Qisda'),
+    '0006': ('B', '2.0', 256, 'Egoman'),
+    '0007': ('A', '2.0', 256, 'Egoman'),
+    '0008': ('A', '2.0', 256, 'Sony'),
+    '0009': ('A', '2.0', 256, 'Qisda'),
+    '000d': ('B', '2.0', 512, 'Egoman'),
+    '000e': ('B', '2.0', 512, 'Sony'),
+    '000f': ('B', '2.0', 512, 'Qisda')
+}
+
+RPI_SYSINFO = None
+
+
+def get_rpi_sysinfo():
+    """ Returns (model, revision, mb-ram and maker) for this raspberry """
+    global RPI_SYSINFO
+    if RPI_SYSINFO:
+        return RPI_SYSINFO
+
+    import re
+    with open("/proc/cpuinfo") as f:
+        cpuinfo = f.read()
+    rev_hex = re.search(r"(?<=\nRevision)[ |:|\t]*\w+", cpuinfo) \
+            .group().strip(" :\t")
+    RPI_SYSINFO = model_data[rev_hex]
+    return RPI_SYSINFO
+
+
+def is_valid_gpio_id(gpio_id, board_rev=None):
+    """
+    Returns True/False depending on whether the supplied gpio_id is valid on
+    the current board. board_rev is either '1.0' or '2.0'
+    """
+    if not board_rev:
+        board_rev = get_rpi_sysinfo[1]
+    return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV2 \
+            if board_rev == "2.0" else PIN_TO_GPIO_LAYOUT_REV1)
 
 
 def _threaded_callback(callback, *args):
