@@ -51,19 +51,15 @@ Examples:
 Author: Chris Hager <chris@linuxuser.at>
 URL: https://github.com/metachris/RPIO
 """
-from optparse import OptionParser
+import os
+import sys
+import urllib2
 import logging
 from logging import debug, info, warn, error
-import os
+from optparse import OptionParser
 
 RPIO_VERSION_MIN = "0.1.8"
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
-
-
-def error_gpio_outdated():
-        print(("Please update RPIO to a newer version (eg. "
-                "`sudo pip install --upgrade RPIO`)."))
-        exit(1)
 
 
 def interrupt_callback(gpio_id, value):
@@ -82,12 +78,12 @@ if __name__ == "__main__":
 
     # Prepare help and options
     usage = """usage: %prog options"""
-    desc = ("GPIO Swiss Army Knife for the Raspberry Pi. See "
+    desc = ("Inspect and modify GPIOs on the Raspberry Pi. See "
             "https://github.com/metachris/RPIO for more info.")
     parser = OptionParser(usage=usage, description=desc)
 
     parser.add_option("-i", "--inspect", dest="show",
-            help=("Show GPIO function (IN/OUT/ALT0) and state. For multiple "
+            help=("Inspect GPIO function (IN/OUT/ALT0) and state. For multiple "
                 "GPIOs separate ids with commas (eg. `-i 17,18,19`) "
                 "or specify a range (eg. `-i 2-20`)"), metavar="gpio-id")
 
@@ -109,6 +105,12 @@ if __name__ == "__main__":
     parser.add_option("--setoutput", dest="setoutput",
             help="Setup a GPIO as OUTPUT", metavar="gpio-id")
 
+    #parser.add_option("--update-rpio", dest="update_rpio",
+    #        help="Update rpio to the latest version", action="store_true")
+
+    parser.add_option("--update-man", dest="update_manpage",
+            help="Update the man page for rpio", action="store_true")
+
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true")
 
     # Parse options and arguments now
@@ -122,10 +124,12 @@ if __name__ == "__main__":
         log_level = logging.INFO
         log_format = '%(message)s'
     logging.basicConfig(format=log_format, level=log_level)
-    import RPIO
 
+    import RPIO
     if RPIO.VERSION < RPIO_VERSION_MIN:
-        error_gpio_outdated()
+        error(("Please update RPIO to a newer version (eg. "
+                "`sudo pip install --upgrade RPIO`)."))
+        exit(1)
 
     # Process startup argument
     if options.show:
@@ -199,6 +203,19 @@ if __name__ == "__main__":
             else:
                 raise ValueError("Error: %s is not `pullup` or `pulldown`" % \
                         gpio_id)
+
+    elif options.update_manpage:
+        url = "https://raw.github.com/metachris/RPIO/master/documentation/rpio.1"
+        mandir = "/usr/local/man/man1"
+        manfile = "%s/rpio.1" % mandir
+        info("Downloading '%s' ..." % url)
+        content = urllib2.urlopen(url).read()
+        if not os.path.exists(mandir):
+            os.makedirs(mandir)
+        with open(manfile, "w") as f:
+            f.write(content)
+        info("Manpage successfully installed into '%s'." % manfile)
+        info("You can now use `man rpio`.")
 
     else:
         parser.print_help()
