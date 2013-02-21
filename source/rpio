@@ -60,11 +60,10 @@ from logging import debug, info, warn, error
 from optparse import OptionParser
 
 RPIO_VERSION_MIN = "0.1.8"
-GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
 
 
 def interrupt_callback(gpio_id, value):
-    logging.info("GPIO %s interrupt: value=%s" % (gpio_id, value))
+    logging.info("GPIO %s interrupt: value = %s" % (gpio_id, value))
 
 
 if __name__ == "__main__":
@@ -145,7 +144,7 @@ if __name__ == "__main__":
         for gpio_id_str in gpio_ids:
             gpio_id = int(gpio_id_str)
             f = RPIO.gpio_function(gpio_id)
-            info("GPIO %-2s: %-7s [%s]" % (gpio_id, GPIO_FUNCTIONS[f], 1 if \
+            info("GPIO %-2s: %-7s [%s]" % (gpio_id, RPIO.GPIO_FUNCTIONS[f], 1 if \
                     RPIO.forceinput(gpio_id) else 0))
 
     elif options.write:
@@ -158,14 +157,14 @@ if __name__ == "__main__":
         else:
             error(("Cannot output to GPIO %s, because it is setup as %s. Use "
                     "--setoutput %s first.") % (gpio_id_str, \
-                    GPIO_FUNCTIONS[f], gpio_id))
+                    RPIO.GPIO_FUNCTIONS[f], gpio_id))
 
     elif options.interrupt:
         # gpio-ids can either be a single value, comma separated or a range
         if "-" in options.interrupt:
             # eg 2-20
             n1, n2 = options.interrupt.split("-")
-            gpio_ids = [n for n in xrange(int(n1), int(n2) + 1)]
+            gpio_ids = [str(n) for n in xrange(int(n1), int(n2) + 1)]
         else:
             gpio_ids = options.interrupt.split(",")
 
@@ -173,9 +172,15 @@ if __name__ == "__main__":
             parts = gpio_id_str.split(":")
             gpio_id = int(parts[0])
             edge = "both" if len(parts) == 1 else parts[1]
-            RPIO.add_interrupt_callback(gpio_id, interrupt_callback, edge=edge)
-            info("GPIO %s interrupt setup complete (edge detection='%s')" % \
-                    (gpio_id, edge))
+            try:
+                RPIO.add_interrupt_callback(gpio_id, interrupt_callback, edge=edge)
+                info("GPIO %s interrupt setup complete (edge detection='%s')" % \
+                        (gpio_id, edge))
+            except IOError as e:
+                error(e)
+                RPIO.cleanup()
+                exit(3)
+
         info("Waiting for interrupts (exit with Ctrl+C) ...")
         try:
             RPIO.wait_for_interrupts()

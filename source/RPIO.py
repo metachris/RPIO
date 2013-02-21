@@ -71,6 +71,7 @@ _is_waiting_for_interrupts = False
 # Internals
 _SYS_GPIO_ROOT = '/sys/class/gpio/'
 _epoll = select.epoll()
+GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
 
 
 def _threaded_callback(callback, *args):
@@ -89,6 +90,12 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     debug("Adding callback for GPIO %s" % gpio_id)
     if not edge in ["falling", "rising", "both", "none"]:
         raise AttributeError("'%s' is not a valid edge." % edge)
+
+    # Require INPUT pin setup
+    if gpio_function(int(gpio_id)) != 1:
+        raise IOError(("GPIO %s cannot be used for interrupts because it's "
+            "setup as %s instead of INPUT. Use `--setinput %s`.") % \
+            (gpio_id, GPIO_FUNCTIONS[gpio_function(int(gpio_id))], gpio_id))
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \
