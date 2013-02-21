@@ -6,7 +6,7 @@
 Welcome to RPIO's documentation!
 ================================
 
-RPIO consists of two main parts:
+RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 
 * :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs
 * :ref:`RPIO.py <ref-rpio-py>`, a module which extends RPi.GPIO with interrupt handling and other good stuff
@@ -15,19 +15,18 @@ RPIO consists of two main parts:
 Installation
 ============
 
-The easiest way to install RPIO on a Raspberry Pi is either with `pip` or `easy_install`::
+The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip::
 
-    $ sudo pip install -U RPIO
     $ sudo easy_install -U RPIO
+    $ sudo pip install -U RPIO
 
-The parameter '-U' updates RPIO if a newer version is available. Alternatively 
-you can get RPIO from the Github repository::
+Another way to get RPIO is directly from the Github repository::
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
     $ sudo python setup.py install
 
-After the installation you can `import RPIO` as well as use the command-line tool
+After the installation you can use `import RPIO` as well as the command-line tool
 `rpio`.
 
 
@@ -36,12 +35,10 @@ After the installation you can `import RPIO` as well as use the command-line too
 **rpio**, the command line tool
 ===============================
 
-`rpio` is a command-line multitool which allows you to inspect and manipulate GPIO's 
-system wide; including gpios used by other processes. rpio uses two new 
-functions in py_gpio.c, namely `forceinput()` and
-`forceoutput()`; to use those you'll need at least RPIO v0.1.8
-(`sudo pip install --upgrade RPIO`). Note that rpio uses the BCM gpio
-numbering scheme. Here are some examples of how to use `rpio`::
+`rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes. 
+The BCM GPIO numbering scheme is used by default.
+
+::
 
     Inspect the function and state of gpios (with -i/--inspect):
 
@@ -83,25 +80,30 @@ numbering scheme. Here are some examples of how to use `rpio`::
         $ rpio --setoutput 18
 
 
+`rpio` was introduced in version 0.5.0. You can update RPIO with `sudo easy_install -U RPIO`.
+
 .. _ref-rpio-py:
 
 **RPIO**, the Python module
 ===========================
 
-RPIO extends RPi.GPIO with interrupt handling. RPIO uses `GPIO.BCM` as default
-GPIO numbering system, as opposed to the pin ids (`GPIO.BOARD`).
+RPIO extends RPi.GPIO with interrupt handling and a few other goodies.
 
 Interrupts are used to receive notifications from the kernel when GPIO state 
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). This is an example of how to use RPIO to react on 
-events on 3 pins by using interrupts, each with different edge detections::
+(`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This 
+is an example of how to use RPIO to react on events on 3 pins by using 
+interrupts, each with different edge detections::
 
+    # Setup logging
     import logging
     log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
     logging.basicConfig(format=log_format, level=logging.DEBUG)
-    import RPIO
 
+    # Get started
+    import RPIO
+    
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
@@ -147,6 +149,10 @@ Besides the interrupt handling, you can use RPIO just as RPi.GPIO::
 
     # reset every channel that has been set up by this program. and unexport gpio interfaces
     RPIO.cleanup()
+
+You can use RPIO as a drop-in replacement for your existing code like this::
+
+    import RPIO as GPIO  # (if you've previously used `import RPi.GPIO as GPIO`)
 
 
 Feedback
