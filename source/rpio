@@ -77,8 +77,6 @@ import logging
 from logging import debug, info, warn, error
 from optparse import OptionParser
 
-RPIO_VERSION_MIN = "0.1.8"
-
 
 def interrupt_callback(gpio_id, value):
     logging.info("GPIO %s interrupt: value = %s" % (gpio_id, value))
@@ -145,12 +143,7 @@ def main():
         log_level = logging.INFO
         log_format = '%(message)s'
     logging.basicConfig(format=log_format, level=log_level)
-
     import RPIO
-    if RPIO.VERSION < RPIO_VERSION_MIN:
-        error(("Please update RPIO to a newer version (eg. "
-                "`sudo pip install --upgrade RPIO`)."))
-        exit(1)
 
     # Process startup argument
     show_help = True
