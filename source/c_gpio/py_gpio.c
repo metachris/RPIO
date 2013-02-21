@@ -30,7 +30,6 @@ static PyObject *InvalidDirectionException;
 static PyObject *InvalidChannelException;
 static PyObject *InvalidPullException;
 static PyObject *ModeNotSetException;
-static PyObject *SetupException;
 static PyObject *high;
 static PyObject *low;
 static PyObject *input;
@@ -67,13 +66,13 @@ static int module_setup(void)
    result = setup();
    if (result == SETUP_DEVMEM_FAIL)
    {
-      PyErr_SetString(SetupException, "No access to /dev/mem.  Try running as root!");
+      PyErr_SetString(PyExc_RuntimeError, "No access to /dev/mem. Try running as root!");
       return SETUP_DEVMEM_FAIL;
    } else if (result == SETUP_MALLOC_FAIL) {
       PyErr_NoMemory();
       return SETUP_MALLOC_FAIL;
    } else if (result == SETUP_MMAP_FAIL) {
-      PyErr_SetString(SetupException, "Mmap failed on module import");
+      PyErr_SetString(PyExc_RuntimeError, "Mmap failed on module import");
       return SETUP_MALLOC_FAIL;
    } else { // result == SETUP_OK
       return SETUP_OK;
@@ -551,9 +550,6 @@ PyMODINIT_FUNC initGPIO(void)
    ModeNotSetException = PyErr_NewException("GPIO.ModeNotSetException", NULL, NULL);
    PyModule_AddObject(module, "ModeNotSetException", ModeNotSetException);
 
-   SetupException = PyErr_NewException("GPIO.SetupException", NULL, NULL);
-   PyModule_AddObject(module, "SetupException", SetupException);
-
    high = Py_BuildValue("i", HIGH);
    PyModule_AddObject(module, "HIGH", high);
 
@@ -588,7 +584,7 @@ PyMODINIT_FUNC initGPIO(void)
    revision = get_rpi_revision();
    if (revision == -1)
    {
-      PyErr_SetString(SetupException, "This module can only be run on a Raspberry Pi!");
+      PyErr_SetString(PyExc_SystemError, "This module can only be run on a Raspberry Pi!");
 #if PY_MAJOR_VERSION > 2
       return NULL;
 #else
