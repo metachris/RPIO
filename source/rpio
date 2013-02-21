@@ -127,6 +127,10 @@ def main():
     parser.add_option("--update-man", dest="update_manpage",
             help="Update the man page for rpio", action="store_true")
 
+
+    parser.add_option("--update-rpio", dest="update_rpio",
+            help="Update RPIO to the latest version", action="store_true")
+
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true")
     parser.add_option("--version", dest="version", action="store_true")
 
@@ -288,6 +292,21 @@ def main():
             f.write(content)
         info("Manpage successfully installed into '%s'." % manfile)
         info("You can now use `man rpio`.")
+
+    if options.update_rpio:
+        import subprocess
+        show_help = False
+        try:
+            subprocess.call(["easy_install", "-U", "RPIO"])
+        except OSError as e:
+            if e.errno == os.errno.ENOENT:
+                # handle file not found error.
+                error("`easy_install` not found. Please install it with "
+                        "'sudo apt-get install python-setuptools'")
+                exit(6)
+            else:
+                # Something else went wrong
+                raise
 
     # All other parts have exited by now
     if options.sysinfo:
