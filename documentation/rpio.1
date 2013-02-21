@@ -1,4 +1,4 @@
-.TH "RPIO" "1" "February 21, 2013" "0.2.0" "RPIO"
+.TH "RPIO" "1" "February 22, 2013" "0.2.0" "RPIO"
 .SH NAME
 rpio \- RPIO Documentation
 .
@@ -83,22 +83,25 @@ Show the help page:
 
 Inspect the function and state of gpios (with \-i/\-\-inspect):
 
-    $ rpio \-i 17
-    $ rpio \-i 17,18,19
-    $ rpio \-i 4\-10
+    $ rpio \-i 7
+    $ rpio \-i 7,8,9
+    $ rpio \-i 1\-9
 
-    # Example output for \(garpio \-i 4\-10\(ga
-    GPIO 4 : INPUT   [0]
-    GPIO 5 : ALT0    [0]
-    GPIO 6 : OUTPUT  [1]
-    GPIO 7 : INPUT   [0]
-    GPIO 8 : INPUT   [0]
-    GPIO 9 : INPUT   [0]
-    GPIO 10: INPUT   [1]
+    # Example output for \(garpio \-i 1\-9\(ga
+    GPIO 2: ALT0   (1)
+    GPIO 3: ALT0   (1)
+    GPIO 4: INPUT  (0)
+    GPIO 7: OUTPUT (0)
+    GPIO 8: INPUT  (1)
+    GPIO 9: INPUT  (0)
 
-Set GPIO 17 to either \(ga0\(ga or \(ga1\(ga (with \-s/\-\-set):
+Inspect all GPIO\(aqs on this board (with \-I/\-\-inspect\-all):
 
-    $ rpio \-s 17:1
+    $ rpio \-I
+
+Set GPIO 7 to either \(ga1\(ga or \(ga0\(ga (with \-s/\-\-set):
+
+    $ rpio \-s 7:1
 
     You can only write to pins that have been set up as OUTPUT. You can
     set this yourself with \(ga\-\-setoutput <gpio\-id>\(ga.
@@ -106,9 +109,9 @@ Set GPIO 17 to either \(ga0\(ga or \(ga1\(ga (with \-s/\-\-set):
 Show interrupt events on GPIOs (with \-w/\-\-wait_for_interrupts;
 default edge=\(aqboth\(aq):
 
-    $ rpio \-w 17
-    $ rpio \-w 17:rising,18:falling,19
-    $ rpio \-w 17\-24
+    $ rpio \-w 7
+    $ rpio \-w 7:rising,18:falling,19
+    $ rpio \-w 1\-9
 
 Setup a pin as INPUT (optionally with pullup or \-down resistor):
 
@@ -119,6 +122,13 @@ Setup a pin as INPUT (optionally with pullup or \-down resistor):
 Setup a pin as OUTPUT:
 
     $ rpio \-\-setoutput 18
+
+Show raspberry pi system info:
+
+    $ rpio \-\-sysinfo
+
+    # Example output:
+    Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 .ft P
 .fi
 .UNINDENT
@@ -226,7 +236,8 @@ RPIO.cleanup()
 .UNINDENT
 .UNINDENT
 .sp
-You can use RPIO as a drop\-in replacement for RPi.GPIO in your existing code like this:
+You can use RPIO as a drop\-in replacement for RPi.GPIO in your existing code like this (if
+you\(aqve used the BCM gpio numbering scheme):
 .INDENT 0.0
 .INDENT 3.5
 .sp

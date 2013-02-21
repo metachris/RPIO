@@ -9,16 +9,12 @@ RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 Installation
 ============
 
-The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip:
-
-::
+The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip::
 
     $ sudo easy_install -U RPIO
     $ sudo pip install -U RPIO
 
-Another way to get RPIO is directly from the Github repository:
-
-::
+Another way to get RPIO is directly from the Github repository::
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
@@ -28,11 +24,12 @@ After the installation you can use `import RPIO` as well as the command-line too
 `rpio`.
 
 
-**rpio**, the command line tool
-===============================
+`rpio`, the command line tool
+=============================
 
-`rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes. 
-`rpio` needs to run with superuser privileges (root), else it will restart using `sudo`. The BCM GPIO numbering scheme is used by default.
+`rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
+`rpio` needs to run with superuser privileges (root), else it will restart using `sudo`. The BCM GPIO numbering
+scheme is used by default. Here are a few examples of using `rpio`:
 
 ::
 
@@ -42,21 +39,25 @@ After the installation you can use `import RPIO` as well as the command-line too
 
     Inspect the function and state of gpios (with -i/--inspect):
 
-        $ rpio -i 17
-        $ rpio -i 17,18,19
-        $ rpio -i 4-10
+        $ rpio -i 7
+        $ rpio -i 7,8,9
+        $ rpio -i 1-9
 
-        # Example output for `rpio -i 4-9`
+        # Example output for `rpio -i 1-9` (non-existing are ommitted)
+        GPIO 2: ALT0   (1)
+        GPIO 3: ALT0   (1)
         GPIO 4: INPUT  (0)
-        GPIO 5: ALT0   (0)
-        GPIO 6: OUTPUT (1)
-        GPIO 7: INPUT  (0)
-        GPIO 8: INPUT  (0)
+        GPIO 7: OUTPUT (0)
+        GPIO 8: INPUT  (1)
         GPIO 9: INPUT  (0)
 
-    Set GPIO 17 to either `0` or `1` (with -s/--set):
+    Inspect all GPIO's on this board (with -I/--inspect-all):
 
-        $ rpio -s 17:1
+        $ rpio -I
+
+    Set GPIO 7 to either `1` or `0` (with -s/--set):
+
+        $ rpio -s 7:1
 
         You can only write to pins that have been set up as OUTPUT. You can
         set this yourself with `--setoutput <gpio-id>`.
@@ -64,9 +65,9 @@ After the installation you can use `import RPIO` as well as the command-line too
     Show interrupt events on GPIOs (with -w/--wait_for_interrupts;
     default edge='both'):
 
-        $ rpio -w 17
-        $ rpio -w 17:rising,18:falling,19
-        $ rpio -w 17-24
+        $ rpio -w 7
+        $ rpio -w 7:rising,18:falling,19
+        $ rpio -w 1-9
 
     Setup a pin as INPUT (optionally with pullup or -down resistor):
 
@@ -78,24 +79,31 @@ After the installation you can use `import RPIO` as well as the command-line too
 
         $ rpio --setoutput 18
 
+    Show raspberry pi system info:
+
+        $ rpio --sysinfo
+
+        # Example output:
+        Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
 `rpio` can install (and update) its manpage::
 
     $ sudo rpio --update-man
     $ man rpio
 
-`rpio` was introduced in version 0.5.1. 
+`rpio` was introduced in version 0.5.1.
 
-**RPIO**, the Python module
-===========================
+
+`RPIO.py`, the Python module
+============================
 
 RPIO extends RPi.GPIO with interrupt handling and a few other goodies.
 
-Interrupts are used to receive notifications from the kernel when GPIO state 
+Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This 
-is an example of how to use RPIO to react on events on 3 pins by using 
+(`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This
+is an example of how to use RPIO to react on events on 3 pins by using
 interrupts, each with different edge detections:
 
 ::
@@ -158,7 +166,8 @@ Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
     # reset every channel that has been set up by this program. and unexport gpio interfaces
     RPIO.cleanup()
 
-You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this:
+You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this (if 
+you've used the BCM gpio numbering scheme):
 
 ::
 
