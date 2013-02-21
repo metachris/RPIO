@@ -225,10 +225,12 @@ def main():
     if options.interrupt:
         show_help = False
         # gpio-ids can either be a single value, comma separated or a range
+        is_range = False
         if "-" in options.interrupt:
             # eg 2-20
             n1, n2 = options.interrupt.split("-")
             gpio_ids = [str(n) for n in xrange(int(n1), int(n2) + 1)]
+            is_range = True
         else:
             gpio_ids = options.interrupt.split(",")
 
@@ -236,6 +238,10 @@ def main():
             parts = gpio_id_str.split(":")
             gpio_id = int(parts[0])
             if not RPIO.is_valid_gpio_id(gpio_id):
+                # If we are setting up interrupts for a range of GPIOs,
+                # we just skip those that don't exist. Else we error out.
+                if  is_range:
+                    continue
                 error("GPIO %s: not a valid gpio-id for this board" % gpio_id)
                 RPIO.cleanup()
                 exit(5)
@@ -243,12 +249,9 @@ def main():
             edge = "both" if len(parts) == 1 else parts[1]
             try:
                 RPIO.add_interrupt_callback(gpio_id, interrupt_callback, edge=edge)
-                info("GPIO %s interrupt setup complete (edge detection='%s')" % \
-                        (gpio_id, edge))
+
             except Exception as e:
                 error(e)
-                RPIO.cleanup()
-                exit(3)
 
         info("Waiting for interrupts (exit with Ctrl+C) ...")
         try:

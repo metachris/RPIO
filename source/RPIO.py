@@ -186,7 +186,8 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "w") as f:
             f.write(edge)
 
-        debug("- kernel interface configured for GPIO %s" % gpio_id)
+        debug("- kernel interface configured for GPIO %s (edge='%s')" % \
+                (gpio_id, edge))
 
         # Open the gpio value stream and read the initial value
         f = open(path_gpio + "value", 'r')
