@@ -1,0 +1,235 @@
+.TH "RPIO" "1" "February 21, 2013" "0.2.0" "RPIO"
+.SH NAME
+rpio \- RPIO Documentation
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.\" Man page generated from reStructuredText.
+.
+.sp
+RPIO consists of two main parts:
+.INDENT 0.0
+.IP \(bu 2
+\fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs
+.IP \(bu 2
+\fI\%RPIO.py\fP, a module which extends RPi.GPIO with interrupt handling and other good stuff
+.UNINDENT
+.sp
+The easiest way to install RPIO on a Raspberry Pi is either with \fIpip\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ sudo pip install RPIO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+or \fIeasy_install\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ sudo easy_install RPIO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+You can also clone the repository from Github and build it yourself::
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ git clone https://github.com/metachris/RPIO.git
+$ cd RPIO
+$ sudo python setup.py install
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+After the installation you can \fIimport RPIO\fP as well as use the command\-line tool
+\fIrpio\fP.
+.sp
+\fIrpio\fP is a command\-line multitool which allows you to inspect and manipulate GPIO\(aqs
+system wide; including gpios used by other processes. rpio uses two new
+functions in py_gpio.c, namely \fIforceinput()\fP and
+\fIforceoutput()\fP; to use those you\(aqll need at least RPIO v0.1.8
+(\fIsudo pip install \-\-upgrade RPIO\fP). Note that rpio uses the BCM gpio
+numbering scheme. Here are some examples of how to use \fIrpio\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+Inspect the function and state of gpios (with \-i/\-\-inspect):
+
+    $ rpio \-i 17
+    $ rpio \-i 17,18,19
+    $ rpio \-i 4\-10
+
+    # Example output for \(garpio \-i 4\-10\(ga
+    GPIO 4 : INPUT   [0]
+    GPIO 5 : ALT0    [0]
+    GPIO 6 : OUTPUT  [1]
+    GPIO 7 : INPUT   [0]
+    GPIO 8 : INPUT   [0]
+    GPIO 9 : INPUT   [0]
+    GPIO 10: INPUT   [1]
+
+Set GPIO 17 to either \(ga0\(ga or \(ga1\(ga (with \-s/\-\-set):
+
+    $ rpio \-s 17:1
+
+    You can only write to pins that have been set up as OUTPUT. You can
+    set this yourself with \(ga\-\-setoutput <gpio\-id>\(ga.
+
+Show interrupt events on GPIOs (with \-w/\-\-wait_for_interrupts;
+default edge=\(aqboth\(aq):
+
+    $ rpio \-w 17
+    $ rpio \-w 17:rising,18:falling,19
+    $ rpio \-w 17\-24
+
+Setup a pin as INPUT (optionally with pullup or \-down resistor):
+
+    $ rpio \-\-setinput 17
+    $ rpio \-\-setinput 17:pullup
+    $ rpio \-\-setinput 17:pulldown
+
+Setup a pin as OUTPUT:
+
+    $ rpio \-\-setoutput 18
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+RPIO extends RPi.GPIO with interrupt handling. RPIO uses \fIGPIO.BCM\fP as default
+GPIO numbering system, as opposed to the pin ids (\fIGPIO.BOARD\fP).
+.sp
+Interrupts are used to receive notifications from the kernel when GPIO state
+changes occur. Advantages include minimized cpu consumption, very fast
+notification times, and the ability to trigger on specific edge transitions
+(\fI\(aqrising|falling|both\(aq\fP). This is an example of how to use RPIO to react on
+events on 3 pins by using interrupts, each with different edge detections:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+import logging
+log_format = \(aq%(levelname)s | %(asctime)\-15s | %(message)s\(aq
+logging.basicConfig(format=log_format, level=logging.DEBUG)
+import RPIO
+
+def do_something(gpio_id, value):
+    logging.info("New value for GPIO %s: %s" % (gpio_id, value))
+
+RPIO.add_interrupt_callback(17, do_something, edge=\(aqrising\(aq)
+RPIO.add_interrupt_callback(18, do_something, edge=\(aqfalling\(aq)
+RPIO.add_interrupt_callback(19, do_something, edge=\(aqboth\(aq)
+RPIO.wait_for_interrupts()
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+If you want to receive a callback inside a Thread (which won\(aqt block anything
+else on the system), set \fIthreaded_callback\fP to True when adding an interrupt\-
+callback. Here is an example::
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+RPIO.add_interrupt_callback(17, do_something, edge=\(aqrising\(aq, threaded_callback=True)
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Make sure to double\-check the value returned from the interrupt, since it
+is not necessarily corresponding to the edge (eg. 0 may come in as value,
+even if edge="rising"). To remove all callbacks from a certain gpio pin, use
+\fIRPIO.del_interrupt_callback(gpio_id)\fP. To stop the \fIwait_for_interrupts()\fP
+loop you can call \fIRPIO.stop_waiting_for_interrupts()\fP.
+.sp
+Besides the interrupt handling, you can use RPIO just as RPi.GPIO::
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+import RPIO
+
+# set up GPIO output channel
+RPIO.setup(17, RPIO.OUT)
+
+# set gpio 17 to high
+RPIO.output(17, True)
+
+# set up output channel with an initial state
+RPIO.setup(18, RPIO.OUT, initial=RPIO.LOW)
+
+# set up input channel with pull\-up control
+#   (pull_up_down be PUD_OFF, PUD_UP or PUD_DOWN, default PUD_OFF)
+RPIO.setup(19, RPIO.IN, pull_up_down=RPIO.PUD_UP)
+
+# read input from gpio 19
+input_value = RPIO.input(19)
+
+# change to BOARD GPIO numbering
+RPIO.setmode(RPIO.BOARD)
+
+# reset every channel that has been set up by this program. and unexport gpio interfaces
+RPIO.cleanup()
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Chris Hager (\fI\%chris@linuxuser.at\fP)
+.INDENT 0.0
+.IP \(bu 2
+\fI\%https://github.com/metachris/RPIO\fP
+.IP \(bu 2
+\fI\%http://pypi.python.org/pypi/RPi.GPIO\fP
+.IP \(bu 2
+\fI\%http://www.kernel.org/doc/Documentation/gpio.txt\fP
+.UNINDENT
+.SH AUTHOR
+Chris Hager
+.SH COPYRIGHT
+2013, Chris Hager
+.\" Generated by docutils manpage writer.
+.
