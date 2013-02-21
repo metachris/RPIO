@@ -112,6 +112,7 @@ if __name__ == "__main__":
             help="Update the man page for rpio", action="store_true")
 
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true")
+    parser.add_option("--version", dest="version", action="store_true")
 
     # Parse options and arguments now
     (options, args) = parser.parse_args()
@@ -216,6 +217,9 @@ if __name__ == "__main__":
             f.write(content)
         info("Manpage successfully installed into '%s'." % manfile)
         info("You can now use `man rpio`.")
+
+    elif options.version:
+        info(RPIO.VERSION)
 
     else:
         parser.print_help()
