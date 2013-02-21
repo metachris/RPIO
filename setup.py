@@ -1,6 +1,5 @@
 import os
 from setuptools import setup, Extension
-from distutils.command.install_data import install_data
 
 
 def read(fname):
