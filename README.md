@@ -64,20 +64,20 @@ scheme is used by default. Here are a few examples of using `rpio`:
     default edge='both'):
 
         $ rpio -w 7
-        $ rpio -w 7:rising,18:falling,19
+        $ rpio -w 7:rising,8:falling,9
         $ rpio -w 1-9
 
     Setup a pin as INPUT (optionally with pullup or -down resistor):
 
-        $ rpio --setinput 17
-        $ rpio --setinput 17:pullup
-        $ rpio --setinput 17:pulldown
+        $ rpio --setinput 7
+        $ rpio --setinput 7:pullup
+        $ rpio --setinput 7:pulldown
 
     Setup a pin as OUTPUT:
 
-        $ rpio --setoutput 18
+        $ rpio --setoutput 8
 
-    Show raspberry pi system info:
+    Show Raspberry Pi system info:
 
         $ rpio --sysinfo
 

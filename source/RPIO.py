@@ -8,24 +8,27 @@ RPIO.input(...)), as well as access the new interrupt handling methods.
 The following example shows how to react on events on 3 pins by using
 interrupts, each with different edge detections:
 
+    # Setup logging
     import logging
     log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
     logging.basicConfig(format=log_format, level=logging.DEBUG)
+
+    # Get started
     import RPIO
 
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
-    RPIO.add_interrupt_callback(17, do_something, edge='rising')
-    RPIO.add_interrupt_callback(18, do_something, edge='falling')
-    RPIO.add_interrupt_callback(19, do_something, edge='both')
+    RPIO.add_interrupt_callback(7, do_something, edge='rising')
+    RPIO.add_interrupt_callback(8, do_something, edge='falling')
+    RPIO.add_interrupt_callback(9, do_something, edge='both')
     RPIO.wait_for_interrupts()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
-    RPIO.add_interrupt_callback(17, do_something, edge='rising',
+    RPIO.add_interrupt_callback(7, do_something, edge='rising',
             threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
