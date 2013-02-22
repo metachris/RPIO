@@ -1,3 +1,5 @@
+**Visit http://pythonhosted.org/RPIO for a pretty version of this documentation.**
+
 RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 
 * **rpio**, a command-line multitool for inspecting and manipulating GPIOs
