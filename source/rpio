@@ -197,7 +197,7 @@ def main():
         if "-" in ids:
             # eg 2-20
             n1, n2 = ids.split("-")
-            gpio_ids = [n for n in xrange(int(n1), int(n2) + 1)]
+            gpio_ids = [n for n in range(int(n1), int(n2) + 1)]
             show_nonexists = False
         else:
             gpio_ids = ids.split(",")
@@ -236,7 +236,7 @@ def main():
         if "-" in options.interrupt:
             # eg 2-20
             n1, n2 = options.interrupt.split("-")
-            gpio_ids = [str(n) for n in xrange(int(n1), int(n2) + 1)]
+            gpio_ids = [str(n) for n in range(int(n1), int(n2) + 1)]
             is_range = True
         else:
             gpio_ids = options.interrupt.split(",")
