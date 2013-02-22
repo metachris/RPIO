@@ -3,11 +3,7 @@
 Command-line interface to RPIO. Its a multitool which allows you to inspect
 and manipulate GPIO's system wide; including gpios used by other processes.
 
-This script uses two new functions in py_gpio.c, namely `forceinput()` and
-`forceoutput()`. To use those you'll need at least RPIO v0.1.8
-(`sudo easy_install -U RPIO` or `sudo pip install -U RPIO`).
-
-Examples:
+Here are some examples of how to use `rpio`:
 
     Inspect the function and state of gpios (with -i/--inspect):
 
