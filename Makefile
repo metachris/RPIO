@@ -22,4 +22,4 @@ doc:
 
 clean:
 	rm -rf build dist RPIO.egg-info
-
+	cd documentation && make clean

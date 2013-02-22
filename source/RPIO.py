@@ -53,7 +53,7 @@ from functools import partial
 from GPIO import *
 from GPIO import cleanup as _cleanup_orig
 
-VERSION = "0.6.1"
+VERSION = "0.6.2"
 
 # BCM numbering mode by default
 setmode(BCM)

@@ -72,7 +72,6 @@ if os.geteuid() != 0:
     os.execlpe('sudo', *args)
     exit(-1)
 
-import urllib2
 import logging
 from logging import debug, info, warn, error
 from optparse import OptionParser
@@ -273,16 +272,21 @@ def main():
             raise
 
     if options.update_manpage:
+        try:
+            #Python3
+            import urllib.request as urllib
+        except:
+            import urllib
         show_help = False
         url = "https://raw.github.com/metachris/RPIO/v%s/documentation/rpio.1" \
                 % RPIO.VERSION
         mandir = "/usr/local/man/man1"
         manfile = "%s/rpio.1" % mandir
         info("Downloading '%s' ..." % url)
-        content = urllib2.urlopen(url).read()
+        content = urllib.urlopen(url).read()
         if not os.path.exists(mandir):
             os.makedirs(mandir)
-        with open(manfile, "w") as f:
+        with open(manfile, "wb") as f:
             f.write(content)
         info("Manpage successfully installed into '%s'. Try `man rpio`." % \
                 manfile)
