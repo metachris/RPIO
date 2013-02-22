@@ -9,7 +9,8 @@ RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 Installation
 ============
 
-The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip:
+The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip (you may need
+to install "`easy_install`" with "`sudo apt-get install python-setuptools`"):
 
     $ sudo easy_install -U RPIO
     $ sudo pip install -U RPIO
