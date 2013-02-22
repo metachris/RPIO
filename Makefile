@@ -18,7 +18,8 @@ doc:
 
  	# Make markdown version for Github
 	cp README.txt README.md
-	sed -i '' "s/:://g" README.md
+	sed -i '' "s/^:://g" README.md
+	sed -i '' "s/::/:/g" README.md
 
 clean:
 	rm -rf build dist RPIO.egg-info

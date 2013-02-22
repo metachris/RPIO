@@ -9,12 +9,12 @@ RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 Installation
 ============
 
-The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip
+The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip:
 
     $ sudo easy_install -U RPIO
     $ sudo pip install -U RPIO
 
-Another way to get RPIO is directly from the Github repository
+Another way to get RPIO is directly from the Github repository:
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
@@ -44,7 +44,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
         $ rpio -i 7,8,9
         $ rpio -i 1-9
 
-        # Example output for `rpio -i 1-9` (non-existing are ommitted)
+        # Example output for `rpio -i 1-9` (non-existing are ommitted):
         GPIO 2: ALT0   (1)
         GPIO 3: ALT0   (1)
         GPIO 4: INPUT  (0)
@@ -87,11 +87,11 @@ scheme is used by default. Here are a few examples of using `rpio`:
         # Example output:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
-You can update RPIO to the latest version with `--update-rpio`
+You can update RPIO to the latest version with `--update-rpio`:
 
     $ rpio --update-rpio
 
-`rpio` can install (and update) its manpage
+`rpio` can install (and update) its manpage:
 
     $ rpio --update-man
     $ man rpio

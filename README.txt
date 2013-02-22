@@ -44,7 +44,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
         $ rpio -i 7,8,9
         $ rpio -i 1-9
 
-        # Example output for `rpio -i 1-9` (non-existing are ommitted)
+        # Example output for `rpio -i 1-9` (non-existing are ommitted):
         GPIO 2: ALT0   (1)
         GPIO 3: ALT0   (1)
         GPIO 4: INPUT  (0)
