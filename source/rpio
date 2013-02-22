@@ -15,7 +15,7 @@ Examples:
         $ rpio -i 7,8,9
         $ rpio -i 1-9
 
-        # Example output for `rpio -i 1-9` (non-existing are ommitted)
+        # Example output for `rpio -i 1-9` (non-existing are ommitted):
         GPIO 2: ALT0   (1)
         GPIO 3: ALT0   (1)
         GPIO 4: INPUT  (0)
@@ -118,12 +118,8 @@ def main():
             help="Show model, revision, mb-ram and maker of this Raspberry",
             action="store_true")
 
-    #parser.add_option("--update-rpio", dest="update_rpio",
-    #        help="Update rpio to the latest version", action="store_true")
-
     parser.add_option("--update-man", dest="update_manpage",
             help="Update the man page for rpio", action="store_true")
-
 
     parser.add_option("--update-rpio", dest="update_rpio",
             help="Update RPIO to the latest version", action="store_true")
