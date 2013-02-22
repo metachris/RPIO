@@ -213,3 +213,9 @@ License
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
+
+
+Updates
+=======
+
+* v0.6.4: Python 3 bugfix in `rpio`
