@@ -94,9 +94,13 @@ scheme is used by default. Here are a few examples of using `rpio`:
         # Example output:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
+You can update RPIO to the latest version with `--update-rpio`::
+
+    $ rpio --update-rpio
+
 `rpio` can install (and update) its manpage::
 
-    $ sudo rpio --update-man
+    $ rpio --update-man
     $ man rpio
 
 `rpio` was introduced in version 0.5.1.

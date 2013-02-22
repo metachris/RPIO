@@ -284,8 +284,8 @@ def main():
             os.makedirs(mandir)
         with open(manfile, "w") as f:
             f.write(content)
-        info("Manpage successfully installed into '%s'." % manfile)
-        info("You can now use `man rpio`.")
+        info("Manpage successfully installed into '%s'. Try `man rpio`." % \
+                manfile)
 
     if options.update_rpio:
         import subprocess
