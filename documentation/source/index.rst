@@ -29,7 +29,6 @@ Another way to get RPIO is directly from the Github repository::
 After the installation you can use `import RPIO` as well as the command-line tool
 `rpio`.
 
-
 .. _ref-rpio-cmd:
 
 `rpio`, the command line tool

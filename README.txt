@@ -1,5 +1,3 @@
-**Visit http://pythonhosted.org/RPIO for a pretty version of this documentation :)**
-
 RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 
 * **rpio**, a command-line multitool for inspecting and manipulating GPIOs
@@ -22,6 +20,7 @@ Another way to get RPIO is directly from the Github repository::
 
 After the installation you can use `import RPIO` as well as the command-line tool
 `rpio`.
+
 
 
 `rpio`, the command line tool
@@ -55,7 +54,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio -I
 
-    Set GPIO 7 to either `1` or `0` (with -s/--set):
+    Set GPIO 7 to `1` (or `0`) (with -s/--set):
 
         $ rpio -s 7:1
 
@@ -79,7 +78,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio --setoutput 8
 
-    Show raspberry pi system info:
+    Show Raspberry Pi system info:
 
         $ rpio --sysinfo
 
@@ -96,6 +95,7 @@ You can update RPIO to the latest version with `--update-rpio`::
     $ man rpio
 
 `rpio` was introduced in version 0.5.1.
+
 
 
 `RPIO.py`, the Python module

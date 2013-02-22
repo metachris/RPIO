@@ -1,5 +1,3 @@
-**Visit [pythonhosted.org/RPIO](http://pythonhosted.org/RPIO) for a pretty version of this documentation :)**
-
 RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 
 * **rpio**, a command-line multitool for inspecting and manipulating GPIOs
@@ -9,12 +7,12 @@ RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 Installation
 ============
 
-The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip:
+The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip
 
     $ sudo easy_install -U RPIO
     $ sudo pip install -U RPIO
 
-Another way to get RPIO is directly from the Github repository:
+Another way to get RPIO is directly from the Github repository
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
@@ -24,12 +22,15 @@ After the installation you can use `import RPIO` as well as the command-line too
 `rpio`.
 
 
+
 `rpio`, the command line tool
 =============================
 
 `rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
 `rpio` needs to run with superuser privileges (root), else it will restart using `sudo`. The BCM GPIO numbering
 scheme is used by default. Here are a few examples of using `rpio`:
+
+
 
     Show the help page:
 
@@ -53,7 +54,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio -I
 
-    Set GPIO 7 to either `1` or `0` (with -s/--set):
+    Set GPIO 7 to `1` (or `0`) (with -s/--set):
 
         $ rpio -s 7:1
 
@@ -77,23 +78,24 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio --setoutput 8
 
-    Show raspberry pi system info:
+    Show Raspberry Pi system info:
 
         $ rpio --sysinfo
 
         # Example output:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
-You can update RPIO to the latest version with `--update-rpio`:
+You can update RPIO to the latest version with `--update-rpio`
 
     $ rpio --update-rpio
 
-`rpio` can install (and update) its manpage:
+`rpio` can install (and update) its manpage
 
     $ rpio --update-man
     $ man rpio
 
 `rpio` was introduced in version 0.5.1.
+
 
 
 `RPIO.py`, the Python module
@@ -107,6 +109,8 @@ notification times, and the ability to trigger on specific edge transitions
 (`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This
 is an example of how to use RPIO to react on events on 3 pins by using
 interrupts, each with different edge detections:
+
+
 
     # Setup logging
     import logging
@@ -128,6 +132,8 @@ If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
+
+
     RPIO.add_interrupt_callback(7, do_something, edge='rising', threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
@@ -137,6 +143,8 @@ even if edge="rising"). To remove all callbacks from a certain gpio pin, use
 loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
 Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
+
+
 
     import RPIO
 
@@ -168,6 +176,8 @@ Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
 You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this (if 
 you've used the BCM gpio numbering scheme):
 
+
+
     import RPIO as GPIO  # (if you've previously used `import RPi.GPIO as GPIO`)
 
 
@@ -189,6 +199,8 @@ Links
 
 License
 =======
+
+
 
     RPIO is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
