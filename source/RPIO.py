@@ -122,8 +122,8 @@ def is_valid_gpio_id(gpio_id, board_rev=None):
     """
     if not board_rev:
         board_rev = get_rpi_sysinfo()[1]
-    return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV2 \
-            if board_rev == "2.0" else PIN_TO_GPIO_LAYOUT_REV1)
+    return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV1 \
+            if board_rev == "1.0" else PIN_TO_GPIO_LAYOUT_REV2)
 
 
 def _threaded_callback(callback, *args):
