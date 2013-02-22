@@ -1,8 +1,5 @@
 *.py[cod]
 
-# C extensions
-*.so
-
 # Packages
 *.egg
 *.egg-info
@@ -33,5 +30,6 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.cproject
 
 documentation/build/
