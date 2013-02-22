@@ -63,7 +63,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio -I
 
-    Set GPIO 7 to either `1` or `0` (with -s/--set):
+    Set GPIO 7 to `1` (or `0`) (with -s/--set):
 
         $ rpio -s 7:1
 
@@ -87,7 +87,7 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio --setoutput 8
 
-    Show raspberry pi system info:
+    Show Raspberry Pi system info:
 
         $ rpio --sysinfo
 

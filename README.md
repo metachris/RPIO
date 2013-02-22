@@ -77,16 +77,20 @@ scheme is used by default. Here are a few examples of using `rpio`:
 
         $ rpio --setoutput 8
 
-    Show Raspberry Pi system info:
+    Show raspberry pi system info:
 
         $ rpio --sysinfo
 
         # Example output:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
-`rpio` can install (and update) its manpage::
+You can update RPIO to the latest version with `--update-rpio`:
 
-    $ sudo rpio --update-man
+    $ rpio --update-rpio
+
+`rpio` can install (and update) its manpage:
+
+    $ rpio --update-man
     $ man rpio
 
 `rpio` was introduced in version 0.5.1.
@@ -115,16 +119,16 @@ interrupts, each with different edge detections:
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
-    RPIO.add_interrupt_callback(17, do_something, edge='rising')
-    RPIO.add_interrupt_callback(18, do_something, edge='falling')
-    RPIO.add_interrupt_callback(19, do_something, edge='both')
+    RPIO.add_interrupt_callback(7, do_something, edge='rising')
+    RPIO.add_interrupt_callback(8, do_something, edge='falling')
+    RPIO.add_interrupt_callback(9, do_something, edge='both')
     RPIO.wait_for_interrupts()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
-    RPIO.add_interrupt_callback(17, do_something, edge='rising', threaded_callback=True)
+    RPIO.add_interrupt_callback(7, do_something, edge='rising', threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
@@ -136,23 +140,26 @@ Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
 
     import RPIO
 
-    # set up GPIO output channel
-    RPIO.setup(17, RPIO.OUT)
+    # set up input channel without pull-up
+    RPIO.setup(7, RPIO.IN)
 
-    # set gpio 17 to high
-    RPIO.output(17, True)
+    # set up input channel with pull-up control
+    #   (pull_up_down be PUD_OFF, PUD_UP or PUD_DOWN, default PUD_OFF)
+    RPIO.setup(7, RPIO.IN, pull_up_down=RPIO.PUD_UP)
+
+    # read input from gpio 7
+    input_value = RPIO.input(7)
+
+    # set up GPIO output channel
+    RPIO.setup(8, RPIO.OUT)
+
+    # set gpio 8 to high
+    RPIO.output(8, True)
 
     # set up output channel with an initial state
     RPIO.setup(18, RPIO.OUT, initial=RPIO.LOW)
 
-    # set up input channel with pull-up control
-    #   (pull_up_down be PUD_OFF, PUD_UP or PUD_DOWN, default PUD_OFF)
-    RPIO.setup(19, RPIO.IN, pull_up_down=RPIO.PUD_UP)
-
-    # read input from gpio 19
-    input_value = RPIO.input(19)
-
-    # change to BOARD GPIO numbering
+    # change to BOARD numbering schema (interrupts will still use BCM though)
     RPIO.setmode(RPIO.BOARD)
 
     # reset every channel that has been set up by this program. and unexport gpio interfaces
