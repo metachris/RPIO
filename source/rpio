@@ -141,7 +141,7 @@ def main():
 
     if options.version:
         show_help = False
-        info("RPIO v%s" % RPIO.VERSION)
+        info("RPIO v%s (gpio-lib v%s)" % (RPIO.VERSION, RPIO.VERSION_GPIO))
 
     if options.setoutput:
         show_help = False

@@ -1,3 +1,11 @@
+/*
+cpuinfo.c is based on RPi.GPIO by Ben Croston, and provides a Python interface to
+interact with the gpio-related C methods. This file is under active development
+as part of the RPIO package by Chris Hager <chris@linuxuser.at>.
+
+URL: https://github.com/metachris/RPIO
+License: cpuinfo.c is released under the MIT License
+*/
 #include <stdio.h>
 #include <string.h>
 #include "cpuinfo.h"
