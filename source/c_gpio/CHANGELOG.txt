@@ -1,2 +1,0 @@
-* py_gpio.c: Added forceinput() and forceoutput() which work without setting up a gpio first
-* py_gpio.c: Removed custom SetupException in favor of standard Exceptions

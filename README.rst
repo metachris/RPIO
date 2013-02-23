@@ -2,8 +2,8 @@ Visit `pythonhosted.org/RPIO <http://pythonhosted.org/RPIO>`_ for a pretty versi
 
 RPIO is a GPIO toolbox for the Raspberry Pi.
 
-* **RPIO.py**, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling and **more**
-* **rpio**, a command-line multitool for inspecting and manipulating GPIOs
+* RPIO.py, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling and more
+* rpio, a command-line multitool for inspecting and manipulating GPIOs system-wide
 
 
 Installation
@@ -104,7 +104,7 @@ Install (and update) the ``rpio`` manpage::
 ============================
 
 RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with 
-interrupt handling and a few **other goodies**.
+interrupt handling and a few other goodies.
 
 Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast

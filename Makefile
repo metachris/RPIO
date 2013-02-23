@@ -9,12 +9,12 @@ doc:
 	cp documentation/build/man/rpio.1 documentation/
 
 	# Make reST version for pypi
-	echo "Visit \`pythonhosted.org/RPIO <http://pythonhosted.org/RPIO>\`_ for a pretty version of this documentation.\n" > README.txt
-	cat documentation/source/index.rst >> README.txt
-	sed -i '' "2,9d" README.txt
-	sed -i '' "s/:ref:\`*/**/g" README.txt
-	sed -i '' "s/ <ref-[a-zA-Z-]*>\`/**/g" README.txt
-	sed -i '' "s/[.][.] _.*//g" README.txt
+	echo "Visit \`pythonhosted.org/RPIO <http://pythonhosted.org/RPIO>\`_ for a pretty version of this documentation.\n" > README.rst
+	cat documentation/source/index.rst >> README.rst
+	sed -i '' "2,9d" README.rst
+	sed -i '' "s/:ref:\`*//g" README.rst
+	sed -i '' "s/ <ref-[a-zA-Z-]*>\`//g" README.rst
+	sed -i '' "s/[.][.] _.*//g" README.rst
 
 clean:
 	rm -rf build dist RPIO.egg-info

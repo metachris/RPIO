@@ -9,7 +9,7 @@ Welcome to RPIO's documentation!
 RPIO is a GPIO toolbox for the Raspberry Pi.
 
 * :ref:`RPIO.py <ref-rpio-py>`, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling and :ref:`more <ref-rpio-py-rpigpio>`
-* :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs
+* :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs system-wide
 
 
 Installation
