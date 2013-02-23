@@ -15,8 +15,8 @@ setup(
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
     scripts=["source/rpio"],
 
-    description=(("Raspberry Pi GPIO tools: an extension of RPi.GPIO "
-            "to easily handle interrupts, and a command line multitool.")),
+    description=(("GPIO toolbox for the Raspberry Pi. Extends RPi.GPIO "
+            "with interrups, a command line tool and more")),
     long_description=read('README.rst'),
     url="https://github.com/metachris/RPIO",
 
