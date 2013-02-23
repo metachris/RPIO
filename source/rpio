@@ -255,13 +255,8 @@ def main():
         info("Waiting for interrupts (exit with Ctrl+C) ...")
         try:
             RPIO.wait_for_interrupts()
-
         except KeyboardInterrupt:
-            RPIO.cleanup()
-
-        except:
-            RPIO.cleanup()
-            raise
+            pass
 
     if options.update_manpage:
         try:

@@ -135,11 +135,7 @@ interrupts, each with different edge detections:
     RPIO.add_interrupt_callback(7, do_something, edge='rising')
     RPIO.add_interrupt_callback(8, do_something, edge='falling')
     RPIO.add_interrupt_callback(9, do_something, edge='both')
-
-    try:
-        RPIO.wait_for_interrupts()
-    except KeyboardInterrupt:
-        RPIO.cleanup()
+    RPIO.wait_for_interrupts()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set ``threaded_callback=True`` when adding an interrupt-
@@ -210,25 +206,25 @@ Additions to RPi.GPIO
 
 Additional Constants
 
-  * ``RPIO.RPI_REVISION`` (either ``1`` or ``2``)
-  * ``RPIO.RPI_REVISION_HEX`` (``0002`` .. ``000f``)
+* ``RPIO.RPI_REVISION`` (either ``1`` or ``2``)
+* ``RPIO.RPI_REVISION_HEX`` (``0002`` .. ``000f``)
 
 Additional Methods
-  
-  * ``RPIO.forceinput(gpio_id)`` - reads the value of any gpio without needing to call setup() first
-  * ``RPIO.forceoutput(gpio_id, value)`` - writes a value to any gpio without needing to call setup() first (**warning**: this can potentially harm
-    your Raspberry)
-  * ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
-  * ``RPIO.is_valid_gpio_id(gpio_id)`` - returns True if the supplied gpio_id is valid on this board
-  * ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
+
+* ``RPIO.forceinput(gpio_id)`` - reads the value of any gpio without needing to call setup() first
+* ``RPIO.forceoutput(gpio_id, value)`` - writes a value to any gpio without needing to call setup() first 
+  (**warning**: this can potentially harm your Raspberry)
+* ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
+* ``RPIO.is_valid_gpio_id(gpio_id)`` - returns True if the supplied gpio_id is valid on this board
+* ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
 
 Interrupt Handling
 
-  * ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=False)``
-  * ``RPIO.del_interrupt_callback(gpio_id)``
-  * ``RPIO.wait_for_interrupts(epoll_timeout=1)``
-  * ``RPIO.stop_waiting_for_interrupts()``
-  *  implemented with ``epoll``
+* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=False)``
+* ``RPIO.del_interrupt_callback(gpio_id)``
+* ``RPIO.wait_for_interrupts(epoll_timeout=1)``
+* ``RPIO.stop_waiting_for_interrupts()``
+*  implemented with ``epoll``
 
 
 Links
@@ -268,5 +264,16 @@ License
 Updates
 =======
 
-* v0.7.1: Refactoring of c_gpio, added new constants and methods
-* v0.6.4: Python 3 bugfix in `rpio`
+* v0.7.1
+  
+  * Refactoring and cleanup of c_gpio
+  * Added new constants and methods (see documentation above)
+  * **Bugfixes**
+
+    * ``wait_for_interrupts()`` now auto-cleans interfaces when an exception occurs. Before you needed to call ``RPIO.cleanup()`` manually.
+
+
+* v0.6.4
+
+  * Python 3 bugfix in `rpio`
+  * Various minor updates

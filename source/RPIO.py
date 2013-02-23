@@ -22,10 +22,7 @@ interrupts, each with different edge detections:
     RPIO.add_interrupt_callback(7, do_something, edge='rising')
     RPIO.add_interrupt_callback(8, do_something, edge='falling')
     RPIO.add_interrupt_callback(9, do_something, edge='both')
-    try:
-        RPIO.wait_for_interrupts()
-    except KeyboardInterrupt:
-        RPIO.cleanup()
+    RPIO.wait_for_interrupts()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
@@ -152,6 +149,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     if not os.path.exists(path_gpio):
         with open(_SYS_GPIO_ROOT + "export", "w") as f:
             f.write("%s" % gpio_id)
+        global _gpio_kernel_interfaces_created
         _gpio_kernel_interfaces_created.append(gpio_id)
         debug("- kernel interface created for GPIO %s" % gpio_id)
 
@@ -233,15 +231,20 @@ def wait_for_interrupts(epoll_timeout=1):
     """
     global _is_waiting_for_interrupts
     _is_waiting_for_interrupts = True
-    while _is_waiting_for_interrupts:
-        events = _epoll.poll(epoll_timeout)
-        for fileno, event in events:
-            if event & select.EPOLLPRI:
-                f = _map_fileno_to_file[fileno]
-                # read() is workaround for not getting new values with read(1)
-                val = f.read().strip()
-                f.seek(0)
-                _handle_interrupt(fileno, val)
+    try:
+        while _is_waiting_for_interrupts:
+            events = _epoll.poll(epoll_timeout)
+            for fileno, event in events:
+                if event & select.EPOLLPRI:
+                    f = _map_fileno_to_file[fileno]
+                    # read() is workaround for not getting new values
+                    # with read(1)
+                    val = f.read().strip()
+                    f.seek(0)
+                    _handle_interrupt(fileno, val)
+    except:
+        _cleanup_interfaces()
+        raise
 
 
 def stop_waiting_for_interrupts():

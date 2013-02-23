@@ -16,9 +16,4 @@ RPIO.add_interrupt_callback(23, handle_interrupt, edge='rising')
 RPIO.add_interrupt_callback(24, handle_interrupt, edge='falling')
 RPIO.add_interrupt_callback(25, handle_interrupt, edge='both',
         threaded_callback=True)
-
-try:
-    RPIO.wait_for_interrupts()
-
-except KeyboardInterrupt:
-    RPIO.cleanup()
+RPIO.wait_for_interrupts()

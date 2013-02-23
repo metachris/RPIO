@@ -51,10 +51,5 @@ def handle_door_bell_ring(gpio_id, val):
     last_bell_ring = t
 
 # Main loop. Blocks at `wait_for_interrupts()`.
-GPIO2.add_interrupt_callback(23, handle_door_bell_ring, edge='rising')
-
-try:
-    RPIO.wait_for_interrupts()
-
-except KeyboardInterrupt:
-    RPIO.cleanup()
+RPIO.add_interrupt_callback(23, handle_door_bell_ring, edge='rising')
+RPIO.wait_for_interrupts()

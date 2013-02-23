@@ -58,7 +58,6 @@ static void
 cache_rpi_revision(void)
 {
     revision_int = get_cpuinfo_revision(revision_hex);
-    printf("rpi revision hex: %s", revision_hex);
 }
 
 // module_setup is run on import of the GPIO module and calls the setup() method in c_gpio.c

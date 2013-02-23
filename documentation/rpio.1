@@ -188,11 +188,7 @@ def do_something(gpio_id, value):
 RPIO.add_interrupt_callback(7, do_something, edge=\(aqrising\(aq)
 RPIO.add_interrupt_callback(8, do_something, edge=\(aqfalling\(aq)
 RPIO.add_interrupt_callback(9, do_something, edge=\(aqboth\(aq)
-
-try:
-    RPIO.wait_for_interrupts()
-except KeyboardInterrupt:
-    RPIO.cleanup()
+RPIO.wait_for_interrupts()
 .ft P
 .fi
 .UNINDENT
@@ -275,25 +271,19 @@ import RPIO as GPIO  # (if you\(aqve previously used \(gaimport RPi.GPIO as GPIO
 .sp
 Additional Constants
 .INDENT 0.0
-.INDENT 3.5
-.INDENT 0.0
 .IP \(bu 2
 \fBRPIO.RPI_REVISION\fP (either \fB1\fP or \fB2\fP)
 .IP \(bu 2
 \fBRPIO.RPI_REVISION_HEX\fP (\fB0002\fP .. \fB000f\fP)
 .UNINDENT
-.UNINDENT
-.UNINDENT
 .sp
 Additional Methods
-.INDENT 0.0
-.INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
 \fBRPIO.forceinput(gpio_id)\fP \- reads the value of any gpio without needing to call setup() first
 .IP \(bu 2
-\fBRPIO.forceoutput(gpio_id, value)\fP \- writes a value to any gpio without needing to call setup() first (\fBwarning\fP: this can potentially harm
-your Raspberry)
+\fBRPIO.forceoutput(gpio_id, value)\fP \- writes a value to any gpio without needing to call setup() first
+(\fBwarning\fP: this can potentially harm your Raspberry)
 .IP \(bu 2
 \fBRPIO.gpio_function(gpio_id)\fP \- returns the current setup of a gpio (\fBIN, OUT, ALT0\fP)
 .IP \(bu 2
@@ -301,12 +291,8 @@ your Raspberry)
 .IP \(bu 2
 \fBRPIO.rpi_sysinfo()\fP \- returns \fB(model, revision, mb\-ram and maker)\fP of this Raspberry
 .UNINDENT
-.UNINDENT
-.UNINDENT
 .sp
 Interrupt Handling
-.INDENT 0.0
-.INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
 \fBRPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, threaded_callback=False)\fP
@@ -318,8 +304,6 @@ Interrupt Handling
 \fBRPIO.stop_waiting_for_interrupts()\fP
 .IP \(bu 2
 implemented with \fBepoll\fP
-.UNINDENT
-.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .IP \(bu 2
@@ -354,9 +338,27 @@ GNU General Public License for more details.
 .UNINDENT
 .INDENT 0.0
 .IP \(bu 2
-v0.7.1: Refactoring of c_gpio, added new constants and methods
+v0.7.1
+.INDENT 2.0
 .IP \(bu 2
-v0.6.4: Python 3 bugfix in \fIrpio\fP
+Refactoring and cleanup of c_gpio
+.IP \(bu 2
+Added new constants and methods (see documentation above)
+.IP \(bu 2
+\fBBugfixes\fP
+.INDENT 2.0
+.IP \(bu 2
+\fBwait_for_interrupts()\fP now auto\-cleans interfaces when an exception occurs. Before you needed to call \fBRPIO.cleanup()\fP manually.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+v0.6.4
+.INDENT 2.0
+.IP \(bu 2
+Python 3 bugfix in \fIrpio\fP
+.IP \(bu 2
+Various minor updates
+.UNINDENT
 .UNINDENT
 .SH AUTHOR
 Chris Hager <chris@linuxuser.at>
