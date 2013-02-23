@@ -74,7 +74,6 @@ _is_waiting_for_interrupts = False
 # Internals
 _epoll = select.epoll()
 _SYS_GPIO_ROOT = '/sys/class/gpio/'
-_RPI_SYSINFO = None
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
 MODEL_DATA = {
     '2': ('B', '1.0', 256, '?'),
@@ -102,7 +101,7 @@ PIN_TO_GPIO_LAYOUT_REV2 = (_DC3V3, _DC5V, 2, _DC5V, 3, _GND, 4, 14, _GND, 15, \
 
 def rpi_sysinfo():
     """ Returns (model, revision, mb-ram and maker) for this raspberry """
-    return MODEL_DATA[rpi_revision_hex().lstrip("0")]
+    return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
 
 
 def is_valid_gpio_id(gpio_id):
@@ -111,7 +110,7 @@ def is_valid_gpio_id(gpio_id):
     the current board. board_rev is either '1.0' or '2.0'
     """
     return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV1 \
-            if rpi_revision() == 1 else PIN_TO_GPIO_LAYOUT_REV2)
+            if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2)
 
 
 def _threaded_callback(callback, *args):
