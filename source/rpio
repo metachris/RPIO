@@ -177,8 +177,7 @@ def main():
         show_help = False
         ids = options.show
         if options.inspect_all:
-            board_rev = RPIO.get_rpi_sysinfo()[1]
-            pins = RPIO.PIN_TO_GPIO_LAYOUT_REV1 if board_rev == "1.0" \
+            pins = RPIO.PIN_TO_GPIO_LAYOUT_REV1 if RPIO.RPI_REVISION == 1 \
                     else RPIO.PIN_TO_GPIO_LAYOUT_REV2
             id_list = list(pins)
             id_list.sort()

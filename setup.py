@@ -17,7 +17,7 @@ setup(
 
     description=(("Raspberry Pi GPIO tools: an extension of RPi.GPIO "
             "to easily handle interrupts, and a command line multitool.")),
-    long_description=read('README.txt'),
+    long_description=read('README.rst'),
     url="https://github.com/metachris/RPIO",
 
     author="Chris Hager",

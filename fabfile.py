@@ -24,3 +24,8 @@ def test():
         run("make")
         run("cp build/GPIO.so ../")
     print("Module built and ready to use in '/tmp/source/'.")
+
+
+def test_dist():
+    local("python setup.py sdist")
+    put("dist/*.tar.gz", "/tmp/")

@@ -261,9 +261,11 @@ def _cleanup_interfaces():
     Remove all /sys/class/gpio/gpioN interfaces that this script created.
     Does not usually need to be used.
     """
+    debug("Cleaning up interfaces...")
     global _gpio_kernel_interfaces_created
     for gpio_id in _gpio_kernel_interfaces_created:
         # Remove the kernel GPIO interface
+        debug("- unexporting GPIO %s" % gpio_id)
         with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
             f.write("%s" % gpio_id)
 
