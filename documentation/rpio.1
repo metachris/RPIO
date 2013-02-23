@@ -188,7 +188,11 @@ def do_something(gpio_id, value):
 RPIO.add_interrupt_callback(7, do_something, edge=\(aqrising\(aq)
 RPIO.add_interrupt_callback(8, do_something, edge=\(aqfalling\(aq)
 RPIO.add_interrupt_callback(9, do_something, edge=\(aqboth\(aq)
-RPIO.wait_for_interrupts()
+
+try:
+    RPIO.wait_for_interrupts()
+except KeyboardInterrupt:
+    RPIO.cleanup()
 .ft P
 .fi
 .UNINDENT
@@ -213,6 +217,10 @@ is not necessarily corresponding to the edge (eg. 0 may come in as value,
 even if \fIedge="rising"\fP). To remove all callbacks from a certain gpio pin, use
 \fBRPIO.del_interrupt_callback(gpio_id)\fP. To stop the \fBwait_for_interrupts()\fP
 loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
+.sp
+Please note that you don\(aqt need to call \fBsetup(..)\fP for a gpio before using it for
+interrupts, pullup/pulldown resistors are not available and only BCM gpio numbering
+is supported (although BOARD will be included shortly).
 .SH RPI.GPIO
 .sp
 Besides the interrupt handling, you can use RPIO just as \fI\%RPi.GPIO\fP:

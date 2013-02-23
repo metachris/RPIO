@@ -135,7 +135,11 @@ interrupts, each with different edge detections:
     RPIO.add_interrupt_callback(7, do_something, edge='rising')
     RPIO.add_interrupt_callback(8, do_something, edge='falling')
     RPIO.add_interrupt_callback(9, do_something, edge='both')
-    RPIO.wait_for_interrupts()
+
+    try:
+        RPIO.wait_for_interrupts()
+    except KeyboardInterrupt:
+        RPIO.cleanup()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set ``threaded_callback=True`` when adding an interrupt-
@@ -150,6 +154,10 @@ is not necessarily corresponding to the edge (eg. 0 may come in as value,
 even if `edge="rising"`). To remove all callbacks from a certain gpio pin, use
 ``RPIO.del_interrupt_callback(gpio_id)``. To stop the ``wait_for_interrupts()``
 loop you can call ``RPIO.stop_waiting_for_interrupts()``.
+
+Please note that you don't need to call ``setup(..)`` for a gpio before using it for 
+interrupts, pullup/pulldown resistors are not available and only BCM gpio numbering
+is supported (although BOARD will be included shortly).
 
 
 .. _ref-rpio-py-rpigpio:

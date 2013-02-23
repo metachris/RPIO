@@ -13,7 +13,7 @@ doc:
 	cat documentation/source/index.rst >> README.txt
 	sed -i '' "2,9d" README.txt
 	sed -i '' "s/:ref:\`*/**/g" README.txt
-	sed -i '' "s/ <ref-.*>\`/**/g" README.txt
+	sed -i '' "s/ <ref-[a-zA-Z-]*>\`/**/g" README.txt
 	sed -i '' "s/[.][.] _.*//g" README.txt
 
 clean:

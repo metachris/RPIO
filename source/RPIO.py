@@ -22,7 +22,10 @@ interrupts, each with different edge detections:
     RPIO.add_interrupt_callback(7, do_something, edge='rising')
     RPIO.add_interrupt_callback(8, do_something, edge='falling')
     RPIO.add_interrupt_callback(9, do_something, edge='both')
-    RPIO.wait_for_interrupts()
+    try:
+        RPIO.wait_for_interrupts()
+    except KeyboardInterrupt:
+        RPIO.cleanup()
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
