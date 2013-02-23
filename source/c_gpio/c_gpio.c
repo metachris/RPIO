@@ -10,6 +10,7 @@ Changes:
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include "c_gpio.h"
 
 #define BCM2708_PERI_BASE   0x20000000
 #define GPIO_BASE           (BCM2708_PERI_BASE + 0x200000)
@@ -28,29 +29,14 @@ Changes:
 #define PAGE_SIZE  (4*1024)
 #define BLOCK_SIZE (4*1024)
 
-#define SETUP_OK          0
-#define SETUP_DEVMEM_FAIL 1
-#define SETUP_MALLOC_FAIL 2
-#define SETUP_MMAP_FAIL   3
-
-#define INPUT  1 // is really 0 for control register!
-#define OUTPUT 0 // is really 1 for control register!
-#define ALT0   4
-
-#define HIGH 1
-#define LOW  0
-
-#define PUD_OFF  0
-#define PUD_DOWN 1
-#define PUD_UP   2
-
 static volatile uint32_t *gpio_map;
 
 // `short_wait` waits 150 cycles
 void
 short_wait(void)
 {
-    for (int i=0; i<150; i++) {
+    int i;
+    for (i=0; i<150; i++) {
         asm volatile("nop");
     }
 }
@@ -132,11 +118,11 @@ gpio_function(int gpio)
 void
 output_gpio(int gpio, int value)
 {
-    int offset, shift;
+    int offset;
     if (value) // value == HIGH
-        offset = SET_OFFSET + (gpio/32);
+        offset = SET_OFFSET + (gpio / 32);
     else       // value == LOW
-        offset = CLR_OFFSET + (gpio/32);
+        offset = CLR_OFFSET + (gpio / 32);
     *(gpio_map+offset) = 1 << gpio % 32;
 }
 

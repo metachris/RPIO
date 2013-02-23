@@ -1,5 +1,7 @@
 /*
-Copyright (c) 2012-2013 Ben Croston
+py_gpio.c is part of RPIO.
+
+Based on RPi.GPIO by 2013 Ben Croston
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -52,6 +54,10 @@ static const int (*pin_to_gpio)[27];
 // Flag whether to show warnings
 static int gpio_warnings = 1;
 
+// Which Raspberry Pi Revision is used (will be 1 or 2); fetched on module init
+// from /proc/cpuinfo (via cpuinfo.c)
+static int rpi_revision_cache = -1;
+
 // Internal map of directions (in/out) per gpio to prevent user mistakes.
 static int gpio_direction[54];
 
@@ -69,7 +75,8 @@ module_setup(void)
     // printf("Setup module (mmap)\n");
 
     // Set all gpios to input in internal direction (not the system)
-    for (int i=0; i<54; i++)
+    int i=0;
+    for (i=0; i<54; i++)
         gpio_direction[i] = -1;
 
     result = setup();
@@ -93,7 +100,8 @@ module_setup(void)
 static PyObject*
 py_cleanup(PyObject *self, PyObject *args)
 {
-    for (int i=0; i<54; i++) {
+    int i;
+    for (i=0; i<54; i++) {
         if (gpio_direction[i] != -1) {
             // printf("GPIO %d --> INPUT\n", i);
             setup_gpio(i, INPUT, PUD_OFF);
@@ -338,6 +346,14 @@ py_forceinput_gpio(PyObject *self, PyObject *args)
         Py_RETURN_FALSE;
 }
 
+// returns the raspberry pi revision
+static PyObject*
+py_rpi_revision(PyObject *self, PyObject *args)
+{
+    return Py_BuildValue("i", (int) rpi_revision_cache);
+    //return rpi_revision_cache;
+}
+
 // python function setmode(mode)
 static PyObject*
 setmode(PyObject *self, PyObject *args)
@@ -395,8 +411,9 @@ PyMethodDef rpi_gpio_methods[] = {
     {"setwarnings", py_setwarnings, METH_VARARGS, "Enable or disable warning messages"},
 
     // New methods in RPIO
-    {"forceoutput", py_forceoutput_gpio, METH_VARARGS, "Force output to a GPIO channel,\nignoring whether it has been set up before."},
-    {"forceinput", py_forceinput_gpio, METH_VARARGS, "Force read input from a GPIO channel,\nignoring whether it was set up before."},
+    {"forceoutput", py_forceoutput_gpio, METH_VARARGS, "Force output to a GPIO channel, ignoring whether it has been set up before."},
+    {"forceinput", py_forceinput_gpio, METH_VARARGS, "Force read input from a GPIO channel, ignoring whether it was set up before."},
+    {"rpi_revision", py_rpi_revision, METH_VARARGS, "Returns integer value of current raspberry revision (1 or 2)."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -477,8 +494,8 @@ PyMODINIT_FUNC initGPIO(void)
     PyModule_AddObject(module, "PUD_DOWN", pud_down);
 
     // detect board revision and set up accordingly
-    revision = get_rpi_revision();
-    if (revision == -1)
+    rpi_revision_cache = get_rpi_revision();
+    if (rpi_revision_cache == -1)
     {
         PyErr_SetString(PyExc_SystemError, "This module can only be run on a Raspberry Pi!");
 #if PY_MAJOR_VERSION > 2
@@ -486,11 +503,12 @@ PyMODINIT_FUNC initGPIO(void)
 #else
         return;
 #endif
-    } else if (revision == 1) {
+    } else if (rpi_revision_cache == 1) {
         pin_to_gpio = &pin_to_gpio_rev1;
     } else { // assume revision 2
         pin_to_gpio = &pin_to_gpio_rev2;
     }
+
     rpi_revision = Py_BuildValue("i", revision);
     PyModule_AddObject(module, "RPI_REVISION", rpi_revision);
 
