@@ -31,15 +31,13 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" Man page generated from reStructuredText.
 .
 .sp
-RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
+RPIO is a GPIO toolbox for the Raspberry Pi.
 .INDENT 0.0
 .IP \(bu 2
-\fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs
+\fI\%RPIO.py\fP, an extension of \fI\%RPi.GPIO\fP with interrupt handling and \fI\%more\fP
 .IP \(bu 2
-\fI\%RPIO.py\fP, a module which extends RPi.GPIO with interrupt handling and other good stuff
+\fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs
 .UNINDENT
-.sp
-Visit \fI\%pythonhosted.org/RPIO\fP for a pretty version of this documentation.
 .sp
 The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP (you may need
 to get it first with \fBsudo apt\-get install python\-setuptools\fP):
@@ -217,7 +215,7 @@ even if \fIedge="rising"\fP). To remove all callbacks from a certain gpio pin, u
 loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
 .SH RPI.GPIO
 .sp
-Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
+Besides the interrupt handling, you can use RPIO just as \fI\%RPi.GPIO\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -267,11 +265,41 @@ import RPIO as GPIO  # (if you\(aqve previously used \(gaimport RPi.GPIO as GPIO
 .UNINDENT
 .SH ADDITIONS TO RPI.GPIO
 .sp
-RPIO extends the functionality of RPi.GPIO in several ways:
+Additional Constants
+.INDENT 0.0
+.INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
-Interrupt handling (implemented with \fBepoll\fP):
-.INDENT 2.0
+\fBRPIO.RPI_REVISION\fP (either \fB1\fP or \fB2\fP)
+.IP \(bu 2
+\fBRPIO.RPI_REVISION_HEX\fP (\fB0002\fP .. \fB000f\fP)
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+Additional Methods
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+\fBRPIO.forceinput(gpio_id)\fP \- reads the value of any gpio without needing to call setup() first
+.IP \(bu 2
+\fBRPIO.forceoutput(gpio_id, value)\fP \- writes a value to any gpio without needing to call setup() first (\fBwarning\fP: this can potentially harm
+your Raspberry)
+.IP \(bu 2
+\fBRPIO.gpio_function(gpio_id)\fP \- returns the current setup of a gpio (\fBIN, OUT, ALT0\fP)
+.IP \(bu 2
+\fBRPIO.is_valid_gpio_id(gpio_id)\fP \- returns True if the supplied gpio_id is valid on this board
+.IP \(bu 2
+\fBRPIO.rpi_sysinfo()\fP \- returns \fB(model, revision, mb\-ram and maker)\fP of this Raspberry
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+Interrupt Handling
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
 .IP \(bu 2
 \fBRPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, threaded_callback=False)\fP
 .IP \(bu 2
@@ -280,42 +308,24 @@ Interrupt handling (implemented with \fBepoll\fP):
 \fBRPIO.wait_for_interrupts(epoll_timeout=1)\fP
 .IP \(bu 2
 \fBRPIO.stop_waiting_for_interrupts()\fP
-.UNINDENT
 .IP \(bu 2
-Additional methods:
-.INDENT 2.0
-.IP \(bu 2
-\fBRPIO.forceinput(gpio_id)\fP which reads the value of any gpio without needing to call setup() first
-.IP \(bu 2
-\fBRPIO.forceoutput(gpio_id, value)\fP which writes a value to any gpio without needing to call setup() first
-.IP \(bu 2
-\fBRPIO.rpi_sysinfo() which returns \(ga\(ga(model, revision, mb\-ram and maker)\fP of this Raspberry
-.IP \(bu 2
-\fBRPIO.gpio_function(gpio_id)\fP which returns the current setup of a gpio (IN, OUT, ALT0)\(ga\(ga
-.IP \(bu 2
-\fBRPIO.is_valid_gpio_id(gpio_id)\fP: returns True if the supplied gpio_id is valid on this board
-.UNINDENT
-.IP \(bu 2
-Additional constants:
-.INDENT 2.0
-.IP \(bu 2
-\fBRPIO.RPI_REVISION\fP (either \fB1\fP or \fB2\fP)
-.IP \(bu 2
-\fBRPIO.RPI_REVISION_HEX\fP (\fB0002\fP .. \fB000f\fP)
+implemented with \fBepoll\fP
 .UNINDENT
 .UNINDENT
-.sp
-Chris Hager (\fI\%chris@linuxuser.at\fP)
-.sp
-If you\(aqve encountered a bug, please let me know via Github: \fI\%https://github.com/metachris/RPIO/issues\fP.
+.UNINDENT
 .INDENT 0.0
 .IP \(bu 2
 \fI\%https://github.com/metachris/RPIO\fP
+.IP \(bu 2
+\fI\%http://pypi.python.org/pypi/RPIO\fP
 .IP \(bu 2
 \fI\%http://pypi.python.org/pypi/RPi.GPIO\fP
 .IP \(bu 2
 \fI\%http://www.kernel.org/doc/Documentation/gpio.txt\fP
 .UNINDENT
+.sp
+Please send any feedback to Chris Hager (\fI\%chris@linuxuser.at\fP) and \fI\%open an issue at Github\fP if
+you\(aqve encountered a bug.
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -335,6 +345,8 @@ GNU General Public License for more details.
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
+.IP \(bu 2
+v0.7.1: Refactoring of c_gpio, added new constants and methods
 .IP \(bu 2
 v0.6.4: Python 3 bugfix in \fIrpio\fP
 .UNINDENT

@@ -1,11 +1,10 @@
-**Visit http://pythonhosted.org/RPIO for a pretty version of this documentation.**
-
-RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
-
-* **rpio**, a command-line multitool for inspecting and manipulating GPIOs
-* **RPIO.py**, a module which extends RPi.GPIO with interrupt handling and other good stuff
-
 Visit `pythonhosted.org/RPIO <http://pythonhosted.org/RPIO>`_ for a pretty version of this documentation.
+
+RPIO is a GPIO toolbox for the Raspberry Pi.
+
+* **RPIO.py**
+* **rpio**, a command-line multitool for inspecting and manipulating GPIOs
+
 
 Installation
 ============
@@ -147,10 +146,12 @@ even if `edge="rising"`). To remove all callbacks from a certain gpio pin, use
 loop you can call ``RPIO.stop_waiting_for_interrupts()``.
 
 
+
+
 RPi.GPIO
 --------
 
-Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
+Besides the interrupt handling, you can use RPIO just as `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_:
 
 ::
 
@@ -193,43 +194,45 @@ You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code lik
 Additions to RPi.GPIO
 ---------------------
 
-RPIO extends the functionality of RPi.GPIO in several ways:
+Additional Constants
 
-* Interrupt handling (implemented with ``epoll``):
+  * ``RPIO.RPI_REVISION`` (either ``1`` or ``2``)
+  * ``RPIO.RPI_REVISION_HEX`` (``0002`` .. ``000f``)
+
+Additional Methods
+  
+  * ``RPIO.forceinput(gpio_id)`` - reads the value of any gpio without needing to call setup() first
+  * ``RPIO.forceoutput(gpio_id, value)`` - writes a value to any gpio without needing to call setup() first (**warning**: this can potentially harm
+    your Raspberry)
+  * ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
+  * ``RPIO.is_valid_gpio_id(gpio_id)`` - returns True if the supplied gpio_id is valid on this board
+  * ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
+
+Interrupt Handling
 
   * ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=False)``
   * ``RPIO.del_interrupt_callback(gpio_id)``
   * ``RPIO.wait_for_interrupts(epoll_timeout=1)``
   * ``RPIO.stop_waiting_for_interrupts()``
-
-* Additional methods:
-  
-  * ``RPIO.forceinput(gpio_id)`` which reads the value of any gpio without needing to call setup() first
-  * ``RPIO.forceoutput(gpio_id, value)`` which writes a value to any gpio without needing to call setup() first
-  * ``RPIO.rpi_sysinfo() which returns ``(model, revision, mb-ram and maker)`` of this Raspberry
-  * ``RPIO.gpio_function(gpio_id)`` which returns the current setup of a gpio (IN, OUT, ALT0)``
-  * ``RPIO.is_valid_gpio_id(gpio_id)``: returns True if the supplied gpio_id is valid on this board
-
-* Additional constants:
-
-  * ``RPIO.RPI_REVISION`` (either ``1`` or ``2``)
-  * ``RPIO.RPI_REVISION_HEX`` (``0002`` .. ``000f``)
-
-
-Feedback
-========
-
-Chris Hager (chris@linuxuser.at)
-
-If you've encountered a bug, please let me know via Github: https://github.com/metachris/RPIO/issues.
+  *  implemented with ``epoll``
 
 
 Links
 =====
 
 * https://github.com/metachris/RPIO
+* http://pypi.python.org/pypi/RPIO
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.kernel.org/doc/Documentation/gpio.txt
+
+
+Feedback
+========
+
+Please send any feedback to Chris Hager (chris@linuxuser.at) and `open an issue at Github <https://github.com/metachris/RPIO/issues>`_ if
+you've encountered a bug.
+
+
 
 
 License
@@ -251,4 +254,5 @@ License
 Updates
 =======
 
+* v0.7.1: Refactoring of c_gpio, added new constants and methods
 * v0.6.4: Python 3 bugfix in `rpio`
