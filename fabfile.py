@@ -1,5 +1,13 @@
-from fabric.api import run, local, cd, lcd, put, env, hosts, hide
-from fabric.contrib.files import exists
+"""
+Fabric makes it super easy to build and test the code on a Raspberry
+(in this case, with just one command):
+
+    $ fab test
+
+You'll need to have Fabric installed ('$ sudo pip install fabric'),
+SSH access to the Raspberry Pi, abd the right host in env.hosts.
+"""
+from fabric.api import run, local, cd, put, env
 
 
 env.use_ssh_config = True
@@ -15,3 +23,4 @@ def test():
     with cd("/tmp/source/c_gpio"):
         run("make")
         run("cp build/GPIO.so ../")
+    print("Module built and ready to use in '/tmp/source/'.")
