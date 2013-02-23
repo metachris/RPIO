@@ -11,12 +11,13 @@ RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 * :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs
 * :ref:`RPIO.py <ref-rpio-py>`, a module which extends RPi.GPIO with interrupt handling and other good stuff
 
+Visit `pythonhosted.org/RPIO <http://pythonhosted.org/RPIO>`_ for a pretty version of this documentation.
 
 Installation
 ============
 
-The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip (you may need
-to install "`easy_install`" with "`sudo apt-get install python-setuptools`")::
+The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_install`` or ``pip`` (you may need
+to get it first with ``sudo apt-get install python-setuptools``)::
 
     $ sudo easy_install -U RPIO
     $ sudo pip install -U RPIO
@@ -27,17 +28,17 @@ Another way to get RPIO is directly from the Github repository::
     $ cd RPIO
     $ sudo python setup.py install
 
-After the installation you can use `import RPIO` as well as the command-line tool
-`rpio`.
+After the installation you can use ``import RPIO`` as well as the command-line tool
+``rpio``.
 
 .. _ref-rpio-cmd:
 
 `rpio`, the command line tool
 =============================
 
-`rpio` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
-`rpio` needs to run with superuser privileges (root), else it will restart using `sudo`. The BCM GPIO numbering
-scheme is used by default. Here are a few examples of using `rpio`:
+``rpio`` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
+``rpio`` needs to run with superuser privileges (root), else it will restart using ``sudo``. The BCM GPIO numbering
+scheme is used by default.
 
 ::
 
@@ -94,28 +95,28 @@ scheme is used by default. Here are a few examples of using `rpio`:
         # Example output:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
-You can update RPIO to the latest version with `--update-rpio`::
+You can update the ``RPIO`` package to the latest version::
 
     $ rpio --update-rpio
 
-`rpio` can install (and update) its manpage::
+Install (and update) the ``rpio`` manpage::
 
     $ rpio --update-man
     $ man rpio
 
-`rpio` was introduced in version 0.5.1.
 
 .. _ref-rpio-py:
 
 `RPIO.py`, the Python module
 ============================
 
-RPIO extends RPi.GPIO with interrupt handling and a few other goodies.
+RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with 
+interrupt handling and a few :ref:`other goodies <ref-rpio-py-goodies>`.
 
 Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(`'rising|falling|both'`). RPIO uses the BCM GPIO numbering scheme by default. This
+(``rising|falling|both``). RPIO uses the BCM GPIO numbering scheme by default. This
 is an example of how to use RPIO to react on events on 3 pins by using
 interrupts, each with different edge detections:
 
@@ -138,7 +139,7 @@ interrupts, each with different edge detections:
     RPIO.wait_for_interrupts()
 
 If you want to receive a callback inside a Thread (which won't block anything
-else on the system), set `threaded_callback` to True when adding an interrupt-
+else on the system), set ``threaded_callback=True`` when adding an interrupt-
 callback. Here is an example:
 
 ::
@@ -147,9 +148,13 @@ callback. Here is an example:
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
-even if edge="rising"). To remove all callbacks from a certain gpio pin, use
-`RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
-loop you can call `RPIO.stop_waiting_for_interrupts()`.
+even if `edge="rising"`). To remove all callbacks from a certain gpio pin, use
+``RPIO.del_interrupt_callback(gpio_id)``. To stop the ``wait_for_interrupts()``
+loop you can call ``RPIO.stop_waiting_for_interrupts()``.
+
+
+RPi.GPIO
+--------
 
 Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
 
@@ -182,12 +187,39 @@ Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
     # reset every channel that has been set up by this program. and unexport gpio interfaces
     RPIO.cleanup()
 
-You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this (if 
-you've used the BCM gpio numbering scheme):
+You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this:
 
 ::
 
     import RPIO as GPIO  # (if you've previously used `import RPi.GPIO as GPIO`)
+
+
+.. _ref-rpio-py-goodies:
+
+Additions to RPi.GPIO
+---------------------
+
+RPIO extends the functionality of RPi.GPIO in several ways:
+
+* Interrupt handling (implemented with ``epoll``):
+
+  * ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=False)``
+  * ``RPIO.del_interrupt_callback(gpio_id)``
+  * ``RPIO.wait_for_interrupts(epoll_timeout=1)``
+  * ``RPIO.stop_waiting_for_interrupts()``
+
+* Additional methods:
+  
+  * ``RPIO.forceinput(gpio_id)`` which reads the value of any gpio without needing to call setup() first
+  * ``RPIO.forceoutput(gpio_id, value)`` which writes a value to any gpio without needing to call setup() first
+  * ``RPIO.rpi_sysinfo() which returns ``(model, revision, mb-ram and maker)`` of this Raspberry
+  * ``RPIO.gpio_function(gpio_id)`` which returns the current setup of a gpio (IN, OUT, ALT0)``
+  * ``RPIO.is_valid_gpio_id(gpio_id)``: returns True if the supplied gpio_id is valid on this board
+
+* Additional constants:
+
+  * ``RPIO.RPI_REVISION`` (either ``1`` or ``2``)
+  * ``RPIO.RPI_REVISION_HEX`` (``0002`` .. ``000f``)
 
 
 Feedback

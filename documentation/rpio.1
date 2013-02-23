@@ -39,8 +39,10 @@ RPIO is a Raspberry Pi GPIO toolbox, consisting of two main parts:
 \fI\%RPIO.py\fP, a module which extends RPi.GPIO with interrupt handling and other good stuff
 .UNINDENT
 .sp
-The easiest way to install/update RPIO on a Raspberry Pi is with either easy_install or pip (you may need
-to install "\fIeasy_install\fP" with "\fIsudo apt\-get install python\-setuptools\fP"):
+Visit \fI\%pythonhosted.org/RPIO\fP for a pretty version of this documentation.
+.sp
+The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP (you may need
+to get it first with \fBsudo apt\-get install python\-setuptools\fP):
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -67,12 +69,12 @@ $ sudo python setup.py install
 .UNINDENT
 .UNINDENT
 .sp
-After the installation you can use \fIimport RPIO\fP as well as the command\-line tool
-\fIrpio\fP.
+After the installation you can use \fBimport RPIO\fP as well as the command\-line tool
+\fBrpio\fP.
 .sp
-\fIrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
-\fIrpio\fP needs to run with superuser privileges (root), else it will restart using \fIsudo\fP. The BCM GPIO numbering
-scheme is used by default. Here are a few examples of using \fIrpio\fP:
+\fBrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
+\fBrpio\fP needs to run with superuser privileges (root), else it will restart using \fBsudo\fP. The BCM GPIO numbering
+scheme is used by default.
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -135,7 +137,7 @@ Show Raspberry Pi system info:
 .UNINDENT
 .UNINDENT
 .sp
-You can update RPIO to the latest version with \fI\-\-update\-rpio\fP:
+You can update the \fBRPIO\fP package to the latest version:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -147,7 +149,7 @@ $ rpio \-\-update\-rpio
 .UNINDENT
 .UNINDENT
 .sp
-\fIrpio\fP can install (and update) its manpage:
+Install (and update) the \fBrpio\fP manpage:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -160,14 +162,13 @@ $ man rpio
 .UNINDENT
 .UNINDENT
 .sp
-\fIrpio\fP was introduced in version 0.5.1.
-.sp
-RPIO extends RPi.GPIO with interrupt handling and a few other goodies.
+RPIO.py extends \fI\%RPi.GPIO\fP with
+interrupt handling and a few \fI\%other goodies\fP.
 .sp
 Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(\fI\(aqrising|falling|both\(aq\fP). RPIO uses the BCM GPIO numbering scheme by default. This
+(\fBrising|falling|both\fP). RPIO uses the BCM GPIO numbering scheme by default. This
 is an example of how to use RPIO to react on events on 3 pins by using
 interrupts, each with different edge detections:
 .INDENT 0.0
@@ -196,7 +197,7 @@ RPIO.wait_for_interrupts()
 .UNINDENT
 .sp
 If you want to receive a callback inside a Thread (which won\(aqt block anything
-else on the system), set \fIthreaded_callback\fP to True when adding an interrupt\-
+else on the system), set \fBthreaded_callback=True\fP when adding an interrupt\-
 callback. Here is an example:
 .INDENT 0.0
 .INDENT 3.5
@@ -211,9 +212,10 @@ RPIO.add_interrupt_callback(7, do_something, edge=\(aqrising\(aq, threaded_callb
 .sp
 Make sure to double\-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
-even if edge="rising"). To remove all callbacks from a certain gpio pin, use
-\fIRPIO.del_interrupt_callback(gpio_id)\fP. To stop the \fIwait_for_interrupts()\fP
-loop you can call \fIRPIO.stop_waiting_for_interrupts()\fP.
+even if \fIedge="rising"\fP). To remove all callbacks from a certain gpio pin, use
+\fBRPIO.del_interrupt_callback(gpio_id)\fP. To stop the \fBwait_for_interrupts()\fP
+loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
+.SH RPI.GPIO
 .sp
 Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
 .INDENT 0.0
@@ -252,8 +254,7 @@ RPIO.cleanup()
 .UNINDENT
 .UNINDENT
 .sp
-You can use RPIO as a drop\-in replacement for RPi.GPIO in your existing code like this (if
-you\(aqve used the BCM gpio numbering scheme):
+You can use RPIO as a drop\-in replacement for RPi.GPIO in your existing code like this:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -262,6 +263,45 @@ you\(aqve used the BCM gpio numbering scheme):
 import RPIO as GPIO  # (if you\(aqve previously used \(gaimport RPi.GPIO as GPIO\(ga)
 .ft P
 .fi
+.UNINDENT
+.UNINDENT
+.SH ADDITIONS TO RPI.GPIO
+.sp
+RPIO extends the functionality of RPi.GPIO in several ways:
+.INDENT 0.0
+.IP \(bu 2
+Interrupt handling (implemented with \fBepoll\fP):
+.INDENT 2.0
+.IP \(bu 2
+\fBRPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, threaded_callback=False)\fP
+.IP \(bu 2
+\fBRPIO.del_interrupt_callback(gpio_id)\fP
+.IP \(bu 2
+\fBRPIO.wait_for_interrupts(epoll_timeout=1)\fP
+.IP \(bu 2
+\fBRPIO.stop_waiting_for_interrupts()\fP
+.UNINDENT
+.IP \(bu 2
+Additional methods:
+.INDENT 2.0
+.IP \(bu 2
+\fBRPIO.forceinput(gpio_id)\fP which reads the value of any gpio without needing to call setup() first
+.IP \(bu 2
+\fBRPIO.forceoutput(gpio_id, value)\fP which writes a value to any gpio without needing to call setup() first
+.IP \(bu 2
+\fBRPIO.rpi_sysinfo() which returns \(ga\(ga(model, revision, mb\-ram and maker)\fP of this Raspberry
+.IP \(bu 2
+\fBRPIO.gpio_function(gpio_id)\fP which returns the current setup of a gpio (IN, OUT, ALT0)\(ga\(ga
+.IP \(bu 2
+\fBRPIO.is_valid_gpio_id(gpio_id)\fP: returns True if the supplied gpio_id is valid on this board
+.UNINDENT
+.IP \(bu 2
+Additional constants:
+.INDENT 2.0
+.IP \(bu 2
+\fBRPIO.RPI_REVISION\fP (either \fB1\fP or \fB2\fP)
+.IP \(bu 2
+\fBRPIO.RPI_REVISION_HEX\fP (\fB0002\fP .. \fB000f\fP)
 .UNINDENT
 .UNINDENT
 .sp

@@ -106,8 +106,7 @@ def rpi_sysinfo():
 
 def is_valid_gpio_id(gpio_id):
     """
-    Returns True/False depending on whether the supplied gpio_id is valid on
-    the current board. board_rev is either '1.0' or '2.0'
+    Returns True if the supplied gpio_id is valid on this board, else False
     """
     return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV1 \
             if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2)
