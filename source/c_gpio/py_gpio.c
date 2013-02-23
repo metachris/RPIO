@@ -54,9 +54,10 @@ static const int (*pin_to_gpio)[27];
 // Flag whether to show warnings
 static int gpio_warnings = 1;
 
-// Which Raspberry Pi Revision is used (will be 1 or 2); fetched on module init
-// from /proc/cpuinfo (via cpuinfo.c)
-static int rpi_revision_cache = -1;
+// Which Raspberry Pi Revision is used (will be 1 or 2; 0 if not a Raspberry Pi).
+// Source: /proc/cpuinfo (via cpuinfo.c)
+static int rpi_revision_int = 0;
+static char rpi_revision_hex[1024] = {'\0'};
 
 // Internal map of directions (in/out) per gpio to prevent user mistakes.
 static int gpio_direction[54];
@@ -66,6 +67,13 @@ static int gpio_direction[54];
 #define BOARD        10
 #define BCM          11
 static int gpio_mode = MODE_UNKNOWN;
+
+static void
+cache_rpi_revision(void)
+{
+    rpi_revision_int = get_cpuinfo_revision(rpi_revision_hex);
+    printf("rpi revision hex: %s", rpi_revision_hex);
+}
 
 // module_setup is run on import of the GPIO module and calls the setup() method in c_gpio.c
 static int
@@ -346,12 +354,18 @@ py_forceinput_gpio(PyObject *self, PyObject *args)
         Py_RETURN_FALSE;
 }
 
-// returns the raspberry pi revision
+// returns the raspberry pi revision (1 or 2)
 static PyObject*
 py_rpi_revision(PyObject *self, PyObject *args)
 {
-    return Py_BuildValue("i", (int) rpi_revision_cache);
-    //return rpi_revision_cache;
+    return Py_BuildValue("i", (int) rpi_revision_int);
+}
+
+// returns the raspberry pi hex revision (0002..000f)
+static PyObject*
+py_rpi_revision_hex(PyObject *self, PyObject *args)
+{
+    return Py_BuildValue("s", rpi_revision_hex);
 }
 
 // python function setmode(mode)
@@ -403,7 +417,7 @@ py_setwarnings(PyObject *self, PyObject *args)
 
 PyMethodDef rpi_gpio_methods[] = {
     {"setup", (PyCFunction)py_setup_channel, METH_VARARGS | METH_KEYWORDS, "Set up the GPIO channel, direction and (optional) pull/up down control\nchannel    - Either: RPi board pin number (not BCM GPIO 00..nn number).  Pins start from 1\n                or     : BCM GPIO number\ndirection - INPUT or OUTPUT\n[pull_up_down] - PUD_OFF (default), PUD_UP or PUD_DOWN\n[initial]        - Initial value for an output channel"},
-    {"cleanup", py_cleanup, METH_VARARGS, "Clean up by resetting all GPIO channels that have been used by this program to INPUT with no pullup/pulldown and no event detection"},
+    {"cleanup", py_cleanup, METH_VARARGS, "Clean up by resetting all GPIO channels that have been used by this program\nto INPUT with no pullup/pulldown and no event detection"},
     {"output", py_output_gpio, METH_VARARGS, "Output to a GPIO channel"},
     {"input", py_input_gpio, METH_VARARGS, "Input from a GPIO channel"},
     {"setmode", setmode, METH_VARARGS, "Set up numbering mode to use for channels.\nBOARD - Use Raspberry Pi board numbers\nBCM    - Use Broadcom GPIO 00..nn numbers"},
@@ -414,6 +428,7 @@ PyMethodDef rpi_gpio_methods[] = {
     {"forceoutput", py_forceoutput_gpio, METH_VARARGS, "Force output to a GPIO channel, ignoring whether it has been set up before."},
     {"forceinput", py_forceinput_gpio, METH_VARARGS, "Force read input from a GPIO channel, ignoring whether it was set up before."},
     {"rpi_revision", py_rpi_revision, METH_VARARGS, "Returns integer value of current raspberry revision (1 or 2)."},
+    {"rpi_revision_hex", py_rpi_revision_hex, METH_VARARGS, "Returns cpu-revision string of current raspberry ('0002'..'000f')."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -494,8 +509,8 @@ PyMODINIT_FUNC initGPIO(void)
     PyModule_AddObject(module, "PUD_DOWN", pud_down);
 
     // detect board revision and set up accordingly
-    rpi_revision_cache = get_rpi_revision();
-    if (rpi_revision_cache == -1)
+    cache_rpi_revision();
+    if (rpi_revision_int < 1)
     {
         PyErr_SetString(PyExc_SystemError, "This module can only be run on a Raspberry Pi!");
 #if PY_MAJOR_VERSION > 2
@@ -503,9 +518,10 @@ PyMODINIT_FUNC initGPIO(void)
 #else
         return;
 #endif
-    } else if (rpi_revision_cache == 1) {
+    } else if (rpi_revision_int == 1) {
         pin_to_gpio = &pin_to_gpio_rev1;
-    } else { // assume revision 2
+    } else { 
+        // assume revision 2
         pin_to_gpio = &pin_to_gpio_rev2;
     }
 

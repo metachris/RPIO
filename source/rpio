@@ -303,7 +303,7 @@ def main():
     if options.sysinfo:
         show_help = False
         s = "Model %s, Revision %s, RAM: %s MB, Maker: %s" % \
-                RPIO.get_rpi_sysinfo()
+                RPIO.rpi_sysinfo()
         info(s)
 
     if show_help:
