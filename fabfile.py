@@ -9,7 +9,7 @@ You'll need to have Fabric installed ('$ sudo pip install fabric'),
 SSH access to the Raspberry Pi, abd the right host in env.hosts.
 """
 from fabric.api import run, local, cd, put, env
-
+from fabric.operations import prompt
 
 env.use_ssh_config = True
 env.hosts = ["raspberry_dev"]
@@ -45,3 +45,27 @@ def test():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source"):
         run("sudo python run_tests.py")
+
+
+def upload_to_pypi():
+    """ Upload sdist and bdist_eggs to pypi """
+    # DO_UPLOAD provides a safety mechanism to avoid accidental pushes to pypi.
+    # Set it to "upload" to actually push to pypi; else it only does a dry-run.
+    DO_UPLOAD = ""  # "upload"
+
+    # One more safety input and then we are ready to go :)
+    x = prompt("Are you sure to upload the current version to pypi?")
+    if not x or not x.lower() in ["y", "yes"]:
+        print("Error: no build found in dist/")
+        return
+
+    local("rm -rf dist")
+    local("python setup.py sdist %s" % DO_UPLOAD)
+    fn = local("ls dist/", capture=True)
+    version = fn[5:-7]
+    put("dist/%s" % fn, "/tmp/")
+    with cd("/tmp"):
+        run("tar -xf /tmp/%s" % fn)
+    with cd("/tmp/RPIO-%s" % version):
+        run("python2.7 setup.py bdist_egg %s" % DO_UPLOAD)
+        run("python3.2 setup.py bdist_egg %s" % DO_UPLOAD)
