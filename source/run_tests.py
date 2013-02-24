@@ -5,6 +5,7 @@ This test suite runs on the Raspberry Pi and tests RPIO inside out.
 import os
 import time
 import unittest
+from threading import Thread
 import logging
 log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
 logging.basicConfig(format=log_format, level=logging.DEBUG)
@@ -113,8 +114,9 @@ class TestSequenceFunctions(unittest.TestCase):
             logging.info("- interrupt callback received: %s", (args))
             RPIO.stop_waiting_for_interrupts()
 
-        logging.info(" ")
-        logging.info(" ")
+        #
+        # Normal interrupt test
+        #
         logging.info(" ")
         logging.info("Testing interrupts on GPIO-%s", GPIO_IN)
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='rising', \
@@ -130,8 +132,9 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.cleanup()
         time.sleep(1)
 
-        logging.info(" ")
-        logging.info(" ")
+        #
+        # Interrupt manual cancel
+        #
         logging.info(" ")
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
                 pull_up_down=RPIO.PUD_UP)
@@ -140,7 +143,29 @@ class TestSequenceFunctions(unittest.TestCase):
             RPIO.wait_for_interrupts()
         except:
             pass
-        logging.info("- stopped waiting for interrupts on GPIO-%s", GPIO_IN)
+        logging.info("-")
+        RPIO.cleanup()
+        RPIO.cleanup()
+        time.sleep(1)
+
+        #
+        # Auto interrupt shutdown with thread and stop_waiting_for_interrupts
+        #
+        logging.info(" ")
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
+                pull_up_down=RPIO.PUD_UP)
+        logging.info("- waiting for auto_exit in 3 sec on GPIO-%s", GPIO_IN)
+
+        def stopint():
+            time.sleep(3)
+            RPIO.stop_waiting_for_interrupts()
+            logging.info("- called `stop_waiting_for_interrupts()`")
+
+        Thread(target=stopint).start()
+        try:
+            RPIO.wait_for_interrupts()
+        except:
+            pass
         logging.info("-")
         RPIO.cleanup()
         RPIO.cleanup()
