@@ -164,7 +164,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         raise AttributeError("'%s' is not a valid pull_up_down value." % edge)
 
     # Make sure the gpio_id is valid
-    if not gpio_id in GPIO_LIST_R1 if RPI_REVISION == 1 else GPIO_LIST_R2:
+    if not gpio_id in (GPIO_LIST_R1 if RPI_REVISION == 1 else GPIO_LIST_R2):
         raise AttributeError("GPIO %s is not a valid gpio-id for this board." \
                 % gpio_id)
 

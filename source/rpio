@@ -147,8 +147,8 @@ def main():
     RPIO.setwarnings(False)
 
     def is_valid_gpio_id(gpio_id):
-        return gpio_id in RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
-                     else RPIO.GPIO_LIST_R2
+        return gpio_id in (RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
+                     else RPIO.GPIO_LIST_R2)
 
     def validate_gpio_id_or_die(gpio_id):
         if not is_valid_gpio_id(gpio_id):

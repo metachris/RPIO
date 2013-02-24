@@ -14,6 +14,13 @@ env.use_ssh_config = True
 env.hosts = ["raspberry_dev"]
 
 
+def test_soft():
+    local("tar -czf /tmp/rpio.tar.gz source")
+    put("/tmp/rpio.tar.gz", "/tmp/")
+    with cd("/tmp"):
+        run("tar -xf rpio.tar.gz")
+
+
 def test():
     local("tar -czf /tmp/rpio.tar.gz source")
     run("rm -rf /tmp/rpio.tar.gz /tmp/source")
