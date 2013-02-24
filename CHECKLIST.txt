@@ -15,6 +15,8 @@ Version Strings
 Documentation
 -------------
   [ ] $ make doc
+  [ ] Check RPIO.py
+  [ ] Cheeck rpio
 
 
 GIT Master Merge & Push
@@ -28,8 +30,7 @@ GIT Master Merge & Push
 
 Double-Check Test Suite
 -----------------------
-  [ ] $ fab buildtest  # check builds for python2.7 and 3.2
-  [ ] $ fab rpiotest   # runs the python RPIO testsuite
+  [ ] $ fab upload build test
 
 
 Add Git Tag and Push

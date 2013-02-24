@@ -127,12 +127,15 @@ MODEL_DATA = {
 }
 _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
-# List of valid bcm gpio ids for raspberry rev1 and rev2
+# List of valid bcm gpio ids for raspberry rev1 and rev2. Used for inspect-all.
 GPIO_LIST_R1 = (0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25)
 GPIO_LIST_R2 = (2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, \
         27, 28, 29, 30, 31)
 
-# Header indicates which board header (rev2 has gpio28-31 on the P5 header)
+# List of board pins with extra information which board header they belong to.
+# Revision 2 boards have extra gpios on the P5 header (gpio 27-31)). Shifting
+# the header info left by 8 bits leaves 255 possible channels per header. This
+# list of board pins is currently only used for testing purposes.
 HEADER_P1 = 0 << 8
 HEADER_P5 = 5 << 8
 PIN_LIST = (3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, \
@@ -204,13 +207,12 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         _map_gpioid_to_callbacks[gpio_id].append(cb)
 
     else:
-        # Export kernel interface /sys/class/gpio/gpioN
-        # If it already exists, unexport first to be sure to clean up
+        # If kernel interface already exists, unexport first for clean setup
         if os.path.exists(path_gpio):
             with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
                 f.write("%s" % gpio_id)
 
-        # Always export it on first usage
+        # Export kernel interface /sys/class/gpio/gpioN
         with open(_SYS_GPIO_ROOT + "export", "w") as f:
             f.write("%s" % gpio_id)
         global _gpio_kernel_interfaces_created
@@ -302,7 +304,7 @@ def wait_for_interrupts(epoll_timeout=1):
                     f.seek(0)
                     _handle_interrupt(fileno, val)
     except:
-        debug("RPIO auto-cleaning interfaces at exception")
+        debug("RPIO: auto-cleaning interfaces after an exception")
         _cleanup_interfaces()
         raise
 
