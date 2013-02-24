@@ -127,22 +127,20 @@ MODEL_DATA = {
 }
 _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
-# Pin layout with GPIO numbers (pin-id range is 1 - 26)
-# DC5V = -1; DC3V3 = -2; GND = -3
-PIN_TO_GPIO_LAYOUT_REV1 = (-2, -1, 0, 5, 1, -3, 4, 14, -3, 15, 17, 18, 21, \
-        -3, 22, 23, -2, 24, 10, -3, 9, 25, 11, 8, -3, 7)
-PIN_TO_GPIO_LAYOUT_REV2 = (-2, -1, 2, -1, 3, -3, 4, 14, -3, 15, 17, 18, \
-        27, -3, 22, 23, -2, 24, 10, -3, 9, 25, 11, 8, -3, 7)
-
-
-def rpi_sysinfo():
-    """ Returns (model, revision, mb-ram and maker) for this raspberry """
-    return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
+# List of valid bcm gpio ids for raspberry rev1 and rev2
+GPIO_LIST_R1 = (0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25)
+GPIO_LIST_R2 = (2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, \
+        27, 28, 29, 30, 31)
 
 
 def _threaded_callback(callback, *args):
     """ Internal wrapper to start a callback in threaded mode """
     Thread(target=callback, args=args).start()
+
+
+def rpi_sysinfo():
+    """ Returns (model, revision, mb-ram and maker) for this raspberry """
+    return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
 
 
 def add_interrupt_callback(gpio_id, callback, edge='both',
@@ -166,8 +164,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         raise AttributeError("'%s' is not a valid pull_up_down value." % edge)
 
     # Make sure the gpio_id is valid
-    if not gpio_id in (PIN_TO_GPIO_LAYOUT_REV1 \
-            if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2):
+    if not gpio_id in GPIO_LIST_R1 if RPI_REVISION == 1 else GPIO_LIST_R2:
         raise AttributeError("GPIO %s is not a valid gpio-id for this board." \
                 % gpio_id)
 

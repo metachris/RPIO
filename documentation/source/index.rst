@@ -272,9 +272,10 @@ Updates
 
 * v0.7.2
 
-  * BOARD numbering scheme supported with interrupts
-  * Software pullup and -down resistor with interrupts
+  * BOARD numbering scheme supported for interrupts
+  * Software pullup and -down resistor for interrupts
   * new method ``RPIO.set_pullupdn(..)``
+  * rpio now supports rev2 gpios on P5 header (28, 29, 30, 31)
 
 
 * v0.7.1
