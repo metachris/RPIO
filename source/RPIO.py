@@ -180,14 +180,8 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     cb = callback if not threaded_callback else \
             partial(_threaded_callback, callback)
 
-    # Check if /sys/class/gpio/gpioN interface exists; else create it
+    # Prepare the /sys/class path of this gpio
     path_gpio = "%sgpio%s/" % (_SYS_GPIO_ROOT, gpio_id)
-    if not os.path.exists(path_gpio):
-        with open(_SYS_GPIO_ROOT + "export", "w") as f:
-            f.write("%s" % gpio_id)
-        global _gpio_kernel_interfaces_created
-        _gpio_kernel_interfaces_created.append(gpio_id)
-        debug("- kernel interface created for GPIO %s" % gpio_id)
 
     # If initial callback for this GPIO then set everything up. Else make sure
     # the edge detection is the same and add this to the callback list.
@@ -195,7 +189,6 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "r") as f:
             e = f.read().strip()
             if e != edge:
-                _cleanup_interfaces()
                 raise AttributeError(("Cannot add callback for gpio %s:"
                         " edge detection '%s' not compatible with existing"
                         " edge detection '%s'.") % (gpio_id, edge, e))
@@ -205,6 +198,19 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         _map_gpioid_to_callbacks[gpio_id].append(cb)
 
     else:
+        # Export kernel interface /sys/class/gpio/gpioN
+        # If it already exists, unexport first to be sure to clean up
+        if os.path.exists(path_gpio):
+            with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
+                f.write("%s" % gpio_id)
+
+        # Always export it on first usage
+        with open(_SYS_GPIO_ROOT + "export", "w") as f:
+            f.write("%s" % gpio_id)
+        global _gpio_kernel_interfaces_created
+        _gpio_kernel_interfaces_created.append(gpio_id)
+        debug("- kernel interface created for GPIO %s" % gpio_id)
+
         # Configure gpio as input
         with open(path_gpio + "direction", "w") as f:
             f.write("in")
