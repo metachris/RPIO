@@ -296,6 +296,7 @@ def wait_for_interrupts(epoll_timeout=1):
                     f.seek(0)
                     _handle_interrupt(fileno, val)
     except:
+        debug("RPIO auto-cleaning interfaces at exception")
         _cleanup_interfaces()
         raise
 

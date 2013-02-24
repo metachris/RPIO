@@ -42,6 +42,8 @@ class TestSequenceFunctions(unittest.TestCase):
             RPIO.setup(32, RPIO.IN)
 
         RPIO.setup(GPIO_IN, RPIO.IN)
+        logging.info(" ")
+        logging.info("--------------------------------------")
         logging.info("Input from GPIO-%s w/ PULLOFF:  %s", \
                 GPIO_IN, RPIO.input(GPIO_IN))
         RPIO.set_pullupdn(GPIO_IN, RPIO.PUD_UP)
@@ -50,6 +52,8 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.set_pullupdn(GPIO_IN, RPIO.PUD_DOWN)
         logging.info("Input from GPIO-%s w/ PULLDOWN: %s", \
                 GPIO_IN, RPIO.input(GPIO_IN))
+        logging.info("--------------------------------------")
+        logging.info(" ")
         RPIO.set_pullupdn(GPIO_IN, RPIO.PUD_OFF)
 
     def test4_output(self):
@@ -75,7 +79,41 @@ class TestSequenceFunctions(unittest.TestCase):
         pass
 
     def test6_interrupts(self):
-        pass
+        def test_callback(*args):
+            logging.info("- interrupt callback received: %s", (args))
+            RPIO.stop_waiting_for_interrupts()
+
+        logging.info(" ")
+        logging.info(" ")
+        logging.info(" ")
+        logging.info("Testing interrupts on GPIO-%s", GPIO_IN)
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='rising', \
+                pull_up_down=RPIO.PUD_DOWN)
+
+        logging.info("- waiting for interrupts on GPIO-%s...", GPIO_IN)
+        try:
+            RPIO.wait_for_interrupts()
+        except:
+            pass
+
+        logging.info("-")
+        RPIO.cleanup()
+        time.sleep(3)
+
+        logging.info(" ")
+        logging.info(" ")
+        logging.info(" ")
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
+                pull_up_down=RPIO.PUD_UP)
+        logging.info("- waiting for manual exit (CTRL+C) on GPIO-%s", GPIO_IN)
+        try:
+            RPIO.wait_for_interrupts()
+        except:
+            pass
+        logging.info("- stopped waiting for interrupts on GPIO-%s", GPIO_IN)
+        logging.info("-")
+        RPIO.cleanup()
+        RPIO.cleanup()
 
 
 if __name__ == '__main__':
