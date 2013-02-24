@@ -35,16 +35,25 @@ def build():
         run("""echo "import GPIO\nprint(GPIO.VERSION_GPIO)" > test.py""")
         run("make gpio2.7 && cp build/GPIO.so .")
         run("sudo python2.7 test.py")
-        run("mv GPIO.so ../")   # keep new 2.7 version for rpiotests
+        run("cp GPIO.so ../")   # keep new 2.7 version for rpiotests
+        run("cp GPIO.so ../GPIO27.so")   # keep new 2.7 version for rpiotests
         run("make gpio3.2 && cp build/GPIO.so .")
         run("sudo python3.2 test.py")
-        run("rm GPIO.so")
+        run("mv GPIO.so ../GPIO32.so")
 
 
 def test():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source"):
+        run("cp GPIO27.so GPIO.so")
         run("sudo python run_tests.py")
+
+
+def test3():
+    """ Invokes test suite in `run_tests.py` """
+    with cd("/tmp/source"):
+        run("cp GPIO32.so GPIO.so")
+        run("sudo python3 run_tests.py")
 
 
 def upload_to_pypi():

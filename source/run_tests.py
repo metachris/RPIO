@@ -3,6 +3,7 @@
 This test suite runs on the Raspberry Pi and tests RPIO inside out.
 """
 import os
+import sys
 import time
 import unittest
 from threading import Thread
@@ -28,12 +29,14 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test2_rpio_cmd(self):
         logging.info(" ")
-        logging.info("=== rpio COMMAND LINE TOOL TESTS ===")
-        run("sudo python rpio --version")
-        run("sudo python rpio -v -I")
-        run("sudo python rpio -v -i 5,%s,%s" % (GPIO_IN, GPIO_OUT))
+        cmd = "sudo python rpio" if sys.version_info[0] == 2 else \
+              "sudo python3 rpio"
+        logging.info("=== rpio COMMAND LINE TOOL TESTS (`%s`)===", cmd)
+        run("%s --version" % cmd)
+        run("%s -v -I" % cmd)
+        run("%s -v -i 5,%s,%s" % (cmd, GPIO_IN, GPIO_OUT))
         # run("sudo python rpio --update-man")
-        run("sudo python rpio --sysinfo")
+        run("%s --sysinfo" % cmd)
 
     def test3_input(self):
         logging.info(" ")
@@ -190,4 +193,10 @@ class TestSequenceFunctions(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    logging.info("==================================")
+    logging.info("= Test Suite Run with Python %s   =" % \
+            sys.version_info[0])
+    logging.info("==================================")
+    logging.info("")
+    logging.info("")
     unittest.main()

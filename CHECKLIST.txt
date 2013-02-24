@@ -30,7 +30,7 @@ GIT Master Merge & Push
 
 Double-Check Test Suite
 -----------------------
-  [ ] $ fab upload build test
+  [ ] $ fab upload build test test3
 
 
 Add Git Tag and Push
@@ -42,8 +42,4 @@ Add Git Tag and Push
 Upload to PyPi
 --------------
   [ ] make doc_upload
-  [ ] python setup.py sdist upload
-
-  - on the Raspberry: 
-  [ ] python2.7 setup.py bdist_egg upload
-  [ ] python3.2 setup.py bdist_egg upload
+  [ ] fab upload_to_pypi  # edit safety line in fabfile first
