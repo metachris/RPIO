@@ -205,8 +205,6 @@ def main():
             id_list = list(pins)
             id_list.sort()
             ids = ",".join([str(gpio) for gpio in id_list if gpio >= 0])
-        else:
-            validate_gpio_id_or_die(ids)
 
         # gpio-ids can either be a single value, comma separated or a range
         show_nonexists = True
