@@ -70,22 +70,27 @@ scheme is used by default.
         You can only write to pins that have been set up as OUTPUT. You can
         set this yourself with `--setoutput <gpio-id>`.
 
-    Show interrupt events on GPIOs (with -w/--wait_for_interrupts;
-    default edge='both'):
+    Wait for interrupt events on GPIOs (with -w/--wait_for_interrupts). You
+    can specify an edge (eg. `:rising`; default='both') as well as `:pullup`,
+    `:pulldown` or `pulloff`.
 
         $ rpio -w 7
-        $ rpio -w 7:rising,8:falling,9
+        $ rpio -w 7:rising
+        $ rpio -w 7:falling:pullup
+
+        $ rpio -w 7:rising:pullup,17,18
         $ rpio -w 1-9
 
-    Setup a pin as INPUT (optionally with pullup or -down resistor):
+    Setup a pin as INPUT (optionally with software resistor):
 
         $ rpio --setinput 7
         $ rpio --setinput 7:pullup
         $ rpio --setinput 7:pulldown
 
-    Setup a pin as OUTPUT:
+    Setup a pin as OUTPUT (optionally with an initial value (0 or 1)):
 
         $ rpio --setoutput 8
+        $ rpio --setoutput 8:1
 
     Show Raspberry Pi system info:
 
@@ -94,9 +99,11 @@ scheme is used by default.
         # Example output:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
+
 You can update the ``RPIO`` package to the latest version::
 
     $ rpio --update-rpio
+
 
 Install (and update) the ``rpio`` manpage::
 
@@ -183,10 +190,14 @@ Besides the interrupt handling, you can use RPIO just as `RPi.GPIO <http://pypi.
     # set up output channel with an initial state
     RPIO.setup(8, RPIO.OUT, initial=RPIO.LOW)
 
-    # change to BOARD numbering schema (interrupts will still use BCM though)
+    # change to BOARD numbering schema
     RPIO.setmode(RPIO.BOARD)
 
-    # reset every channel that has been set up by this program. and unexport gpio interfaces
+    # set software pullup on channel 17
+    RPIO.set_pullupdn(17, RPIO.PUD_UP)
+
+    # reset every channel that has been set up by this program,
+    # and unexport interrupt gpio interfaces
     RPIO.cleanup()
 
 You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code like this:
@@ -212,7 +223,6 @@ Additional Methods
 * ``RPIO.forceoutput(gpio_id, value)`` - writes a value to any gpio without needing to call setup() first 
   (**warning**: this can potentially harm your Raspberry)
 * ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
-* ``RPIO.is_valid_gpio_id(gpio_id)`` - returns True if the supplied gpio_id is valid on this board
 * ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
 * ``RPIO.set_pullupdn(gpio_id, pud)`` - set a pullup or -down resistor on a GPIO
 
@@ -262,8 +272,10 @@ Updates
 
 * v0.7.2
 
-  * **Pullup and -down resistors for interrupts**
+  * BOARD numbering scheme supported with interrupts
+  * Software pullup and -down resistor with interrupts
   * new method ``RPIO.set_pullupdn(..)``
+
 
 * v0.7.1
   
