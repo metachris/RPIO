@@ -15,6 +15,7 @@ env.hosts = ["raspberry_dev"]
 
 
 def test_soft():
+    """ Updates /tmp/source with content of source/ """
     local("tar -czf /tmp/rpio.tar.gz source")
     put("/tmp/rpio.tar.gz", "/tmp/")
     with cd("/tmp"):
@@ -22,6 +23,10 @@ def test_soft():
 
 
 def test():
+    """
+    Replaces /tmp/source with content of source/
+    and rebuilds the C code
+    """
     local("tar -czf /tmp/rpio.tar.gz source")
     run("rm -rf /tmp/rpio.tar.gz /tmp/source")
     put("/tmp/rpio.tar.gz", "/tmp/")
@@ -34,5 +39,6 @@ def test():
 
 
 def test_dist():
+    """ Makes an sdist and uploads it to /tmp """
     local("python setup.py sdist")
     put("dist/*.tar.gz", "/tmp/")

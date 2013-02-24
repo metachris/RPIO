@@ -11,35 +11,38 @@ log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
 logging.basicConfig(format=log_format, level=logging.DEBUG)
 
 import RPIO
+RPIO.setwarnings(False)
 
 GPIO_IN = 14
 GPIO_OUT = 17
 
 
-class TestSequenceFunctions(unittest.TestCase):
-    def setUp(self):
-        RPIO.setwarnings(False)
+def run(cmd):
+        logging.info("Running `%s`...", cmd)
+        os.system(cmd)
 
+
+class TestSequenceFunctions(unittest.TestCase):
     def test1_version(self):
         logging.info("Version: %s (%s)", RPIO.VERSION, RPIO.VERSION_GPIO)
 
     def test2_rpio_cmd(self):
-        logging.info("Running `sudo rpio --version`...")
-        #os.system("sudo python rpio --version")
-        logging.info("Running `sudo rpio -I`...")
-        #os.system("sudo python rpio -I")
-        logging.info("Running `sudo rpio -i 5,%s,%s`...", GPIO_IN, GPIO_OUT)
-        #os.system("sudo python rpio -i 5,%s,%s" % (GPIO_IN, GPIO_OUT)
+        logging.info(" ")
+        logging.info("=== rpio COMMAND LINE TOOL TESTS ===")
+        run("sudo python rpio --version")
+        run("sudo python rpio -I")
+        run("sudo python rpio -i 5,%s,%s" % (GPIO_IN, GPIO_OUT))
+        run("sudo python rpio --update-man")
 
     def test3_input(self):
+        logging.info(" ")
+        logging.info(" ")
+        logging.info("=== INPUT TESTS ===")
         with self.assertRaises(RPIO.InvalidChannelException):
-            # 5 is not a valid gpio
             RPIO.setup(5, RPIO.IN)
         with self.assertRaises(RPIO.InvalidChannelException):
-            # 5 is not a valid gpio
             RPIO.setup(0, RPIO.IN)
         with self.assertRaises(RPIO.InvalidChannelException):
-            # 5 is not a valid gpio
             RPIO.setup(32, RPIO.IN)
 
         RPIO.setup(GPIO_IN, RPIO.IN)
@@ -58,6 +61,9 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.set_pullupdn(GPIO_IN, RPIO.PUD_OFF)
 
     def test4_output(self):
+        logging.info(" ")
+        logging.info(" ")
+        logging.info("=== OUTPUT TESTS ===")
         with self.assertRaises(RPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(5, RPIO.OUT)
@@ -79,7 +85,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test5_board_pin_numbers(self):
         logging.info(" ")
         logging.info(" ")
-        logging.info(" ")
+        logging.info("=== BCM AND BOARD NUMBERING TESTS ===")
 
         RPIO.setmode(RPIO.BCM)
         pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
@@ -110,6 +116,10 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.setmode(RPIO.BCM)
 
     def test6_interrupts(self):
+        logging.info(" ")
+        logging.info(" ")
+        logging.info("=== INTERRUPT TESTS ==")
+
         def test_callback(*args):
             logging.info("- interrupt callback received: %s", (args))
             RPIO.stop_waiting_for_interrupts()
@@ -133,28 +143,13 @@ class TestSequenceFunctions(unittest.TestCase):
         time.sleep(1)
 
         #
-        # Interrupt manual cancel
-        #
-        logging.info(" ")
-        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
-                pull_up_down=RPIO.PUD_UP)
-        logging.info("- waiting for manual exit (CTRL+C) on GPIO-%s", GPIO_IN)
-        try:
-            RPIO.wait_for_interrupts()
-        except:
-            pass
-        logging.info("-")
-        RPIO.cleanup()
-        RPIO.cleanup()
-        time.sleep(1)
-
-        #
         # Auto interrupt shutdown with thread and stop_waiting_for_interrupts
         #
         logging.info(" ")
+        logging.info(" ")
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
                 pull_up_down=RPIO.PUD_UP)
-        logging.info("- waiting for auto_exit in 3 sec on GPIO-%s", GPIO_IN)
+        logging.info("- AUTO-EXIT IN 3 SECONDS")
 
         def stopint():
             time.sleep(3)
@@ -169,6 +164,25 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info("-")
         RPIO.cleanup()
         RPIO.cleanup()
+
+        #
+        # Interrupt manual cancel
+        #
+        logging.info(" ")
+        logging.info(" ")
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='rising', \
+                pull_up_down=RPIO.PUD_DOWN)
+        RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
+                pull_up_down=RPIO.PUD_UP)
+        logging.info("- waiting for interrupts on GPIO-%s...", GPIO_IN)
+        try:
+            RPIO.wait_for_interrupts()
+        except:
+            pass
+        logging.info("-")
+        RPIO.cleanup()
+        RPIO.cleanup()
+        time.sleep(1)
 
 
 if __name__ == '__main__':
