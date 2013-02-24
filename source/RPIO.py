@@ -34,15 +34,50 @@ callback. Here is an example:
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
-even if edge="rising").
-
-To remove all callbacks from a certain gpio pin, use
+even if edge="rising"). To remove all callbacks from a certain gpio pin, use
 `RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
 loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
+Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
+
+    import RPIO
+
+    # set up input channel without pull-up
+    RPIO.setup(7, RPIO.IN)
+
+    # set up input channel with pull-up control. Can be
+    # PUD_UP, PUD_DOWN or PUD_OFF (default)
+    RPIO.setup(7, RPIO.IN, pull_up_down=RPIO.PUD_UP)
+
+    # read input from gpio 7
+    input_value = RPIO.input(7)
+
+    # set up GPIO output channel
+    RPIO.setup(8, RPIO.OUT)
+
+    # set gpio 8 to high
+    RPIO.output(8, True)
+
+    # set up output channel with an initial state
+    RPIO.setup(8, RPIO.OUT, initial=RPIO.LOW)
+
+    # change to BOARD numbering schema
+    RPIO.setmode(RPIO.BOARD)
+
+    # set software pullup on channel 17
+    RPIO.set_pullupdn(17, RPIO.PUD_UP)
+
+    # reset every channel that has been set up by this program,
+    # and unexport interrupt gpio interfaces
+    RPIO.cleanup()
+
+You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code:
+
+    import RPIO as GPIO  # (if you've used `import RPi.GPIO as GPIO`)
+
 Author: Chris Hager <chris@linuxuser.at>
-License: GPLv3
 URL: https://github.com/metachris/RPIO
+License: GPLv3
 """
 import select
 import os.path
