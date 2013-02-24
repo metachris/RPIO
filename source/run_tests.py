@@ -71,12 +71,42 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.setup(GPIO_OUT, RPIO.OUT)
         logging.info("Setting GPIO-%s output to 1...", GPIO_OUT)
         RPIO.output(GPIO_OUT, RPIO.HIGH)
-        time.sleep(3)
+        time.sleep(2)
         logging.info("Setting GPIO-%s output to 0...", GPIO_OUT)
         RPIO.output(GPIO_OUT, RPIO.LOW)
 
     def test5_board_pin_numbers(self):
-        pass
+        logging.info(" ")
+        logging.info(" ")
+        logging.info(" ")
+
+        RPIO.setmode(RPIO.BCM)
+        pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
+                else RPIO.GPIO_LIST_R2
+        logging.info("testing bcm gpio numbering: %s", pins)
+        for pin in pins:
+            gpio_id = RPIO.channel_to_gpio(pin)
+            logging.info("- BCM channel %s = gpio %s", pin, gpio_id)
+        with self.assertRaises(RPIO.InvalidChannelException):
+            gpio_id = RPIO.channel_to_gpio(32)
+        with self.assertRaises(RPIO.InvalidChannelException):
+            gpio_id = RPIO.channel_to_gpio(5)
+
+        logging.info(" ")
+
+        pins = RPIO.PIN_LIST
+        RPIO.setmode(RPIO.BOARD)
+        logging.info("testing board gpio numbering: %s", pins)
+        for pin in pins:
+            if pin >> 8 > 0:
+                # py_gpio.c cannot deal with BOARD->BCM of P5 pins yet
+                continue
+            gpio_id = RPIO.channel_to_gpio(pin)
+            logging.info("- BOARD channel %s = gpio %s", pin, gpio_id)
+        with self.assertRaises(RPIO.InvalidChannelException):
+            gpio_id = RPIO.channel_to_gpio(0)
+
+        RPIO.setmode(RPIO.BCM)
 
     def test6_interrupts(self):
         def test_callback(*args):
@@ -98,7 +128,7 @@ class TestSequenceFunctions(unittest.TestCase):
 
         logging.info("-")
         RPIO.cleanup()
-        time.sleep(3)
+        time.sleep(1)
 
         logging.info(" ")
         logging.info(" ")

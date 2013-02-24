@@ -132,6 +132,12 @@ GPIO_LIST_R1 = (0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25)
 GPIO_LIST_R2 = (2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, \
         27, 28, 29, 30, 31)
 
+# Header indicates which board header (rev2 has gpio28-31 on the P5 header)
+HEADER_P1 = 0 << 8
+HEADER_P5 = 5 << 8
+PIN_LIST = (3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, \
+        3 | HEADER_P5, 4 | HEADER_P5, 5 | HEADER_P5, 6 | HEADER_P5)
+
 
 def _threaded_callback(callback, *args):
     """ Internal wrapper to start a callback in threaded mode """
