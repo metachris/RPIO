@@ -61,6 +61,7 @@ def buildtest():
         run("""echo "import GPIO\nprint(GPIO.VERSION_GPIO)" > test.py""")
         run("make gpio2.7 && cp build/GPIO.so .")
         run("sudo python2.7 test.py")
+        run("mv GPIO.so ../")   # keep new 2.7 version for rpiotests
         run("make gpio3.2 && cp build/GPIO.so .")
         run("sudo python3.2 test.py")
-    run("rm GPIO.so")
+        run("rm GPIO.so")

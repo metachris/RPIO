@@ -1,4 +1,4 @@
-.TH "RPIO" "1" "February 24, 2013" "0.7.2" "RPIO"
+.TH "RPIO" "1" "February 24, 2013" "0.8.0" "RPIO"
 .SH NAME
 rpio \- RPIO Documentation
 .
@@ -39,21 +39,20 @@ RPIO is a GPIO toolbox for the Raspberry Pi.
 \fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs system\-wide
 .UNINDENT
 .sp
-The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP (you may need
-to get it first with \fBsudo apt\-get install python\-setuptools\fP):
+The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
-$ sudo easy_install \-U RPIO
+$ sudo apt\-get install python\-pip
 $ sudo pip install \-U RPIO
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-Another way to get RPIO is directly from the Github repository:
+Another way to get RPIO is directly from the Github repository (make sure you have \fBpython\-dev\fP installed):
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -67,8 +66,7 @@ $ sudo python setup.py install
 .UNINDENT
 .UNINDENT
 .sp
-After the installation you can use \fBimport RPIO\fP as well as the command\-line tool
-\fBrpio\fP.
+After the installation you can use import \fBRPIO\fP as well as the command\-line tool \fBrpio\fP.
 .sp
 \fBrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
 \fBrpio\fP needs to run with superuser privileges (root), else it will restart using \fBsudo\fP. The BCM GPIO numbering
@@ -100,7 +98,7 @@ Inspect all GPIO\(aqs on this board (with \-I/\-\-inspect\-all):
 
     $ rpio \-I
 
-Set GPIO 7 to \(ga1\(ga (or \(ga0\(ga) (with \-s/\-\-set):
+Set GPIO 7 output to \(ga1\(ga (or \(ga0\(ga) (with \-s/\-\-set):
 
     $ rpio \-s 7:1
 
@@ -219,9 +217,10 @@ is not necessarily corresponding to the edge (eg. 0 may come in as value,
 even if \fIedge="rising"\fP). To remove all callbacks from a certain gpio pin, use
 \fBRPIO.del_interrupt_callback(gpio_id)\fP. To stop the \fBwait_for_interrupts()\fP
 loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
-.SH RPI.GPIO
+.SH GPIO INPUT & OUTPUT
 .sp
-Besides the interrupt handling, you can use RPIO just as \fI\%RPi.GPIO\fP:
+RPIO extends \fI\%RPi.GPIO\fP;
+all the input and output handling works just the same:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -273,6 +272,20 @@ import RPIO as GPIO  # (if you\(aqve previously used \(gaimport RPi.GPIO as GPIO
 .fi
 .UNINDENT
 .UNINDENT
+.sp
+To find out more about the methods and constants in RPIO you can run \fB$ sudo pydoc RPIO\fP, or
+use the help method inside Python:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+import RPIO
+help(RPIO)
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
 .SH ADDITIONS TO RPI.GPIO
 .sp
 Additional Constants
@@ -286,22 +299,22 @@ Additional Constants
 Additional Methods
 .INDENT 0.0
 .IP \(bu 2
+\fBRPIO.gpio_function(gpio_id)\fP \- returns the current setup of a gpio (\fBIN, OUT, ALT0\fP)
+.IP \(bu 2
+\fBRPIO.set_pullupdn(gpio_id, pud)\fP \- set a pullup or \-down resistor on a GPIO
+.IP \(bu 2
 \fBRPIO.forceinput(gpio_id)\fP \- reads the value of any gpio without needing to call setup() first
 .IP \(bu 2
 \fBRPIO.forceoutput(gpio_id, value)\fP \- writes a value to any gpio without needing to call setup() first
 (\fBwarning\fP: this can potentially harm your Raspberry)
 .IP \(bu 2
-\fBRPIO.gpio_function(gpio_id)\fP \- returns the current setup of a gpio (\fBIN, OUT, ALT0\fP)
-.IP \(bu 2
 \fBRPIO.rpi_sysinfo()\fP \- returns \fB(model, revision, mb\-ram and maker)\fP of this Raspberry
-.IP \(bu 2
-\fBRPIO.set_pullupdn(gpio_id, pud)\fP \- set a pullup or \-down resistor on a GPIO
 .UNINDENT
 .sp
 Interrupt Handling
 .INDENT 0.0
 .IP \(bu 2
-\fBRPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, threaded_callback=False)\fP
+\fBRPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, pull_up_down=RPIO.PUD_OFF, threaded_callback=False)\fP
 .IP \(bu 2
 \fBRPIO.del_interrupt_callback(gpio_id)\fP
 .IP \(bu 2
@@ -310,6 +323,51 @@ Interrupt Handling
 \fBRPIO.stop_waiting_for_interrupts()\fP
 .IP \(bu 2
 implemented with \fBepoll\fP
+.UNINDENT
+.sp
+Please send feedback and ideas to \fI\%chris@linuxuser.at\fP, and \fI\%open an issue at Github\fP if
+you\(aqve encountered a bug.
+.sp
+\fBHow does RPIO work?\fP
+.INDENT 0.0
+.INDENT 3.5
+RPIO extends RPi.GPIO, a GPIO controller written in C which uses a low\-level memory interface. Interrupts are
+implemented  with \fBepoll\fP via \fB/sys/class/gpio/\fP. For more detailled information take a look at the \fI\%source\fP, it\(aqs well documented and easy to build.
+.UNINDENT
+.UNINDENT
+.sp
+\fBShould I update RPIO often?\fP
+.INDENT 0.0
+.INDENT 3.5
+Yes, because RPIO is getting better by the day. You can use \fB$ rpio \-\-update\-rpio\fP or see \fI\%Installation\fP for more information about methods to update.
+.UNINDENT
+.UNINDENT
+.sp
+\fBI\(aqve encountered a bug, what next?\fP
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+Make sure you are using the latest version of RPIO (see \fI\%Installation\fP)
+.IP \(bu 2
+Open an issue at Github
+.INDENT 2.0
+.IP \(bu 2
+Go to \fI\%https://github.com/metachris/RPIO/issues/new\fP
+.IP \(bu 2
+Describe the problem and steps to replicate
+.IP \(bu 2
+Add the output of \fB$ rpio \-\-version\fP and \fB$ rpio \-\-sysinfo\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+\fBpip is throwing an error during the build:\fP \fBsource/c_gpio/py_gpio.c:9:20: fatal error: Python.h: No such file or directory\fP
+.INDENT 0.0
+.INDENT 3.5
+You need to install the \fBpython\-dev\fP package (eg. \fB$ sudo apt\-get install python\-dev\fP), or use \fBeasy_install\fP (see \fI\%Installation\fP).
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .IP \(bu 2
@@ -321,9 +379,6 @@ implemented with \fBepoll\fP
 .IP \(bu 2
 \fI\%http://www.kernel.org/doc/Documentation/gpio.txt\fP
 .UNINDENT
-.sp
-Please send any feedback to Chris Hager (\fI\%chris@linuxuser.at\fP) and \fI\%open an issue at Github\fP if
-you\(aqve encountered a bug.
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -344,14 +399,24 @@ GNU General Public License for more details.
 .UNINDENT
 .INDENT 0.0
 .IP \(bu 2
-v0.7.2
+v0.8.0
 .INDENT 2.0
 .IP \(bu 2
-BOARD numbering scheme supported with interrupts
+Improved auto\-cleaning of interrupt interfaces
 .IP \(bu 2
-Software pullup and \-down resistor with interrupts
+BOARD numbering scheme support for interrupts
 .IP \(bu 2
-new method \fBRPIO.set_pullupdn(..)\fP
+Support for software pullup and \-down resistor with interrupts
+.IP \(bu 2
+New method \fBRPIO.set_pullupdn(..)\fP
+.IP \(bu 2
+\fBrpio\fP now supports P5 header gpios (28, 29, 30, 31) (only in BCM mode)
+.IP \(bu 2
+Tests added in \fBsource/run_tests.py\fP and \fBfabfile.py\fP
+.IP \(bu 2
+Major refactoring of C GPIO code
+.IP \(bu 2
+Various minor updates and fixes
 .UNINDENT
 .IP \(bu 2
 v0.7.1

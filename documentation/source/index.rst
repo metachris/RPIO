@@ -11,24 +11,24 @@ RPIO is a GPIO toolbox for the Raspberry Pi.
 * :ref:`RPIO.py <ref-rpio-py>`, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling and :ref:`more <ref-rpio-py-rpigpio>`
 * :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs system-wide
 
+.. _ref-installation:
 
 Installation
 ============
 
-The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_install`` or ``pip`` (you may need
-to get it first with ``sudo apt-get install python-setuptools``)::
+The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_install`` or ``pip``::
 
-    $ sudo easy_install -U RPIO
+    $ sudo apt-get install python-pip
     $ sudo pip install -U RPIO
 
-Another way to get RPIO is directly from the Github repository::
+Another way to get RPIO is directly from the Github repository (make sure you have ``python-dev`` installed)::
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
     $ sudo python setup.py install
 
-After the installation you can use ``import RPIO`` as well as the command-line tool
-``rpio``.
+After the installation you can use import ``RPIO`` as well as the command-line tool ``rpio``.
+
 
 .. _ref-rpio-cmd:
 
@@ -63,7 +63,7 @@ scheme is used by default.
 
         $ rpio -I
 
-    Set GPIO 7 to `1` (or `0`) (with -s/--set):
+    Set GPIO 7 output to `1` (or `0`) (with -s/--set):
 
         $ rpio -s 7:1
 
@@ -162,10 +162,11 @@ loop you can call ``RPIO.stop_waiting_for_interrupts()``.
 
 .. _ref-rpio-py-rpigpio:
 
-RPi.GPIO
---------
+GPIO Input & Output
+-------------------
 
-Besides the interrupt handling, you can use RPIO just as `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_:
+RPIO extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_;
+all the input and output handling works just the same:
 
 ::
 
@@ -206,6 +207,12 @@ You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code lik
 
     import RPIO as GPIO  # (if you've previously used `import RPi.GPIO as GPIO`)
 
+To find out more about the methods and constants in RPIO you can run ``$ sudo pydoc RPIO``, or
+use the help method inside Python::
+
+    import RPIO
+    help(RPIO)
+
 
 .. _ref-rpio-py-goodies:
 
@@ -219,20 +226,56 @@ Additional Constants
 
 Additional Methods
 
+* ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
+* ``RPIO.set_pullupdn(gpio_id, pud)`` - set a pullup or -down resistor on a GPIO
 * ``RPIO.forceinput(gpio_id)`` - reads the value of any gpio without needing to call setup() first
 * ``RPIO.forceoutput(gpio_id, value)`` - writes a value to any gpio without needing to call setup() first 
   (**warning**: this can potentially harm your Raspberry)
-* ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
 * ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
-* ``RPIO.set_pullupdn(gpio_id, pud)`` - set a pullup or -down resistor on a GPIO
 
 Interrupt Handling
 
-* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', threaded_callback=False)``
+* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)``
 * ``RPIO.del_interrupt_callback(gpio_id)``
 * ``RPIO.wait_for_interrupts(epoll_timeout=1)``
 * ``RPIO.stop_waiting_for_interrupts()``
 *  implemented with ``epoll``
+
+
+Feedback
+========
+
+Please send feedback and ideas to chris@linuxuser.at, and `open an issue at Github <https://github.com/metachris/RPIO/issues/new>`_ if
+you've encountered a bug.
+
+
+FAQ
+===
+
+**How does RPIO work?**
+
+  RPIO extends RPi.GPIO, a GPIO controller written in C which uses a low-level memory interface. Interrupts are
+  implemented  with ``epoll`` via ``/sys/class/gpio/``. For more detailled information take a look at the `source <https://github.com/metachris/RPIO/tree/master/source>`_, it's well documented and easy to build.
+
+
+**Should I update RPIO often?**
+
+  Yes, because RPIO is getting better by the day. You can use ``$ rpio --update-rpio`` or see :ref:`Installation <ref-installation>` for more information about methods to update.
+
+
+**I've encountered a bug, what next?**
+
+  * Make sure you are using the latest version of RPIO (see :ref:`Installation <ref-installation>`)
+  * Open an issue at Github
+
+    * Go to https://github.com/metachris/RPIO/issues/new
+    * Describe the problem and steps to replicate
+    * Add the output of ``$ rpio --version`` and ``$ rpio --sysinfo``
+
+
+**pip is throwing an error during the build:** ``source/c_gpio/py_gpio.c:9:20: fatal error: Python.h: No such file or directory``
+
+  You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see :ref:`Installation <ref-installation>`).
 
 
 Links
@@ -242,13 +285,6 @@ Links
 * http://pypi.python.org/pypi/RPIO
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.kernel.org/doc/Documentation/gpio.txt
-
-
-Feedback
-========
-
-Please send any feedback to Chris Hager (chris@linuxuser.at) and `open an issue at Github <https://github.com/metachris/RPIO/issues>`_ if
-you've encountered a bug.
 
 
 License
@@ -267,15 +303,19 @@ License
     GNU General Public License for more details.
 
 
-Updates
+Changes
 =======
 
-* v0.7.2
+* v0.8.0
 
-  * BOARD numbering scheme supported for interrupts
-  * Software pullup and -down resistor for interrupts
-  * new method ``RPIO.set_pullupdn(..)``
-  * rpio now supports rev2 gpios on P5 header (28, 29, 30, 31)
+  * Improved auto-cleaning of interrupt interfaces
+  * BOARD numbering scheme support for interrupts
+  * Support for software pullup and -down resistor with interrupts
+  * New method ``RPIO.set_pullupdn(..)``
+  * ``rpio`` now supports P5 header gpios (28, 29, 30, 31) (only in BCM mode)
+  * Tests added in ``source/run_tests.py`` and ``fabfile.py``
+  * Major refactoring of C GPIO code
+  * Various minor updates and fixes
 
 
 * v0.7.1

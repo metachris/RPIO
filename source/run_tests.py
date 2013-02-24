@@ -32,7 +32,8 @@ class TestSequenceFunctions(unittest.TestCase):
         run("sudo python rpio --version")
         run("sudo python rpio -v -I")
         run("sudo python rpio -v -i 5,%s,%s" % (GPIO_IN, GPIO_OUT))
-        run("sudo python rpio --update-man")
+        # run("sudo python rpio --update-man")
+        run("sudo python rpio --sysinfo")
 
     def test3_input(self):
         logging.info(" ")
@@ -75,6 +76,7 @@ class TestSequenceFunctions(unittest.TestCase):
             RPIO.setup(32, RPIO.OUT)
 
         logging.info("Setting up GPIO-%s as output...", GPIO_OUT)
+        RPIO.setup(GPIO_OUT, RPIO.OUT, initial=RPIO.LOW)
         RPIO.setup(GPIO_OUT, RPIO.OUT)
         logging.info("Setting GPIO-%s output to 1...", GPIO_OUT)
         RPIO.output(GPIO_OUT, RPIO.HIGH)

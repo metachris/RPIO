@@ -7,8 +7,9 @@ Version Strings
 ---------------
   [ ] RPIO.py
   [ ] py_gpio.c
-  [ ] doc/source/conf.py
   [ ] setup.py
+  [ ] doc/source/conf.py
+  [ ] doc/source/index.rst (section 'Changes')
 
 
 Documentation
