@@ -1,0 +1,47 @@
+Self-Check
+----------
+DO NOT RELEASE IF TIRED OR VERY LATE! :)
+
+
+Version Strings
+---------------
+  [ ] RPIO.py
+  [ ] py_gpio.c
+  [ ] doc/source/conf.py
+  [ ] setup.py
+
+
+Documentation
+-------------
+  [ ] $ make doc
+
+
+GIT Master Merge & Push
+-----------------------
+  [ ] $ git checkout master && git merge dev
+  [ ] $ git status
+
+  [ ] everything commited?
+  [ ] $ git push 
+
+
+Double-Check Test Suite
+-----------------------
+  [ ] $ fab buildtest  # check builds for python2.7 and 3.2
+  [ ] $ fab rpiotest   # runs the python RPIO testsuite
+
+
+Add Git Tag and Push
+--------------------
+  [ ] tag added (eg. `git tag -a v0.1.2`)
+  [ ] git push --tags
+
+
+Upload to PyPi
+--------------
+  [ ] make doc_upload
+  [ ] python setup.py sdist upload
+
+  - on the Raspberry: 
+  [ ] python2.7 setup.py bdist_egg upload
+  [ ] python3.2 setup.py bdist_egg upload

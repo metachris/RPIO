@@ -30,8 +30,8 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         logging.info("=== rpio COMMAND LINE TOOL TESTS ===")
         run("sudo python rpio --version")
-        run("sudo python rpio -I")
-        run("sudo python rpio -i 5,%s,%s" % (GPIO_IN, GPIO_OUT))
+        run("sudo python rpio -v -I")
+        run("sudo python rpio -v -i 5,%s,%s" % (GPIO_IN, GPIO_OUT))
         run("sudo python rpio --update-man")
 
     def test3_input(self):
@@ -122,17 +122,21 @@ class TestSequenceFunctions(unittest.TestCase):
 
         def test_callback(*args):
             logging.info("- interrupt callback received: %s", (args))
-            RPIO.stop_waiting_for_interrupts()
 
+        def stop_interrupts(timeout=3):
+            time.sleep(timeout)
+            RPIO.stop_waiting_for_interrupts()
+            logging.info("- called `stop_waiting_for_interrupts()`")
         #
         # Normal interrupt test
         #
         logging.info(" ")
         logging.info("Testing interrupts on GPIO-%s", GPIO_IN)
-        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='rising', \
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_DOWN)
 
-        logging.info("- waiting for interrupts on GPIO-%s...", GPIO_IN)
+        logging.info("- waiting 10s for interrupts on GPIO-%s...", GPIO_IN)
+        Thread(target=stop_interrupts, args=(10,)).start()
         try:
             RPIO.wait_for_interrupts()
         except:
@@ -140,7 +144,7 @@ class TestSequenceFunctions(unittest.TestCase):
 
         logging.info("-")
         RPIO.cleanup()
-        time.sleep(1)
+        time.sleep(3)
 
         #
         # Auto interrupt shutdown with thread and stop_waiting_for_interrupts
@@ -149,14 +153,8 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
                 pull_up_down=RPIO.PUD_UP)
-        logging.info("- AUTO-EXIT IN 3 SECONDS")
-
-        def stopint():
-            time.sleep(3)
-            RPIO.stop_waiting_for_interrupts()
-            logging.info("- called `stop_waiting_for_interrupts()`")
-
-        Thread(target=stopint).start()
+        logging.info("- test auto-exit in 3 seconds")
+        Thread(target=stop_interrupts, args=(3,)).start()
         try:
             RPIO.wait_for_interrupts()
         except:
@@ -164,6 +162,7 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info("-")
         RPIO.cleanup()
         RPIO.cleanup()
+        time.sleep(3)
 
         #
         # Interrupt manual cancel
@@ -174,7 +173,9 @@ class TestSequenceFunctions(unittest.TestCase):
                 pull_up_down=RPIO.PUD_DOWN)
         RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
                 pull_up_down=RPIO.PUD_UP)
-        logging.info("- waiting for interrupts on GPIO-%s...", GPIO_IN)
+        logging.info("- waiting 10s for interrupts on gpio %s and %s...", \
+                GPIO_IN, GPIO_OUT)
+        Thread(target=stop_interrupts, args=(10,)).start()
         try:
             RPIO.wait_for_interrupts()
         except:
@@ -182,7 +183,8 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info("-")
         RPIO.cleanup()
         RPIO.cleanup()
-        time.sleep(1)
+
+        logging.info("ALL DONE :)")
 
 
 if __name__ == '__main__':
