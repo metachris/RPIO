@@ -241,21 +241,24 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
 def del_interrupt_callback(gpio_id):
     """ Delete all interrupt callbacks from a certain gpio """
+    debug("- removing interrupts on gpio %s" % gpio_id)
     gpio_id = channel_to_gpio(gpio_id)
     fileno = _map_gpioid_to_fileno[gpio_id]
 
     # 1. Remove from epoll
     _epoll.unregister(fileno)
 
-    # 2. Close the open file
+    # 2. Cache the file
     f = _map_fileno_to_file[fileno]
-    f.close()
 
     # 3. Remove from maps
     del _map_fileno_to_file[fileno]
     del _map_fileno_to_gpioid[fileno]
     del _map_gpioid_to_fileno[gpio_id]
     del _map_gpioid_to_callbacks[gpio_id]
+
+    # 4. Close file last. In case of IOError everything else has been shutdown
+    f.close()
 
 
 def _handle_interrupt(fileno, val):
@@ -273,6 +276,11 @@ def wait_for_interrupts(epoll_timeout=1):
     associated callbacks. epoll_timeout is an easy way to shutdown the
     blocking function. Per default the timeout is set to 1 second; if
     `_is_waiting_for_interrupts` is set to False the loop will exit.
+
+    If an exception occurs while waiting for interrupts, the interrupt
+    gpio interfaces will be cleaned up (/sys/class/gpio unexports). In
+    this case all interrupts will be reset and you'd need to add the
+    callbacks again before using `wait_for_interrupts(..)` again.
     """
     global _is_waiting_for_interrupts
     _is_waiting_for_interrupts = True
@@ -303,17 +311,24 @@ def stop_waiting_for_interrupts():
 
 def _cleanup_interfaces():
     """
-    Remove all /sys/class/gpio/gpioN interfaces that this script created.
-    Does not usually need to be used.
+    Remove all /sys/class/gpio/gpioN interfaces that this script created,
+    and delete all callback bindings. Should be used after using interrupts.
     """
     debug("Cleaning up interfaces...")
     global _gpio_kernel_interfaces_created
     for gpio_id in _gpio_kernel_interfaces_created:
+        # Close the value-file and remove interrupt bindings
+        try:
+            del_interrupt_callback(gpio_id)
+        except:
+            pass
+
         # Remove the kernel GPIO interface
         debug("- unexporting GPIO %s" % gpio_id)
         with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
             f.write("%s" % gpio_id)
 
+    # Reset list of created interfaces
     _gpio_kernel_interfaces_created = []
 
 
@@ -321,7 +336,8 @@ def cleanup():
     """
     Clean up by resetting all GPIO channels that have been used by this
     program to INPUT with no pullup/pulldown and no event detection. Also
-    unexports the interfaces that have been set up for interrupts.
+    unexports the interrupt interfaces and callback bindings. You'll need
+    to add the interrupt callbacks again before waiting for interrupts again.
     """
     _cleanup_interfaces()
     _cleanup_orig()
