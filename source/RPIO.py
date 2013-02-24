@@ -127,6 +127,9 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     if not edge in ["falling", "rising", "both", "none"]:
         raise AttributeError("'%s' is not a valid edge." % edge)
 
+    if not pull_up_down in [PUD_UP, PUD_DOWN, PUD_OFF]:
+        raise AttributeError("'%s' is not a valid pull_up_down value." % edge)
+
     # Make sure the gpio_id is valid
     if not gpio_id in (PIN_TO_GPIO_LAYOUT_REV1 \
             if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2):
