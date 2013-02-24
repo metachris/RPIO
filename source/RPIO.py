@@ -19,29 +19,65 @@ interrupts, each with different edge detections:
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
-    RPIO.add_interrupt_callback(7, do_something, edge='rising')
-    RPIO.add_interrupt_callback(8, do_something, edge='falling')
-    RPIO.add_interrupt_callback(9, do_something, edge='both')
+    RPIO.add_interrupt_callback(7, do_something)
+    RPIO.add_interrupt_callback(8, do_something, edge='rising')
+    RPIO.add_interrupt_callback(9, do_something, pull_up_down=RPIO.PUD_UP)
     RPIO.wait_for_interrupts()
+
+Default edge is `both` and default pull_up_down is `RPIO.PUD_OFF`.
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
-    RPIO.add_interrupt_callback(7, do_something, edge='rising',
-            threaded_callback=True)
+    RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
-even if edge="rising").
-
-To remove all callbacks from a certain gpio pin, use
+even if edge="rising"). To remove all callbacks from a certain gpio pin, use
 `RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
 loop you can call `RPIO.stop_waiting_for_interrupts()`.
 
+Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
+
+    import RPIO
+
+    # set up input channel without pull-up
+    RPIO.setup(7, RPIO.IN)
+
+    # set up input channel with pull-up control. Can be
+    # PUD_UP, PUD_DOWN or PUD_OFF (default)
+    RPIO.setup(7, RPIO.IN, pull_up_down=RPIO.PUD_UP)
+
+    # read input from gpio 7
+    input_value = RPIO.input(7)
+
+    # set up GPIO output channel
+    RPIO.setup(8, RPIO.OUT)
+
+    # set gpio 8 to high
+    RPIO.output(8, True)
+
+    # set up output channel with an initial state
+    RPIO.setup(8, RPIO.OUT, initial=RPIO.LOW)
+
+    # change to BOARD numbering schema
+    RPIO.setmode(RPIO.BOARD)
+
+    # set software pullup on channel 17
+    RPIO.set_pullupdn(17, RPIO.PUD_UP)
+
+    # reset every channel that has been set up by this program,
+    # and unexport interrupt gpio interfaces
+    RPIO.cleanup()
+
+You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code:
+
+    import RPIO as GPIO  # (if you've used `import RPi.GPIO as GPIO`)
+
 Author: Chris Hager <chris@linuxuser.at>
-License: GPLv3
 URL: https://github.com/metachris/RPIO
+License: GPLv3
 """
 import select
 import os.path
@@ -52,8 +88,9 @@ from functools import partial
 
 from GPIO import *
 from GPIO import cleanup as _cleanup_orig
+from GPIO import setmode as _setmode
 
-VERSION = "0.7.1"
+VERSION = "0.8.0"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -88,28 +125,21 @@ MODEL_DATA = {
     'e': ('B', '2.0', 512, 'Sony'),
     'f': ('B', '2.0', 512, 'Qisda')
 }
+_PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
-# Pin layout with GPIO numbers (pin-id range is 1 - 26)
-_DC5V = -1
-_DC3V3 = -2
-_GND = -3
-PIN_TO_GPIO_LAYOUT_REV1 = (_DC3V3, _DC5V, 0, 5, 1, _GND, 4, 14, _GND, 15, \
-        17, 18, 21, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
-PIN_TO_GPIO_LAYOUT_REV2 = (_DC3V3, _DC5V, 2, _DC5V, 3, _GND, 4, 14, _GND, 15, \
-        17, 18, 27, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
+# List of valid bcm gpio ids for raspberry rev1 and rev2. Used for inspect-all.
+GPIO_LIST_R1 = (0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25)
+GPIO_LIST_R2 = (2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, \
+        27, 28, 29, 30, 31)
 
-
-def rpi_sysinfo():
-    """ Returns (model, revision, mb-ram and maker) for this raspberry """
-    return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
-
-
-def is_valid_gpio_id(gpio_id):
-    """
-    Returns True if the supplied gpio_id is valid on this board, else False
-    """
-    return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV1 \
-            if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2)
+# List of board pins with extra information which board header they belong to.
+# Revision 2 boards have extra gpios on the P5 header (gpio 27-31)). Shifting
+# the header info left by 8 bits leaves 255 possible channels per header. This
+# list of board pins is currently only used for testing purposes.
+HEADER_P1 = 0 << 8
+HEADER_P5 = 5 << 8
+PIN_LIST = (3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, \
+        3 | HEADER_P5, 4 | HEADER_P5, 5 | HEADER_P5, 6 | HEADER_P5)
 
 
 def _threaded_callback(callback, *args):
@@ -117,41 +147,50 @@ def _threaded_callback(callback, *args):
     Thread(target=callback, args=args).start()
 
 
-def add_interrupt_callback(gpio_id, callback, edge='both',
-        threaded_callback=False):
-    """
-    Add a callback to be executed when the value on 'gpio_id' changes to the
-    edge specified via the 'edge' parameter (default='both').
+def rpi_sysinfo():
+    """ Returns (model, revision, mb-ram and maker) for this raspberry """
+    return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
 
-    If threaded_callback is True, the callback will be started inside a Thread.
+
+def add_interrupt_callback(gpio_id, callback, edge='both',
+        pull_up_down=PUD_OFF, threaded_callback=False):
     """
+    Add a callback to be executed when the value on 'gpio_id' changes to
+    the edge specified via the 'edge' parameter (default='both').
+
+    `pull_up_down` can be set to `RPIO.PUD_UP`, `RPIO.PUD_DOWN`, and
+    `RPIO.PUD_OFF`.
+
+    If `threaded_callback` is True, the callback will be started
+    inside a Thread.
+    """
+    gpio_id = channel_to_gpio(gpio_id)
     debug("Adding callback for GPIO %s" % gpio_id)
     if not edge in ["falling", "rising", "both", "none"]:
         raise AttributeError("'%s' is not a valid edge." % edge)
 
+    if not pull_up_down in [PUD_UP, PUD_DOWN, PUD_OFF]:
+        raise AttributeError("'%s' is not a valid pull_up_down value." % edge)
+
     # Make sure the gpio_id is valid
-    if not is_valid_gpio_id(gpio_id):
+    if not gpio_id in (GPIO_LIST_R1 if RPI_REVISION == 1 else GPIO_LIST_R2):
         raise AttributeError("GPIO %s is not a valid gpio-id for this board." \
                 % gpio_id)
 
-    # Require INPUT pin setup
-    if gpio_function(int(gpio_id)) != 1:
-        raise IOError(("GPIO %s cannot be used for interrupts because it's "
-                "setup as %s instead of INPUT.") % (gpio_id, \
-                GPIO_FUNCTIONS[gpio_function(int(gpio_id))]))
+    # Require INPUT pin setup; and set the correct PULL_UPDN
+    if gpio_function(int(gpio_id)) == IN:
+        set_pullupdn(gpio_id, pull_up_down)
+    else:
+        debug("- changing gpio function from %s to INPUT" % \
+                (GPIO_FUNCTIONS[gpio_function(int(gpio_id))]))
+        setup(gpio_id, IN, pull_up_down)
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \
             partial(_threaded_callback, callback)
 
-    # Check if /sys/class/gpio/gpioN interface exists; else create it
+    # Prepare the /sys/class path of this gpio
     path_gpio = "%sgpio%s/" % (_SYS_GPIO_ROOT, gpio_id)
-    if not os.path.exists(path_gpio):
-        with open(_SYS_GPIO_ROOT + "export", "w") as f:
-            f.write("%s" % gpio_id)
-        global _gpio_kernel_interfaces_created
-        _gpio_kernel_interfaces_created.append(gpio_id)
-        debug("- kernel interface created for GPIO %s" % gpio_id)
 
     # If initial callback for this GPIO then set everything up. Else make sure
     # the edge detection is the same and add this to the callback list.
@@ -168,6 +207,18 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         _map_gpioid_to_callbacks[gpio_id].append(cb)
 
     else:
+        # If kernel interface already exists, unexport first for clean setup
+        if os.path.exists(path_gpio):
+            with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
+                f.write("%s" % gpio_id)
+
+        # Export kernel interface /sys/class/gpio/gpioN
+        with open(_SYS_GPIO_ROOT + "export", "w") as f:
+            f.write("%s" % gpio_id)
+        global _gpio_kernel_interfaces_created
+        _gpio_kernel_interfaces_created.append(gpio_id)
+        debug("- kernel interface created for GPIO %s" % gpio_id)
+
         # Configure gpio as input
         with open(path_gpio + "direction", "w") as f:
             f.write("in")
@@ -176,8 +227,9 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "w") as f:
             f.write(edge)
 
-        debug("- kernel interface configured for GPIO %s (edge='%s')" % \
-                (gpio_id, edge))
+        debug(("- kernel interface configured for GPIO %s "
+                "(edge='%s', pullupdn=%s)") % (gpio_id, edge, \
+                _PULL_UPDN[pull_up_down]))
 
         # Open the gpio value stream and read the initial value
         f = open(path_gpio + "value", 'r')
@@ -197,20 +249,24 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
 def del_interrupt_callback(gpio_id):
     """ Delete all interrupt callbacks from a certain gpio """
+    debug("- removing interrupts on gpio %s" % gpio_id)
+    gpio_id = channel_to_gpio(gpio_id)
     fileno = _map_gpioid_to_fileno[gpio_id]
 
     # 1. Remove from epoll
     _epoll.unregister(fileno)
 
-    # 2. Close the open file
+    # 2. Cache the file
     f = _map_fileno_to_file[fileno]
-    f.close()
 
     # 3. Remove from maps
     del _map_fileno_to_file[fileno]
     del _map_fileno_to_gpioid[fileno]
     del _map_gpioid_to_fileno[gpio_id]
     del _map_gpioid_to_callbacks[gpio_id]
+
+    # 4. Close file last. In case of IOError everything else has been shutdown
+    f.close()
 
 
 def _handle_interrupt(fileno, val):
@@ -228,6 +284,11 @@ def wait_for_interrupts(epoll_timeout=1):
     associated callbacks. epoll_timeout is an easy way to shutdown the
     blocking function. Per default the timeout is set to 1 second; if
     `_is_waiting_for_interrupts` is set to False the loop will exit.
+
+    If an exception occurs while waiting for interrupts, the interrupt
+    gpio interfaces will be cleaned up (/sys/class/gpio unexports). In
+    this case all interrupts will be reset and you'd need to add the
+    callbacks again before using `wait_for_interrupts(..)` again.
     """
     global _is_waiting_for_interrupts
     _is_waiting_for_interrupts = True
@@ -243,6 +304,7 @@ def wait_for_interrupts(epoll_timeout=1):
                     f.seek(0)
                     _handle_interrupt(fileno, val)
     except:
+        debug("RPIO: auto-cleaning interfaces after an exception")
         _cleanup_interfaces()
         raise
 
@@ -258,17 +320,24 @@ def stop_waiting_for_interrupts():
 
 def _cleanup_interfaces():
     """
-    Remove all /sys/class/gpio/gpioN interfaces that this script created.
-    Does not usually need to be used.
+    Remove all /sys/class/gpio/gpioN interfaces that this script created,
+    and delete all callback bindings. Should be used after using interrupts.
     """
     debug("Cleaning up interfaces...")
     global _gpio_kernel_interfaces_created
     for gpio_id in _gpio_kernel_interfaces_created:
+        # Close the value-file and remove interrupt bindings
+        try:
+            del_interrupt_callback(gpio_id)
+        except:
+            pass
+
         # Remove the kernel GPIO interface
         debug("- unexporting GPIO %s" % gpio_id)
         with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
             f.write("%s" % gpio_id)
 
+    # Reset list of created interfaces
     _gpio_kernel_interfaces_created = []
 
 
@@ -276,7 +345,8 @@ def cleanup():
     """
     Clean up by resetting all GPIO channels that have been used by this
     program to INPUT with no pullup/pulldown and no event detection. Also
-    unexports the interfaces that have been set up for interrupts.
+    unexports the interrupt interfaces and callback bindings. You'll need
+    to add the interrupt callbacks again before waiting for interrupts again.
     """
     _cleanup_interfaces()
     _cleanup_orig()

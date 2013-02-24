@@ -1,0 +1,49 @@
+Self-Check
+----------
+DO NOT RELEASE IF TIRED OR VERY LATE! :)
+
+
+Version Strings
+---------------
+  [ ] RPIO.py
+  [ ] py_gpio.c
+  [ ] setup.py
+  [ ] doc/source/conf.py
+  [ ] doc/source/index.rst (section 'Changes')
+
+
+Documentation
+-------------
+  [ ] $ make doc
+  [ ] Check RPIO.py
+  [ ] Cheeck rpio
+
+
+GIT Master Merge & Push
+-----------------------
+  [ ] $ git checkout master && git merge dev
+  [ ] $ git status
+
+  [ ] everything commited?
+  [ ] $ git push 
+
+
+Double-Check Test Suite
+-----------------------
+  [ ] $ fab upload build test
+
+
+Add Git Tag and Push
+--------------------
+  [ ] tag added (eg. `git tag -a v0.1.2`)
+  [ ] git push --tags
+
+
+Upload to PyPi
+--------------
+  [ ] make doc_upload
+  [ ] python setup.py sdist upload
+
+  - on the Raspberry: 
+  [ ] python2.7 setup.py bdist_egg upload
+  [ ] python3.2 setup.py bdist_egg upload
