@@ -304,6 +304,32 @@ py_forceoutput_gpio(PyObject *self, PyObject *args)
     return Py_None;
 }
 
+// python function output(channel, value) without direction check
+static PyObject*
+py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    int gpio, channel;
+    int pud = PUD_OFF;
+
+    static char *kwlist[] = {"channel", "pull_up_down", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|ii", kwlist, &channel, &pud))
+        return NULL;
+
+    if (gpio_mode == BOARD) {
+        gpio = *(*pin_to_gpio+channel);
+        if (gpio == -1) {
+            PyErr_SetString(InvalidChannelException, "The channel sent is invalid on a Raspberry Pi");
+            return NULL;
+        }
+    } else {
+        gpio = channel;
+    }
+
+    printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
+    set_pullupdn(gpio, pud);
+    return Py_None;
+}
+
 // python function value = input(channel)
 static PyObject*
 py_input_gpio(PyObject *self, PyObject *args)
@@ -398,6 +424,7 @@ PyMethodDef rpi_gpio_methods[] = {
     // New methods in RPIO
     {"forceoutput", py_forceoutput_gpio, METH_VARARGS, "Force output to a GPIO channel, ignoring whether it has been set up before."},
     {"forceinput", py_forceinput_gpio, METH_VARARGS, "Force read input from a GPIO channel, ignoring whether it was set up before."},
+    {"set_pullupdn", (PyCFunction)py_set_pullupdn, METH_VARARGS | METH_KEYWORDS, "Set pullup or -down resistor on a GPIO channel."},
     {NULL, NULL, 0, NULL}
 };
 
