@@ -110,7 +110,7 @@ Install (and update) the ``rpio`` manpage::
 ============================
 
 RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with 
-interrupt handling and a few :ref:`other goodies <ref-rpio-py-goodies>`.
+interrupt handling and :ref:`more <ref-rpio-py-goodies>`.
 
 Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast
@@ -132,28 +132,25 @@ interrupts, each with different edge detections:
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
-    RPIO.add_interrupt_callback(7, do_something, edge='rising')
-    RPIO.add_interrupt_callback(8, do_something, edge='falling')
-    RPIO.add_interrupt_callback(9, do_something, edge='both')
+    RPIO.add_interrupt_callback(7, do_something)
+    RPIO.add_interrupt_callback(8, do_something, edge='rising')
+    RPIO.add_interrupt_callback(9, do_something, pull_up_down=RPIO.PUD_UP)
     RPIO.wait_for_interrupts()
 
-If you want to receive a callback inside a Thread (which won't block anything
+Default edge is ``both`` and default pull_up_down is ``RPIO.PUD_OFF``. If 
+you want to receive a callback inside a Thread (which won't block anything
 else on the system), set ``threaded_callback=True`` when adding an interrupt-
 callback. Here is an example:
 
 ::
 
-    RPIO.add_interrupt_callback(7, do_something, edge='rising', threaded_callback=True)
+    RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
 even if `edge="rising"`). To remove all callbacks from a certain gpio pin, use
 ``RPIO.del_interrupt_callback(gpio_id)``. To stop the ``wait_for_interrupts()``
 loop you can call ``RPIO.stop_waiting_for_interrupts()``.
-
-Please note that you don't need to call ``setup(..)`` for a gpio before using it for 
-interrupts, pullup/pulldown resistors are not available and only BCM gpio numbering
-is supported (although BOARD will be included shortly).
 
 
 .. _ref-rpio-py-rpigpio:
@@ -170,8 +167,8 @@ Besides the interrupt handling, you can use RPIO just as `RPi.GPIO <http://pypi.
     # set up input channel without pull-up
     RPIO.setup(7, RPIO.IN)
 
-    # set up input channel with pull-up control
-    #   (pull_up_down be PUD_OFF, PUD_UP or PUD_DOWN, default PUD_OFF)
+    # set up input channel with pull-up control. Can be 
+    # PUD_UP, PUD_DOWN or PUD_OFF (default)
     RPIO.setup(7, RPIO.IN, pull_up_down=RPIO.PUD_UP)
 
     # read input from gpio 7
@@ -184,7 +181,7 @@ Besides the interrupt handling, you can use RPIO just as `RPi.GPIO <http://pypi.
     RPIO.output(8, True)
 
     # set up output channel with an initial state
-    RPIO.setup(18, RPIO.OUT, initial=RPIO.LOW)
+    RPIO.setup(8, RPIO.OUT, initial=RPIO.LOW)
 
     # change to BOARD numbering schema (interrupts will still use BCM though)
     RPIO.setmode(RPIO.BOARD)
@@ -217,6 +214,7 @@ Additional Methods
 * ``RPIO.gpio_function(gpio_id)`` - returns the current setup of a gpio (``IN, OUT, ALT0``)
 * ``RPIO.is_valid_gpio_id(gpio_id)`` - returns True if the supplied gpio_id is valid on this board
 * ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
+* ``RPIO.set_pullupdn(gpio_id, pud)`` - set a pullup or -down resistor on a GPIO
 
 Interrupt Handling
 
@@ -243,8 +241,6 @@ Please send any feedback to Chris Hager (chris@linuxuser.at) and `open an issue 
 you've encountered a bug.
 
 
-
-
 License
 =======
 
@@ -263,6 +259,11 @@ License
 
 Updates
 =======
+
+* v0.7.2
+
+  * **Pullup and -down resistors for interrupts**
+  * new method ``RPIO.set_pullupdn(..)``
 
 * v0.7.1
   

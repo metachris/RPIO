@@ -19,17 +19,18 @@ interrupts, each with different edge detections:
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
-    RPIO.add_interrupt_callback(7, do_something, edge='rising')
-    RPIO.add_interrupt_callback(8, do_something, edge='falling')
-    RPIO.add_interrupt_callback(9, do_something, edge='both')
+    RPIO.add_interrupt_callback(7, do_something)
+    RPIO.add_interrupt_callback(8, do_something, edge='rising')
+    RPIO.add_interrupt_callback(9, do_something, pull_up_down=RPIO.PUD_UP)
     RPIO.wait_for_interrupts()
+
+Default edge is `both` and default pull_up_down is `RPIO.PUD_OFF`.
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
 callback. Here is an example:
 
-    RPIO.add_interrupt_callback(7, do_something, edge='rising',
-            threaded_callback=True)
+    RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
 Make sure to double-check the value returned from the interrupt, since it
 is not necessarily corresponding to the edge (eg. 0 may come in as value,
@@ -52,6 +53,7 @@ from functools import partial
 
 from GPIO import *
 from GPIO import cleanup as _cleanup_orig
+from GPIO import setmode as _setmode
 
 VERSION = "0.7.2"
 
@@ -91,26 +93,16 @@ MODEL_DATA = {
 _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
 # Pin layout with GPIO numbers (pin-id range is 1 - 26)
-_DC5V = -1
-_DC3V3 = -2
-_GND = -3
-PIN_TO_GPIO_LAYOUT_REV1 = (_DC3V3, _DC5V, 0, 5, 1, _GND, 4, 14, _GND, 15, \
-        17, 18, 21, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
-PIN_TO_GPIO_LAYOUT_REV2 = (_DC3V3, _DC5V, 2, _DC5V, 3, _GND, 4, 14, _GND, 15, \
-        17, 18, 27, _GND, 22, 23, _DC3V3, 24, 10, _GND, 9, 25, 11, 8, _GND, 7)
+# DC5V = -1; DC3V3 = -2; GND = -3
+PIN_TO_GPIO_LAYOUT_REV1 = (-2, -1, 0, 5, 1, -3, 4, 14, -3, 15, 17, 18, 21, \
+        -3, 22, 23, -2, 24, 10, -3, 9, 25, 11, 8, -3, 7)
+PIN_TO_GPIO_LAYOUT_REV2 = (-2, -1, 2, -1, 3, -3, 4, 14, -3, 15, 17, 18, \
+        27, -3, 22, 23, -2, 24, 10, -3, 9, 25, 11, 8, -3, 7)
 
 
 def rpi_sysinfo():
     """ Returns (model, revision, mb-ram and maker) for this raspberry """
     return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
-
-
-def is_valid_gpio_id(gpio_id):
-    """
-    Returns True if the supplied gpio_id is valid on this board, else False
-    """
-    return int(gpio_id) in (PIN_TO_GPIO_LAYOUT_REV1 \
-            if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2)
 
 
 def _threaded_callback(callback, *args):
@@ -130,12 +122,14 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     If `threaded_callback` is True, the callback will be started
     inside a Thread.
     """
+    gpio_id = channel_to_gpio(gpio_id)
     debug("Adding callback for GPIO %s" % gpio_id)
     if not edge in ["falling", "rising", "both", "none"]:
         raise AttributeError("'%s' is not a valid edge." % edge)
 
     # Make sure the gpio_id is valid
-    if not is_valid_gpio_id(gpio_id):
+    if not gpio_id in (PIN_TO_GPIO_LAYOUT_REV1 \
+            if RPI_REVISION == 1 else PIN_TO_GPIO_LAYOUT_REV2):
         raise AttributeError("GPIO %s is not a valid gpio-id for this board." \
                 % gpio_id)
 
@@ -205,6 +199,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
 
 def del_interrupt_callback(gpio_id):
     """ Delete all interrupt callbacks from a certain gpio """
+    gpio_id = channel_to_gpio(gpio_id)
     fileno = _map_gpioid_to_fileno[gpio_id]
 
     # 1. Remove from epoll
