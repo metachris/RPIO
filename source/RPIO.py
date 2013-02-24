@@ -195,6 +195,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "r") as f:
             e = f.read().strip()
             if e != edge:
+                _cleanup_interfaces()
                 raise AttributeError(("Cannot add callback for gpio %s:"
                         " edge detection '%s' not compatible with existing"
                         " edge detection '%s'.") % (gpio_id, edge, e))
