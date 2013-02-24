@@ -4,6 +4,7 @@ void output_gpio(int gpio, int value);
 int input_gpio(int gpio);
 void cleanup(void);
 int gpio_function(int gpio);
+void set_pullupdn(int gpio, int pud);
 
 #define SETUP_OK          0
 #define SETUP_DEVMEM_FAIL 1

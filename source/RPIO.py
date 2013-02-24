@@ -53,7 +53,7 @@ from functools import partial
 from GPIO import *
 from GPIO import cleanup as _cleanup_orig
 
-VERSION = "0.7.1"
+VERSION = "0.7.2"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -88,6 +88,7 @@ MODEL_DATA = {
     'e': ('B', '2.0', 512, 'Sony'),
     'f': ('B', '2.0', 512, 'Qisda')
 }
+_PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
 # Pin layout with GPIO numbers (pin-id range is 1 - 26)
 _DC5V = -1
@@ -118,12 +119,16 @@ def _threaded_callback(callback, *args):
 
 
 def add_interrupt_callback(gpio_id, callback, edge='both',
-        threaded_callback=False):
+        pull_up_down=PUD_OFF, threaded_callback=False):
     """
-    Add a callback to be executed when the value on 'gpio_id' changes to the
-    edge specified via the 'edge' parameter (default='both').
+    Add a callback to be executed when the value on 'gpio_id' changes to
+    the edge specified via the 'edge' parameter (default='both').
 
-    If threaded_callback is True, the callback will be started inside a Thread.
+    `pull_up_down` can be set to `RPIO.PUD_UP`, `RPIO.PUD_DOWN`, and
+    `RPIO.PUD_OFF`.
+
+    If `threaded_callback` is True, the callback will be started
+    inside a Thread.
     """
     debug("Adding callback for GPIO %s" % gpio_id)
     if not edge in ["falling", "rising", "both", "none"]:
@@ -134,11 +139,13 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         raise AttributeError("GPIO %s is not a valid gpio-id for this board." \
                 % gpio_id)
 
-    # Require INPUT pin setup
-    if gpio_function(int(gpio_id)) != 1:
-        raise IOError(("GPIO %s cannot be used for interrupts because it's "
-                "setup as %s instead of INPUT.") % (gpio_id, \
-                GPIO_FUNCTIONS[gpio_function(int(gpio_id))]))
+    # Require INPUT pin setup; and set the correct PULL_UPDN
+    if gpio_function(int(gpio_id)) == IN:
+        set_pullupdn(gpio_id, pull_up_down)
+    else:
+        debug("- changing gpio function from %s to INPUT" % \
+                (GPIO_FUNCTIONS[gpio_function(int(gpio_id))]))
+        setup(gpio_id, IN, pull_up_down)
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \
@@ -176,8 +183,9 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
         with open(path_gpio + "edge", "w") as f:
             f.write(edge)
 
-        debug("- kernel interface configured for GPIO %s (edge='%s')" % \
-                (gpio_id, edge))
+        debug(("- kernel interface configured for GPIO %s "
+                "(edge='%s', pullupdn=%s)") % (gpio_id, edge, \
+                _PULL_UPDN[pull_up_down]))
 
         # Open the gpio value stream and read the initial value
         f = open(path_gpio + "value", 'r')

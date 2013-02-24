@@ -283,17 +283,13 @@ py_forceoutput_gpio(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (gpio_mode == BOARD)
-    {
+    if (gpio_mode == BOARD) {
         gpio = *(*pin_to_gpio+channel);
-        if (gpio == -1)
-        {
+        if (gpio == -1) {
             PyErr_SetString(InvalidChannelException, "The channel sent is invalid on a Raspberry Pi");
             return NULL;
         }
-    }
-    else // gpio_mode == BCM
-    {
+    } else {
         gpio = channel;
     }
 
@@ -325,7 +321,7 @@ py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
         gpio = channel;
     }
 
-    printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
+    // printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
     set_pullupdn(gpio, pud);
     return Py_None;
 }
@@ -353,10 +349,20 @@ py_input_gpio(PyObject *self, PyObject *args)
 static PyObject*
 py_forceinput_gpio(PyObject *self, PyObject *args)
 {
-    int gpio;
+    int gpio, channel;
 
-    if (!PyArg_ParseTuple(args, "i", &gpio))
+    if (!PyArg_ParseTuple(args, "i", &channel))
         return NULL;
+
+    if (gpio_mode == BOARD) {
+        gpio = *(*pin_to_gpio+channel);
+        if (gpio == -1) {
+            PyErr_SetString(InvalidChannelException, "The channel sent is invalid on a Raspberry Pi");
+            return NULL;
+        }
+    } else {
+        gpio = channel;
+    }
 
     //printf("Input GPIO %d\n", gpio);
     if (input_gpio(gpio))
@@ -526,7 +532,7 @@ PyMODINIT_FUNC initGPIO(void)
     rpi_revision_hex = Py_BuildValue("s", revision_hex);
     PyModule_AddObject(module, "RPI_REVISION_HEX", rpi_revision_hex);
 
-    version = Py_BuildValue("s", "0.7.1/0.4.2a");
+    version = Py_BuildValue("s", "0.7.2/0.4.2a");
     PyModule_AddObject(module, "VERSION_GPIO", version);
 
     // set up mmaped areas
