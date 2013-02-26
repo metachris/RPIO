@@ -12,7 +12,10 @@ from fabric.api import run, local, cd, put, env
 from fabric.operations import prompt
 
 env.use_ssh_config = True
-env.hosts = ["raspberry_dev"]
+
+# Set default hosts
+if not env.hosts:
+    env.hosts = ["raspberry_dev"]
 
 
 def upload():
