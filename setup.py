@@ -10,10 +10,10 @@ setup(
     name="RPIO",
     version="0.8.0",
     package_dir={"": "source"},
-    py_modules=["RPIO"],
-    ext_modules=[Extension('GPIO', ['source/c_gpio/py_gpio.c', \
+    packages=['RPIO'],
+    ext_modules=[Extension('RPIO.GPIO', ['source/c_gpio/py_gpio.c', \
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
-    scripts=["source/rpio"],
+    scripts=["source/scripts/rpio"],
 
     description=(("GPIO toolbox for the Raspberry Pi. Extends RPi.GPIO "
             "with interrups, a command line tool and more")),
