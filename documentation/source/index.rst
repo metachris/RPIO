@@ -18,8 +18,8 @@ Installation
 
 The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_install`` or ``pip``::
 
-    $ sudo apt-get install python-pip
-    $ sudo pip install -U RPIO
+    $ sudo apt-get install python-setuptools
+    $ sudo easy_install -U RPIO
 
 Another way to get RPIO is directly from the Github repository (make sure you have ``python-dev`` installed)::
 

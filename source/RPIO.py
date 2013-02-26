@@ -6,12 +6,7 @@ as opposed to the pin ids (GPIO.BOARD)).
 You can use RPIO the same way as RPi.GPIO (eg. RPIO.setmode(...),
 RPIO.input(...)), as well as access the new interrupt handling methods.
 The following example shows how to react on events on 3 pins by using
-interrupts, each with different edge detections:
-
-    # Setup logging
-    import logging
-    log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
-    logging.basicConfig(format=log_format, level=logging.DEBUG)
+interrupt, with optional `edge` and `pull_up_down` parameters:
 
     # Get started
     import RPIO
