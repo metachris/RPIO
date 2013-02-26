@@ -38,11 +38,11 @@ def build():
         run("""echo "import GPIO\nprint(GPIO.VERSION_GPIO)" > test.py""")
         run("make gpio2.7 && cp build/GPIO.so .")
         run("sudo python2.7 test.py")
-        run("cp GPIO.so ../")   # keep new 2.7 version for rpiotests
-        run("cp GPIO.so ../GPIO27.so")   # keep new 2.7 version for rpiotests
+        run("cp GPIO.so ../RPIO/")
+        run("cp GPIO.so ../RPIO/GPIO27.so")
         run("make gpio3.2 && cp build/GPIO.so .")
         run("sudo python3.2 test.py")
-        run("mv GPIO.so ../GPIO32.so")
+        run("mv GPIO.so ../RPIO/GPIO32.so")
 
 
 def test():
