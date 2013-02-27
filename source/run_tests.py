@@ -160,10 +160,8 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info("- waiting 10s for interrupts on GPIO-%s...", GPIO_IN)
         Thread(target=socket_client).start()
         Thread(target=stop_interrupts, args=(10,)).start()
-        try:
-            RPIO.wait_for_interrupts()
-        except:
-            pass
+
+        RPIO.wait_for_interrupts()
 
         logging.info("-")
         RPIO.cleanup()
@@ -179,10 +177,7 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info("- waiting 5s for interrupts on gpio %s and %s...", \
                 GPIO_IN, GPIO_OUT)
         Thread(target=stop_interrupts, args=(5,)).start()
-        try:
-            RPIO.wait_for_interrupts()
-        except:
-            pass
+        RPIO.wait_for_interrupts()
         logging.info("-")
         RPIO.cleanup()
 

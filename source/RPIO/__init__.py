@@ -15,7 +15,7 @@ server on port 8080. The interrupts can have optional `edge` and
 
     def socket_callback(socket, val):
         print("socket %s: '%s'" % (socket.fileno(), val))
-        socket.send("echo: %s\\n" % val)
+        socket.send("echo: %s\n" % val)
 
     def do_something(gpio_id, value):
         logging.info("New value for GPIO %s: %s" % (gpio_id, value))
@@ -117,10 +117,8 @@ _gpio_kernel_interfaces_created = []
 
 # TCP socket stuff
 _TCP_SOCKET_HOST = "0.0.0.0"
-_tcp_client_sockets = {}  # { fileno: socket }
-_tcp_client_sockets_cb = {}  # { fileno: cb }
-_tcp_server_sockets = {}  # { fileno: socket }
-_tcp_server_sockets_cb = {}  # { fileno: cb }
+_tcp_client_sockets = {}  # { fileno: (socket, cb) }
+_tcp_server_sockets = {}  # { fileno: (socket, cb) }
 
 # Whether to continue the epoll loop or quit at next chance. You
 # can manually set this to False to stop `wait_for_interrupts()`.
@@ -184,13 +182,12 @@ def add_tcp_callback(port, callback, threaded_callback=False):
     serversocket.listen(1)
     serversocket.setblocking(0)
     _epoll.register(serversocket.fileno(), select.EPOLLIN)
-    _tcp_server_sockets[serversocket.fileno()] = serversocket
 
     # Prepare the callback (wrap in Thread if needed)
     cb = callback if not threaded_callback else \
             partial(_threaded_callback, callback)
 
-    _tcp_server_sockets_cb[serversocket.fileno()] = cb
+    _tcp_server_sockets[serversocket.fileno()] = (serversocket, cb)
     debug("Socket server started at port %s and callback added." % port)
 
 
@@ -323,11 +320,10 @@ def _handle_interrupt(fileno, val):
 def _close_tcp_client(fileno):
     debug("closing client socket fd %s" % fileno)
     global _tcp_client_sockets
-    global _tcp_client_sockets_cb
     _epoll.unregister(fileno)
-    _tcp_client_sockets[fileno].close()
+    socket, cb = _tcp_client_sockets[fileno]
+    socket.close()
     del _tcp_client_sockets[fileno]
-    del _tcp_client_sockets_cb[fileno]
 
 
 def wait_for_interrupts(epoll_timeout=1):
@@ -350,24 +346,23 @@ def wait_for_interrupts(epoll_timeout=1):
         for fileno, event in events:
             if fileno in _tcp_server_sockets:
                 # New client connection to socket server
-                serversocket = _tcp_server_sockets[fileno]
+                serversocket, cb = _tcp_server_sockets[fileno]
                 connection, address = serversocket.accept()
                 connection.setblocking(0)
                 f = connection.fileno()
                 _epoll.register(f, select.EPOLLIN)
-                _tcp_client_sockets[f] = connection
-                _tcp_client_sockets_cb[f] = _tcp_server_sockets_cb[fileno]
+                _tcp_client_sockets[f] = (connection, cb)
 
             elif event & select.EPOLLIN:
                 # Input from TCP socket
-                content = _tcp_client_sockets[fileno].recv(1024)
+                socket, cb = _tcp_client_sockets[fileno]
+                content = socket.recv(1024)
                 if not content or not content.strip():
                     # No content means quitting
                     _close_tcp_client(fileno)
                 else:
-                    _tcp_client_sockets_cb[fileno]( \
-                            _tcp_client_sockets[fileno], \
-                            content.strip())
+                    sock, cb = _tcp_client_sockets[fileno]
+                    cb(_tcp_client_sockets[fileno], content.strip())
 
             elif event & select.EPOLLHUP:
                 # TCP Socket Hangup
@@ -426,15 +421,14 @@ def _cleanup_tcpsockets():
     Closes all TCP connections and then the socket servers
     """
     global _tcp_server_sockets
-    global _tcp_server_sockets_cb
     for fileno in _tcp_client_sockets.keys():
         _close_tcp_client(fileno)
-    for fileno, socket in _tcp_server_sockets.items():
+    for fileno, items in _tcp_server_sockets.items():
+        socket, cb = items
         debug("- _cleanup server socket connection (fd %s)" % fileno)
         _epoll.unregister(fileno)
         socket.close()
     _tcp_server_sockets = {}
-    _tcp_server_sockets_cb = {}
 
 
 def cleanup():
