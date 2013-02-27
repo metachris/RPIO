@@ -1,4 +1,4 @@
-.TH "RPIO" "1" "February 24, 2013" "0.8.0" "RPIO"
+.TH "RPIO" "1" "February 27, 2013" "0.8.2" "RPIO"
 .SH NAME
 rpio \- RPIO Documentation
 .
@@ -34,9 +34,15 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 RPIO is a GPIO toolbox for the Raspberry Pi.
 .INDENT 0.0
 .IP \(bu 2
-\fI\%RPIO.py\fP, an extension of \fI\%RPi.GPIO\fP with interrupt handling and \fI\%more\fP
+\fI\%RPIO.py\fP, an extension of \fI\%RPi.GPIO\fP with interrupt handling, socket servers and \fI\%more\fP
 .IP \(bu 2
 \fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs system\-wide
+.UNINDENT
+.sp
+\fBNew\fP
+.INDENT 0.0
+.IP \(bu 2
+Socket server callbacks with \fI\%RPIO.add_tcp_callback(port, callback, threaded_callback=False))\fP
 .UNINDENT
 .sp
 The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP:
@@ -45,8 +51,8 @@ The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_
 .sp
 .nf
 .ft C
-$ sudo apt\-get install python\-pip
-$ sudo pip install \-U RPIO
+$ sudo apt\-get install python\-setuptools
+$ sudo easy_install \-U RPIO
 .ft P
 .fi
 .UNINDENT
@@ -164,59 +170,102 @@ $ man rpio
 .UNINDENT
 .sp
 RPIO.py extends \fI\%RPi.GPIO\fP with
-interrupt handling and \fI\%more\fP.
+various methods, and uses the BCM GPIO numbering scheme by default.
+.INDENT 0.0
+.IP \(bu 2
+\fI\%GPIO Input & Output\fP
+.IP \(bu 2
+\fI\%Interrupt handling\fP
+.IP \(bu 2
+\fI\%Socket servers\fP
+.IP \(bu 2
+\fI\%more\fP
+.UNINDENT
+.SH GPIO INTERRUPTS
 .sp
 Interrupts are used to receive notifications from the kernel when GPIO state
 changes occur. Advantages include minimized cpu consumption, very fast
 notification times, and the ability to trigger on specific edge transitions
-(\fBrising|falling|both\fP). RPIO uses the BCM GPIO numbering scheme by default. This
-is an example of how to use RPIO to react on events on 3 pins by using
-interrupts, each with different edge detections:
+(\fBrising\fP, \fBfalling\fP or \fBboth\fP). You can also set a software pull\-up
+or pull\-down resistor.
+.INDENT 0.0
+.TP
+.B RPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
+Adds a callback to receive notifications when a GPIO changes it\(aqs value.. Possible edges are \fBrising\fP,
+\fBfalling\fP and \fBboth\fP (default). Possible \fBpull_up_down\fP values are \fBRPIO.PUD_UP\fP, \fBRPIO.PUD_DOWN\fP and
+\fBRPIO.PUD_OFF\fP (default)
+.UNINDENT
+.SH TCP SOCKET INTERRUPTS
+.sp
+RPIO makes it easy to open ports for incoming TCP connections with \fBadd_tcp_callback(port, callback, threaded_callback=False)\fP.
+When \fBRPIO.wait_for_interrupts()\fP is running, you can connect to the socket server with \fB$ telnet localhost <your\-port>\fP.
+.INDENT 0.0
+.TP
+.B RPIO.add_tcp_callback(port, callback, threaded_callback=False)
+Adds a socket server callback, which will be started when a connected socket client sends something. This is implemented
+by RPIO creating a TCP server socket at the specified port. Incoming connections will be accepted when \fBRPIO.wait_for_interrupts()\fP runs.
+The callback must accept exactly two parameters: server and message (eg. \fBdef callback(socket, msg)\fP). The callback can use the socket parameter to send values back to the client (eg. \fBsocket.send("hi there\en")\fP).
+.UNINDENT
+.SH EXAMPLE
+.sp
+The following example shows how to react to events on three gpios, and one socket
+server on port 8080:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
-# Setup logging
-import logging
-log_format = \(aq%(levelname)s | %(asctime)\-15s | %(message)s\(aq
-logging.basicConfig(format=log_format, level=logging.DEBUG)
-
-# Get started
 import RPIO
+
+def gpio_callback(gpio_id, val):
+    print("gpio %s: %s" % (gpio_id, val))
+
+def socket_callback(socket, val):
+    print("socket %s: \(aq%s\(aq" % (socket.fileno(), val))
+    socket.send("echo: %s\en" % val)
 
 def do_something(gpio_id, value):
     logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
-RPIO.add_interrupt_callback(7, do_something)
-RPIO.add_interrupt_callback(8, do_something, edge=\(aqrising\(aq)
-RPIO.add_interrupt_callback(9, do_something, pull_up_down=RPIO.PUD_UP)
+# Three GPIO interrupt callbacks
+RPIO.add_interrupt_callback(7, gpio_callback)
+RPIO.add_interrupt_callback(8, gpio_callback, edge=\(aqrising\(aq)
+RPIO.add_interrupt_callback(9, gpio_callback, pull_up_down=RPIO.PUD_UP)
+
+# One TCP socket server callback on port 8080
+RPIO.add_tcp_callback(8080, socket_callback)
+
+# Start the blocking epoll loop
 RPIO.wait_for_interrupts()
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-Default edge is \fBboth\fP and default pull_up_down is \fBRPIO.PUD_OFF\fP. If
-you want to receive a callback inside a Thread (which won\(aqt block anything
-else on the system), set \fBthreaded_callback=True\fP when adding an interrupt\-
+Now you can connect to the socket server with \fB$ telnet localhost 8080\fP and
+everything you send to the callback will be echoed by the \fBsocket.send(..)\fP command.
+If you want to receive a callback inside a Thread (which won\(aqt block anything
+else on the system), set \fBthreaded_callback\fP to \fBTrue\fP when adding an interrupt\-
 callback. Here is an example:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .nf
 .ft C
+# for GPIO interrupts
 RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
+
+# for socket interrupts
+RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True))
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-Make sure to double\-check the value returned from the interrupt, since it
-is not necessarily corresponding to the edge (eg. 0 may come in as value,
-even if \fIedge="rising"\fP). To remove all callbacks from a certain gpio pin, use
-\fBRPIO.del_interrupt_callback(gpio_id)\fP. To stop the \fBwait_for_interrupts()\fP
-loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
+To stop the \fBwait_for_interrupts()\fP loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
+If an exception occurs while waiting for interrupts, all interfaces will be cleaned and reset,
+and you need to re\-add callbacks before waiting for interrupts again. If you use \fBRPIO.stop_waiting_for_interrupts()\fP.
+you should call \fBRPIO.cleanup()\fP before your program exits.
 .SH GPIO INPUT & OUTPUT
 .sp
 RPIO extends \fI\%RPi.GPIO\fP;
@@ -316,6 +365,8 @@ Interrupt Handling
 .IP \(bu 2
 \fBRPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, pull_up_down=RPIO.PUD_OFF, threaded_callback=False)\fP
 .IP \(bu 2
+\fBRPIO.add_tcp_callback(port, callback, threaded_callback=False)\fP
+.IP \(bu 2
 \fBRPIO.del_interrupt_callback(gpio_id)\fP
 .IP \(bu 2
 \fBRPIO.wait_for_interrupts(epoll_timeout=1)\fP
@@ -323,6 +374,22 @@ Interrupt Handling
 \fBRPIO.stop_waiting_for_interrupts()\fP
 .IP \(bu 2
 implemented with \fBepoll\fP
+.UNINDENT
+.sp
+Other Changes
+.INDENT 0.0
+.IP \(bu 2
+Uses \fBBCM\fP GPIO numbering by default
+.IP \(bu 2
+Improved documentation
+.IP \(bu 2
+Refactored, clean, simple C GPIO library
+.IP \(bu 2
+Interrupt handling
+.IP \(bu 2
+Support for P5 header GPIOs (29\-31) [??]
+.IP \(bu 2
+Command\-line tool \fBrpio\fP
 .UNINDENT
 .sp
 Please send feedback and ideas to \fI\%chris@linuxuser.at\fP, and \fI\%open an issue at Github\fP if
@@ -398,6 +465,12 @@ GNU General Public License for more details.
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
+.IP \(bu 2
+v0.8.2
+.INDENT 2.0
+.IP \(bu 2
+Added TCP socket callbacks
+.UNINDENT
 .IP \(bu 2
 v0.8.0
 .INDENT 2.0

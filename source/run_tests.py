@@ -3,8 +3,10 @@
 This test suite runs on the Raspberry Pi and tests RPIO inside out.
 """
 import os
+import sys
 import time
 import unittest
+import socket
 from threading import Thread
 import logging
 log_format = '%(levelname)s | %(asctime)-15s | %(message)s'
@@ -13,8 +15,8 @@ logging.basicConfig(format=log_format, level=logging.DEBUG)
 import RPIO
 RPIO.setwarnings(False)
 
-GPIO_IN = 14
-GPIO_OUT = 17
+GPIO_IN = 17
+GPIO_OUT = 14
 
 
 def run(cmd):
@@ -28,12 +30,14 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test2_rpio_cmd(self):
         logging.info(" ")
-        logging.info("=== rpio COMMAND LINE TOOL TESTS ===")
-        run("sudo python rpio --version")
-        run("sudo python rpio -v -I")
-        run("sudo python rpio -v -i 5,%s,%s" % (GPIO_IN, GPIO_OUT))
+        cmd = "sudo python rpio" if sys.version_info[0] == 2 else \
+              "sudo python3 rpio"
+        logging.info("=== rpio COMMAND LINE TOOL TESTS (`%s`)===", cmd)
+        run("%s --version" % cmd)
+        run("%s -v -I" % cmd)
+        run("%s -v -i 5,%s,%s" % (cmd, GPIO_IN, GPIO_OUT))
         # run("sudo python rpio --update-man")
-        run("sudo python rpio --sysinfo")
+        run("%s --sysinfo" % cmd)
 
     def test3_input(self):
         logging.info(" ")
@@ -120,7 +124,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test6_interrupts(self):
         logging.info(" ")
         logging.info(" ")
-        logging.info("=== INTERRUPT TESTS ==")
+        logging.info("=== INTERRUPT TESTS (3x 5sec) ==")
 
         def test_callback(*args):
             logging.info("- interrupt callback received: %s", (args))
@@ -129,65 +133,62 @@ class TestSequenceFunctions(unittest.TestCase):
             time.sleep(timeout)
             RPIO.stop_waiting_for_interrupts()
             logging.info("- called `stop_waiting_for_interrupts()`")
+
+        PORT = 8080
+
+        def socket_callback(socket, msg):
+            logging.info("Socket msg received: %s", msg)
+
+        def socket_client():
+            logging.info("Socket client connecting in 3 seconds...")
+            time.sleep(3)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(("localhost", PORT))
+            s.sendall("Hello, world".encode('utf-8'))
+            s.close()
+            logging.info("Socket client done...")
+
         #
-        # Normal interrupt test
+        # Interrupt test with socket comm
         #
         logging.info(" ")
-        logging.info("Testing interrupts on GPIO-%s", GPIO_IN)
+        logging.info("Testing interrupts on GPIO-%s and socket comm", GPIO_IN)
+        RPIO.add_tcp_callback(PORT, socket_callback)
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_DOWN)
 
         logging.info("- waiting 10s for interrupts on GPIO-%s...", GPIO_IN)
+        Thread(target=socket_client).start()
         Thread(target=stop_interrupts, args=(10,)).start()
-        try:
-            RPIO.wait_for_interrupts()
-        except:
-            pass
+
+        RPIO.wait_for_interrupts()
 
         logging.info("-")
         RPIO.cleanup()
-        time.sleep(3)
 
         #
         # Auto interrupt shutdown with thread and stop_waiting_for_interrupts
         #
         logging.info(" ")
-        logging.info(" ")
-        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='falling', \
-                pull_up_down=RPIO.PUD_UP)
-        logging.info("- test auto-exit in 3 seconds")
-        Thread(target=stop_interrupts, args=(3,)).start()
-        try:
-            RPIO.wait_for_interrupts()
-        except:
-            pass
-        logging.info("-")
-        RPIO.cleanup()
-        RPIO.cleanup()
-        time.sleep(3)
-
-        #
-        # Interrupt manual cancel
-        #
-        logging.info(" ")
-        logging.info(" ")
-        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='rising', \
-                pull_up_down=RPIO.PUD_DOWN)
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
+                pull_up_down=RPIO.PUD_OFF)
         RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
                 pull_up_down=RPIO.PUD_UP)
-        logging.info("- waiting 10s for interrupts on gpio %s and %s...", \
+        logging.info("- waiting 5s for interrupts on gpio %s and %s...", \
                 GPIO_IN, GPIO_OUT)
-        Thread(target=stop_interrupts, args=(10,)).start()
-        try:
-            RPIO.wait_for_interrupts()
-        except:
-            pass
+        Thread(target=stop_interrupts, args=(5,)).start()
+        RPIO.wait_for_interrupts()
         logging.info("-")
-        RPIO.cleanup()
         RPIO.cleanup()
 
         logging.info("ALL DONE :)")
 
 
 if __name__ == '__main__':
+    logging.info("==================================")
+    logging.info("= Test Suite Run with Python %s   =" % \
+            sys.version_info[0])
+    logging.info("==================================")
+    logging.info("")
+    logging.info("")
     unittest.main()

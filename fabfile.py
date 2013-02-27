@@ -12,7 +12,10 @@ from fabric.api import run, local, cd, put, env
 from fabric.operations import prompt
 
 env.use_ssh_config = True
-env.hosts = ["raspberry_dev"]
+
+# Set default hosts
+if not env.hosts:
+    env.hosts = ["raspberry_dev"]
 
 
 def upload():
@@ -35,16 +38,27 @@ def build():
         run("""echo "import GPIO\nprint(GPIO.VERSION_GPIO)" > test.py""")
         run("make gpio2.7 && cp build/GPIO.so .")
         run("sudo python2.7 test.py")
-        run("mv GPIO.so ../")   # keep new 2.7 version for rpiotests
+        run("cp GPIO.so ../RPIO/")
+        run("cp GPIO.so ../RPIO/GPIO27.so")
         run("make gpio3.2 && cp build/GPIO.so .")
         run("sudo python3.2 test.py")
-        run("rm GPIO.so")
+        run("mv GPIO.so ../RPIO/GPIO32.so")
 
 
 def test():
     """ Invokes test suite in `run_tests.py` """
+    with cd("/tmp/source/RPIO"):
+        run("cp GPIO27.so GPIO.so")
     with cd("/tmp/source"):
         run("sudo python run_tests.py")
+
+
+def test3():
+    """ Invokes test suite in `run_tests.py` """
+    with cd("/tmp/source/RPIO"):
+        run("cp GPIO32.so GPIO.so")
+    with cd("/tmp/source"):
+        run("sudo python3 run_tests.py")
 
 
 def upload_to_pypi():
