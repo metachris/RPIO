@@ -118,7 +118,7 @@ _gpio_kernel_interfaces_created = []
 # TCP socket stuff
 _TCP_SOCKET_HOST = "0.0.0.0"
 _tcp_client_sockets = {}  # { fileno: socket }
-_tcp_client_sockets_cb = {}  # { fileno: socket }
+_tcp_client_sockets_cb = {}  # { fileno: cb }
 _tcp_server_sockets = {}  # { fileno: socket }
 _tcp_server_sockets_cb = {}  # { fileno: cb }
 
@@ -154,7 +154,6 @@ GPIO_LIST_R2 = (2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, \
 # Revision 2 boards have extra gpios on the P5 header (gpio 27-31)). Shifting
 # the header info left by 8 bits leaves 255 possible channels per header. This
 # list of board pins is currently only used for testing purposes.
-HEADER_P1 = 0 << 8
 HEADER_P5 = 5 << 8
 PIN_LIST = (3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, \
         3 | HEADER_P5, 4 | HEADER_P5, 5 | HEADER_P5, 6 | HEADER_P5)
