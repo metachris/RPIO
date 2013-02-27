@@ -178,10 +178,6 @@ def add_tcp_callback(port, callback, threaded_callback=False):
     if not callback:
         raise AttributeError("No callback specified")
 
-    # Prepare the callback (wrap in Thread if needed)
-    cb = callback if not threaded_callback else \
-            partial(_threaded_callback, callback)
-
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     serversocket.bind((_TCP_SOCKET_HOST, port))
@@ -189,6 +185,11 @@ def add_tcp_callback(port, callback, threaded_callback=False):
     serversocket.setblocking(0)
     _epoll.register(serversocket.fileno(), select.EPOLLIN)
     _tcp_server_sockets[serversocket.fileno()] = serversocket
+
+    # Prepare the callback (wrap in Thread if needed)
+    cb = callback if not threaded_callback else \
+            partial(_threaded_callback, callback)
+
     _tcp_server_sockets_cb[serversocket.fileno()] = cb
     debug("Socket server started at port %s and callback added." % port)
 
@@ -445,4 +446,3 @@ def cleanup():
     _cleanup_tcpsockets()
     _cleanup_interfaces()
     _cleanup_orig()
-    _epoll.close()

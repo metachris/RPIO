@@ -47,15 +47,17 @@ def build():
 
 def test():
     """ Invokes test suite in `run_tests.py` """
-    with cd("/tmp/source"):
+    with cd("/tmp/source/RPIO"):
         run("cp GPIO27.so GPIO.so")
+    with cd("/tmp/source"):
         run("sudo python run_tests.py")
 
 
 def test3():
     """ Invokes test suite in `run_tests.py` """
-    with cd("/tmp/source"):
+    with cd("/tmp/source/RPIO"):
         run("cp GPIO32.so GPIO.so")
+    with cd("/tmp/source"):
         run("sudo python3 run_tests.py")
 
 
