@@ -425,15 +425,16 @@ def _cleanup_tcpsockets():
     """
     Closes all TCP connections and then the socket servers
     """
+    global _tcp_server_sockets
+    global _tcp_server_sockets_cb
     for fileno in _tcp_client_sockets.keys():
         _close_tcp_client(fileno)
-
     for fileno, socket in _tcp_server_sockets.items():
-        debug("- closing server socket connection (fd %s)" % fileno)
+        debug("- _cleanup server socket connection (fd %s)" % fileno)
         _epoll.unregister(fileno)
         socket.close()
-        del _tcp_server_sockets[fileno]
-        del _tcp_server_sockets_cb[fileno]
+    _tcp_server_sockets = {}
+    _tcp_server_sockets_cb = {}
 
 
 def cleanup():

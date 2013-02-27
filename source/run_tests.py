@@ -144,7 +144,7 @@ class TestSequenceFunctions(unittest.TestCase):
             time.sleep(3)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(("localhost", PORT))
-            s.sendall('Hello, world')
+            s.sendall("Hello, world".encode('utf-8'))
             s.close()
             logging.info("Socket client done...")
 
