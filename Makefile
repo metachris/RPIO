@@ -15,6 +15,8 @@ doc:
 	sed -i '' "s/:ref:\`*//g" README.rst
 	sed -i '' "s/ <ref-[a-zA-Z-]*>\`//g" README.rst
 	sed -i '' "s/[.][.] _.*//g" README.rst
+	sed -i '' "s/[.][.] method:: //g" README.rst
+
 
 clean:
 	rm -rf build dist RPIO.egg-info

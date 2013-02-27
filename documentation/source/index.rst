@@ -127,8 +127,8 @@ various methods, and uses the BCM GPIO numbering scheme by default.
 
 * :ref:`GPIO Input & Output <ref-rpio-py-rpigpio>` 
 * :ref:`Interrupt handling <ref-rpio-py-interrupts>` 
-* :ref:`Socket servers<ref-rpio-py-interrupts>` 
-* :ref:`more <ref-rpio-py-goodies>`.
+* :ref:`Socket servers <ref-rpio-py-interrupts>` 
+* :ref:`more <ref-rpio-py-goodies>`
 
 
 .. _ref-rpio-py-interrupts:

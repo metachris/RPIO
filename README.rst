@@ -1,23 +1,17 @@
-.. RPIO documentation master file, created by
-   sphinx-quickstart on Thu Feb 21 13:13:51 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to RPIO's documentation!
-================================
+Visit `pythonhosted.org/RPIO <http://pythonhosted.org/RPIO>`_ for a pretty version of this documentation.
 
 RPIO is a GPIO toolbox for the Raspberry Pi.
 
-* :ref:`RPIO.py <ref-rpio-py>`, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling, socket servers and :ref:`more <ref-rpio-py-rpigpio>`
-* :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs system-wide
+* RPIO.py, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling, socket servers and more
+* rpio, a command-line multitool for inspecting and manipulating GPIOs system-wide
 
 
 **New**
 
-* Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False)) <ref-rpio-py>`
+* Socket server callbacks with RPIO.add_tcp_callback(port, callback, threaded_callback=False))
 
 
-.. _ref-installation:
+
 
 Installation
 ============
@@ -36,7 +30,7 @@ Another way to get RPIO is directly from the Github repository (make sure you ha
 After the installation you can use import ``RPIO`` as well as the command-line tool ``rpio``.
 
 
-.. _ref-rpio-cmd:
+
 
 ``rpio``, the command line tool
 ===============================
@@ -117,7 +111,7 @@ Install (and update) the ``rpio`` manpage::
     $ man rpio
 
 
-.. _ref-rpio-py:
+
 
 ``RPIO.py``, the Python module
 ==============================
@@ -125,13 +119,13 @@ Install (and update) the ``rpio`` manpage::
 RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with 
 various methods, and uses the BCM GPIO numbering scheme by default.
 
-* :ref:`GPIO Input & Output <ref-rpio-py-rpigpio>` 
-* :ref:`Interrupt handling <ref-rpio-py-interrupts>` 
-* :ref:`Socket servers<ref-rpio-py-interrupts>` 
-* :ref:`more <ref-rpio-py-goodies>`.
+* GPIO Input & Output 
+* Interrupt handling 
+* Socket servers 
+* more
 
 
-.. _ref-rpio-py-interrupts:
+
 
 GPIO Interrupts
 ---------------
@@ -141,21 +135,21 @@ notification times, and the ability to trigger on specific edge transitions
 (``rising``, ``falling`` or ``both``). You can also set a software pull-up 
 or pull-down resistor.
 
-.. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
+RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
 
    Adds a callback to receive notifications when a GPIO changes it's value.. Possible edges are ``rising``,
    ``falling`` and ``both`` (default). Possible ``pull_up_down`` values are ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and
    ``RPIO.PUD_OFF`` (default)
 
 
-.. _ref-rpio-py-tcpserver:
+
 
 TCP Socket Interrupts
 ---------------------
 RPIO makes it easy to open ports for incoming TCP connections with ``add_tcp_callback(port, callback, threaded_callback=False)``.
 When ``RPIO.wait_for_interrupts()`` is running, you can connect to the socket server with ``$ telnet localhost <your-port>``.
 
-.. method:: RPIO.add_tcp_callback(port, callback, threaded_callback=False)
+RPIO.add_tcp_callback(port, callback, threaded_callback=False)
 
    Adds a socket server callback, which will be started when a connected socket client sends something. This is implemented
    by RPIO creating a TCP server socket at the specified port. Incoming connections will be accepted when ``RPIO.wait_for_interrupts()`` runs.
@@ -211,7 +205,7 @@ and you need to re-add callbacks before waiting for interrupts again. If you use
 you should call ``RPIO.cleanup()`` before your program exits.
 
 
-.. _ref-rpio-py-rpigpio:
+
 
 GPIO Input & Output
 -------------------
@@ -265,7 +259,7 @@ use the help method inside Python::
     help(RPIO)
 
 
-.. _ref-rpio-py-goodies:
+
 
 Additions to RPi.GPIO
 ---------------------
@@ -321,12 +315,12 @@ FAQ
 
 **Should I update RPIO often?**
 
-  Yes, because RPIO is getting better by the day. You can use ``$ rpio --update-rpio`` or see :ref:`Installation <ref-installation>` for more information about methods to update.
+  Yes, because RPIO is getting better by the day. You can use ``$ rpio --update-rpio`` or see Installation for more information about methods to update.
 
 
 **I've encountered a bug, what next?**
 
-  * Make sure you are using the latest version of RPIO (see :ref:`Installation <ref-installation>`)
+  * Make sure you are using the latest version of RPIO (see Installation)
   * Open an issue at Github
 
     * Go to https://github.com/metachris/RPIO/issues/new
@@ -336,7 +330,7 @@ FAQ
 
 **pip is throwing an error during the build:** ``source/c_gpio/py_gpio.c:9:20: fatal error: Python.h: No such file or directory``
 
-  You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see :ref:`Installation <ref-installation>`).
+  You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see Installation).
 
 
 Links
