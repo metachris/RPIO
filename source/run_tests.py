@@ -28,16 +28,16 @@ class TestSequenceFunctions(unittest.TestCase):
     def test1_version(self):
         logging.info("Version: %s (%s)", RPIO.VERSION, RPIO.VERSION_GPIO)
 
-    def test2_rpio_cmd(self):
-        logging.info(" ")
-        cmd = "sudo python rpio" if sys.version_info[0] == 2 else \
-              "sudo python3 rpio"
-        logging.info("=== rpio COMMAND LINE TOOL TESTS (`%s`)===", cmd)
-        run("%s --version" % cmd)
-        run("%s -v -I" % cmd)
-        run("%s -v -i 5,%s,%s" % (cmd, GPIO_IN, GPIO_OUT))
-        # run("sudo python rpio --update-man")
-        run("%s --sysinfo" % cmd)
+    # def test2_rpio_cmd(self):
+    #     logging.info(" ")
+    #     cmd = "sudo python rpio" if sys.version_info[0] == 2 else \
+    #           "sudo python3 rpio"
+    #     logging.info("=== rpio COMMAND LINE TOOL TESTS (`%s`)===", cmd)
+    #     run("%s --version" % cmd)
+    #     run("%s -v -I" % cmd)
+    #     run("%s -v -i 5,%s,%s" % (cmd, GPIO_IN, GPIO_OUT))
+    #     # run("sudo python rpio --update-man")
+    #     run("%s --sysinfo" % cmd)
 
     def test3_input(self):
         logging.info(" ")
@@ -139,9 +139,9 @@ class TestSequenceFunctions(unittest.TestCase):
         def socket_callback(socket, msg):
             logging.info("Socket msg received: %s", msg)
 
-        def socket_client():
+        def socket_client(timeout=3):
             logging.info("Socket client connecting in 3 seconds...")
-            time.sleep(3)
+            time.sleep(timeout)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(("localhost", PORT))
             s.sendall("Hello, world".encode('utf-8'))
@@ -157,10 +157,17 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_DOWN)
 
-        logging.info("- waiting 10s for interrupts on GPIO-%s...", GPIO_IN)
+        # Add a number of TCP clients
         Thread(target=socket_client).start()
+        Thread(target=socket_client, args=(4,)).start()
+        Thread(target=socket_client, args=(4,)).start()
+        Thread(target=socket_client, args=(4,)).start()
+        Thread(target=socket_client, args=(4,)).start()
+
+        # One stop interrupts thread
         Thread(target=stop_interrupts, args=(10,)).start()
 
+        logging.info("- waiting 10s for interrupts on GPIO-%s...", GPIO_IN)
         RPIO.wait_for_interrupts()
 
         logging.info("-")

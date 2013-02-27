@@ -28,8 +28,11 @@ server on port 8080. The interrupts can have optional `edge` and
     # One TCP socket server callback on port 8080
     RPIO.add_tcp_callback(8080, socket_callback)
 
-    # Start the blocking epoll loop
-    RPIO.wait_for_interrupts()
+    # Start the blocking epoll loop, and catch Ctrl+C KeyboardInterrupt
+    try:
+        RPIO.wait_for_interrupts()
+    except KeyboardInterrupt:
+        RPIO.cleanup_interrupts()
 
 Now you can connect to the socket server with `$ telnet localhost 8080` and
 send input to your callback.
@@ -248,6 +251,7 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
     else:
         # If kernel interface already exists, unexport first for clean setup
         if os.path.exists(path_gpio):
+            debug("- unexporting kernel interface for GPIO %s" % gpio_id)
             with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
                 f.write("%s" % gpio_id)
 
@@ -431,6 +435,16 @@ def _cleanup_tcpsockets():
     _tcp_server_sockets = {}
 
 
+def cleanup_interrupts():
+    """
+    Clean up all interrupt-related sockets and interfaces. Recommended to
+    use before exiting your program! After this you'll need to re-add the
+    interrupt callbacks before waiting for interrupts again.
+    """
+    _cleanup_tcpsockets()
+    _cleanup_interfaces()
+
+
 def cleanup():
     """
     Clean up by resetting all GPIO channels that have been used by this
@@ -438,6 +452,5 @@ def cleanup():
     unexports the interrupt interfaces and callback bindings. You'll need
     to add the interrupt callbacks again before waiting for interrupts again.
     """
-    _cleanup_tcpsockets()
-    _cleanup_interfaces()
+    cleanup_interrupts()
     _cleanup_orig()

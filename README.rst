@@ -8,7 +8,7 @@ RPIO is a GPIO toolbox for the Raspberry Pi.
 
 **New**
 
-* Socket server callbacks with RPIO.add_tcp_callback(port, callback, threaded_callback=False))
+* Socket server callbacks with RPIO.add_tcp_callback(port, callback, threaded_callback=False)
 
 
 
@@ -190,19 +190,18 @@ server on port 8080::
 Now you can connect to the socket server with ``$ telnet localhost 8080`` and
 everything you send to the callback will be echoed by the ``socket.send(..)`` command.
 If you want to receive a callback inside a Thread (which won't block anything
-else on the system), set ``threaded_callback`` to ``True`` when adding an interrupt-
-callback. Here is an example::
+else on the system), set ``threaded_callback`` to ``True`` when adding it::
 
     # for GPIO interrupts
     RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
     # for socket interrupts
-    RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True))
+    RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True)
 
 To stop the ``wait_for_interrupts()`` loop you can call ``RPIO.stop_waiting_for_interrupts()``.
 If an exception occurs while waiting for interrupts, all interfaces will be cleaned and reset,
-and you need to re-add callbacks before waiting for interrupts again. If you use ``RPIO.stop_waiting_for_interrupts()``.
-you should call ``RPIO.cleanup()`` before your program exits.
+and you need to re-add callbacks before waiting for interrupts again. After using ``RPIO.stop_waiting_for_interrupts()``
+you should call ``RPIO.cleanup()`` before your program quits to shut everything down nicely.
 
 
 
@@ -289,12 +288,11 @@ Interrupt Handling
 
 Other Changes
 
-* Uses ``BCM`` GPIO numbering by default
+* Command-line tool ``rpio``
+* GPIO and TCP socket interrupt handling
 * Improved documentation
 * Refactored, clean, simple C GPIO library
-* Interrupt handling
-* Support for P5 header GPIOs (29-31) [??]
-* Command-line tool ``rpio``
+* Uses ``BCM`` GPIO numbering by default
 
 
 Feedback
@@ -382,7 +380,7 @@ Changes
   
   * Refactoring and cleanup of c_gpio
   * Added new constants and methods (see documentation above)
-  * **Bugfixes**
+  * Bugfixes
 
     * ``wait_for_interrupts()`` now auto-cleans interfaces when an exception occurs. Before you needed to call ``RPIO.cleanup()`` manually.
 

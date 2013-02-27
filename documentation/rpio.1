@@ -42,7 +42,7 @@ RPIO is a GPIO toolbox for the Raspberry Pi.
 \fBNew\fP
 .INDENT 0.0
 .IP \(bu 2
-Socket server callbacks with \fI\%RPIO.add_tcp_callback(port, callback, threaded_callback=False))\fP
+Socket server callbacks with \fI\%RPIO.add_tcp_callback(port, callback, threaded_callback=False)\fP
 .UNINDENT
 .sp
 The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP:
@@ -245,8 +245,7 @@ RPIO.wait_for_interrupts()
 Now you can connect to the socket server with \fB$ telnet localhost 8080\fP and
 everything you send to the callback will be echoed by the \fBsocket.send(..)\fP command.
 If you want to receive a callback inside a Thread (which won\(aqt block anything
-else on the system), set \fBthreaded_callback\fP to \fBTrue\fP when adding an interrupt\-
-callback. Here is an example:
+else on the system), set \fBthreaded_callback\fP to \fBTrue\fP when adding it:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -256,7 +255,7 @@ callback. Here is an example:
 RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
 # for socket interrupts
-RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True))
+RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True)
 .ft P
 .fi
 .UNINDENT
@@ -264,8 +263,8 @@ RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True))
 .sp
 To stop the \fBwait_for_interrupts()\fP loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
 If an exception occurs while waiting for interrupts, all interfaces will be cleaned and reset,
-and you need to re\-add callbacks before waiting for interrupts again. If you use \fBRPIO.stop_waiting_for_interrupts()\fP.
-you should call \fBRPIO.cleanup()\fP before your program exits.
+and you need to re\-add callbacks before waiting for interrupts again. After using \fBRPIO.stop_waiting_for_interrupts()\fP
+you should call \fBRPIO.cleanup()\fP before your program quits to shut everything down nicely.
 .SH GPIO INPUT & OUTPUT
 .sp
 RPIO extends \fI\%RPi.GPIO\fP;
@@ -379,17 +378,15 @@ implemented with \fBepoll\fP
 Other Changes
 .INDENT 0.0
 .IP \(bu 2
-Uses \fBBCM\fP GPIO numbering by default
+Command\-line tool \fBrpio\fP
+.IP \(bu 2
+GPIO and TCP socket interrupt handling
 .IP \(bu 2
 Improved documentation
 .IP \(bu 2
 Refactored, clean, simple C GPIO library
 .IP \(bu 2
-Interrupt handling
-.IP \(bu 2
-Support for P5 header GPIOs (29\-31) [??]
-.IP \(bu 2
-Command\-line tool \fBrpio\fP
+Uses \fBBCM\fP GPIO numbering by default
 .UNINDENT
 .sp
 Please send feedback and ideas to \fI\%chris@linuxuser.at\fP, and \fI\%open an issue at Github\fP if
@@ -499,7 +496,7 @@ Refactoring and cleanup of c_gpio
 .IP \(bu 2
 Added new constants and methods (see documentation above)
 .IP \(bu 2
-\fBBugfixes\fP
+Bugfixes
 .INDENT 2.0
 .IP \(bu 2
 \fBwait_for_interrupts()\fP now auto\-cleans interfaces when an exception occurs. Before you needed to call \fBRPIO.cleanup()\fP manually.
