@@ -6,13 +6,21 @@
 Welcome to RPIO's documentation!
 ================================
 
-RPIO is a GPIO toolbox for the Raspberry Pi.
+RPIO is an advanced GPIO module for the Raspberry Pi.
 
-* :ref:`RPIO.py <ref-rpio-py>`, an extension of `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with interrupt handling, socket servers and :ref:`more <ref-rpio-py-rpigpio>`
+* GPIO Input and Output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
+* GPIO Interrupts (callbacks when events occur on input gpios)
+* TCP Socket Interrupts (callbacks when tcp socket clients send data)
+* Well documented, tested, fast source code
+* Minimal CPU and memory profile
+
+RPIO consists of two main components:
+
+* :ref:`RPIO.py <ref-rpio-py>`, which you can import in Python 2 or 3 with ``import RPIO``
 * :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs system-wide
 
 
-**New**
+New in v0.8.2
 
 * Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
 
@@ -27,13 +35,19 @@ The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_i
     $ sudo apt-get install python-setuptools
     $ sudo easy_install -U RPIO
 
-Another way to get RPIO is directly from the Github repository (make sure you have ``python-dev`` installed)::
+You can also get RPIO from Github repository, which is usually a step ahead of pypi::
 
     $ git clone https://github.com/metachris/RPIO.git
     $ cd RPIO
     $ sudo python setup.py install
 
-After the installation you can use import ``RPIO`` as well as the command-line tool ``rpio``.
+Or from Github but without Git::
+
+    $ curl -L https://github.com/metachris/RPIO/archive/master.tar.gz | tar -xz
+    $ cd RPIO-master
+    $ sudo python setup.py install
+
+After the installation you can use ``import RPIO`` as well as the command-line tool ``rpio``.
 
 
 .. _ref-rpio-cmd:
@@ -43,7 +57,8 @@ After the installation you can use import ``RPIO`` as well as the command-line t
 
 ``rpio`` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
 ``rpio`` needs to run with superuser privileges (root), else it will restart using ``sudo``. The BCM GPIO numbering
-scheme is used by default.
+scheme is used by default. ``rpio --inspect-all`` (or ``-I``) is the most popular command; it shows you all gpios
+on the board, with function and state. Here is an overview of all the functions:
 
 ::
 
@@ -103,7 +118,7 @@ scheme is used by default.
         $ rpio --sysinfo
 
         # Example output:
-        Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
+        000e: Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
 
 You can update the ``RPIO`` package to the latest version::
@@ -122,13 +137,13 @@ Install (and update) the ``rpio`` manpage::
 ``RPIO.py``, the Python module
 ==============================
 
-RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ with 
-various methods, and uses the BCM GPIO numbering scheme by default.
+RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ in
+various ways, and uses the BCM GPIO numbering scheme by default.
 
+* :ref:`GPIO Interrupts <ref-rpio-py-interrupts>` 
+* :ref:`TCP Socket Interrupts <ref-rpio-py-tcpserver>` 
 * :ref:`GPIO Input & Output <ref-rpio-py-rpigpio>` 
-* :ref:`Interrupt handling <ref-rpio-py-interrupts>` 
-* :ref:`Socket servers <ref-rpio-py-tcpserver>` 
-* :ref:`more <ref-rpio-py-goodies>`
+* :ref:`more <ref-rpio-py-additions>`
 
 
 .. _ref-rpio-py-interrupts:
@@ -143,23 +158,26 @@ or pull-down resistor.
 
 .. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
 
-   Adds a callback to receive notifications when a GPIO changes it's value.. Possible edges are ``rising``,
-   ``falling`` and ``both`` (default). Possible ``pull_up_down`` values are ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and
-   ``RPIO.PUD_OFF`` (default)
+   Adds a callback to receive notifications when a GPIO changes it's value. Possible ``pull_up_down`` values are 
+   ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and ``RPIO.PUD_OFF`` (default). Possible edges are ``rising``,
+   ``falling`` and ``both`` (default). Note that ``rising`` and ``falling`` edges may receive values
+   not corresponding to the edge, so be sure to double check.
 
 
 .. _ref-rpio-py-tcpserver:
 
 TCP Socket Interrupts
 ---------------------
-RPIO makes it easy to open ports for incoming TCP connections with ``add_tcp_callback(port, callback, threaded_callback=False)``.
-When ``RPIO.wait_for_interrupts()`` is running, you can connect to the socket server with ``$ telnet localhost <your-port>``.
+Its easy to open ports for incoming TCP connections with just this one method:
 
 .. method:: RPIO.add_tcp_callback(port, callback, threaded_callback=False)
 
    Adds a socket server callback, which will be started when a connected socket client sends something. This is implemented
    by RPIO creating a TCP server socket at the specified port. Incoming connections will be accepted when ``RPIO.wait_for_interrupts()`` runs.
-   The callback must accept exactly two parameters: server and message (eg. ``def callback(socket, msg)``). The callback can use the socket parameter to send values back to the client (eg. ``socket.send("hi there\n")``).
+   The callback must accept exactly two parameters: socket and message (eg. ``def callback(socket, msg)``). The callback can use the socket parameter to send values back to the client (eg. ``socket.send("hi there\n")``).
+
+   You can test the TCP socket interrupts with ``$ telnet <your-ip> <your-port>`` (eg. ``$ telnet localhost 8080``). An empty string
+   tells the server to close the client connection (for instance if you just press enter in telnet, you'll get disconnected).
 
 
 
@@ -196,10 +214,9 @@ server on port 8080::
         RPIO.cleanup_interrupts()
 
 
-Now you can connect to the socket server with ``$ telnet localhost 8080`` and
-everything you send to the callback will be echoed by the ``socket.send(..)`` command.
-If you want to receive a callback inside a Thread (which won't block anything
-else on the system), set ``threaded_callback`` to ``True`` when adding it::
+If you want to receive a callback inside a Thread (to not block RPIO from returning to wait
+for interrupts), set ``threaded_callback`` to ``True`` when adding it::
+
 
     # for GPIO interrupts
     RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
@@ -210,6 +227,10 @@ else on the system), set ``threaded_callback`` to ``True`` when adding it::
 To stop the ``wait_for_interrupts()`` loop you can call ``RPIO.stop_waiting_for_interrupts()``.
 After using ``RPIO.wait_for_interrupts()`` you should call ``RPIO.cleanup_interrupts()`` before your 
 program quits, to shut everything down nicely.
+
+
+Log Output
+----------
 
 To enable RPIO log output, import ``logging`` and set the loglevel to ``DEBUG`` before importing RPIO::
 
@@ -254,7 +275,10 @@ all the input and output handling works just the same:
     RPIO.setmode(RPIO.BOARD)
 
     # set software pullup on channel 17
-    RPIO.set_pullupdn(17, RPIO.PUD_UP)
+    RPIO.set_pullupdn(17, RPIO.PUD_UP)  # new in RPIO
+
+    # get the function of channel 8
+    RPIO.gpio_function(8)
 
     # reset every channel that has been set up by this program,
     # and unexport interrupt gpio interfaces
@@ -273,15 +297,15 @@ use the help method inside Python::
     help(RPIO)
 
 
-.. _ref-rpio-py-goodies:
+.. _ref-rpio-py-additions:
 
 Additions to RPi.GPIO
 ---------------------
 
 Additional Constants
 
-* ``RPIO.RPI_REVISION`` (either ``1`` or ``2``)
-* ``RPIO.RPI_REVISION_HEX`` (``0002`` .. ``000f``)
+* ``RPIO.RPI_REVISION`` - the current board's revision (either ``1`` or ``2``)
+* ``RPIO.RPI_REVISION_HEX`` - the cpu hex revision code (``0002`` .. ``000f``)
 
 Additional Methods
 
@@ -290,7 +314,8 @@ Additional Methods
 * ``RPIO.forceinput(gpio_id)`` - reads the value of any gpio without needing to call setup() first
 * ``RPIO.forceoutput(gpio_id, value)`` - writes a value to any gpio without needing to call setup() first 
   (**warning**: this can potentially harm your Raspberry)
-* ``RPIO.rpi_sysinfo()`` - returns ``(model, revision, mb-ram and maker)`` of this Raspberry
+* ``RPIO.sysinfo()`` - returns ``(hex_rev, model, revision, mb-ram and maker)`` of this Raspberry
+* ``RPIO.version()`` - returns ``(version_rpio, version_cgpio)``
 
 Interrupt Handling
 
@@ -300,14 +325,6 @@ Interrupt Handling
 * ``RPIO.wait_for_interrupts(epoll_timeout=1)``
 * ``RPIO.stop_waiting_for_interrupts()``
 *  implemented with ``epoll``
-
-Other Changes
-
-* Command-line tool ``rpio``
-* GPIO and TCP socket interrupt handling
-* Improved documentation
-* Refactored, clean, simple C GPIO library
-* Uses ``BCM`` GPIO numbering by default
 
 
 Feedback
@@ -375,9 +392,15 @@ License
 Changes
 =======
 
+* v0.8.3: pypi release update with updated documentation and bits of refactoring
+
 * v0.8.2
 
   * Added TCP socket callbacks
+  * ``RPIO`` does not auto-clean interfaces on exceptions anymore, but will auto-clean them 
+    as needed. This means you should now call ``RPIO.cleanup_interrupts()`` to properly close
+    the sockets and unexport the interfaces. 
+  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo()``
 
 
 * v0.8.0

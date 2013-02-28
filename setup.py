@@ -8,15 +8,16 @@ def read(fname):
 
 setup(
     name="RPIO",
-    version="0.8.2",
+    version="0.8.3",
     package_dir={"": "source"},
     packages=['RPIO'],
     ext_modules=[Extension('RPIO.GPIO', ['source/c_gpio/py_gpio.c', \
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
     scripts=["source/scripts/rpio"],
 
-    description=(("GPIO toolbox for the Raspberry Pi. Extends RPi.GPIO "
-            "with interrups, a command line tool and more")),
+    description=(("Advanced GPIO for the Raspberry Pi. Extends RPi.GPIO with "
+            "GPIO interrups, TCP socket interrupts, a command line tool and "
+            "more")),
     long_description=read('README.rst'),
     url="https://github.com/metachris/RPIO",
 
