@@ -18,6 +18,10 @@ if not env.hosts:
     env.hosts = ["raspberry_dev"]
 
 
+def clean():
+    run("rm -rf /tmp/source/")
+
+
 def upload():
     """ Uploads source/ to raspberrypi:/tmp/source/ """
     local("tar -czf /tmp/rpio.tar.gz source")
