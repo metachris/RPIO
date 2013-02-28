@@ -5,7 +5,7 @@ DO NOT RELEASE IF TIRED OR VERY LATE! :)
 
 Version Strings
 ---------------
-  [ ] RPIO.py
+  [ ] RPIO/__init__.py
   [ ] py_gpio.c
   [ ] setup.py
   [ ] doc/source/conf.py

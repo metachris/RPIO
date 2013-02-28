@@ -154,8 +154,14 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         logging.info("Testing interrupts on GPIO-%s and socket comm", GPIO_IN)
         RPIO.add_tcp_callback(PORT, socket_callback)
+
+        with self.assertRaises(AttributeError):
+            RPIO.add_tcp_callback(8081, None)
+
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_DOWN)
+        RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
+                pull_up_down=RPIO.PUD_DOWN, threaded_callback=True)
 
         # Add a number of TCP clients
         Thread(target=socket_client).start()

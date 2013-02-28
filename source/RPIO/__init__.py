@@ -1,5 +1,5 @@
 """
-RPIO extends RPi.GPIO with interrupt handling, sockets servers and more.
+RPIO extends RPi.GPIO with GPIO interrupts, TCP socket interrupts and more.
 
 You can use RPIO the same way as RPi.GPIO (eg. RPIO.setmode(...),
 RPIO.input(...)), as well as access the new interrupt handling methods. The
@@ -99,12 +99,13 @@ import os.path
 from logging import debug, info, warn, error
 from threading import Thread
 from functools import partial
+from time import sleep
 
 from GPIO import *
 from GPIO import cleanup as _cleanup_orig
 from GPIO import setmode as _setmode
 
-VERSION = "0.8.2"
+VERSION = "0.8.3"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -167,7 +168,7 @@ def _threaded_callback(callback, *args):
 
 def rpi_sysinfo():
     """ Returns (model, revision, mb-ram and maker) for this raspberry """
-    return MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
+    return (RPI_REVISION_HEX,) + MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
 
 
 def add_tcp_callback(port, callback, threaded_callback=False):
@@ -177,7 +178,7 @@ def add_tcp_callback(port, callback, threaded_callback=False):
     parameters, eg. ``def callback(socket, msg)``.
     """
     if not callback:
-        raise AttributeError("No callback specified")
+        raise AttributeError("No callback")
 
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -254,13 +255,14 @@ def add_interrupt_callback(gpio_id, callback, edge='both',
             debug("- unexporting kernel interface for GPIO %s" % gpio_id)
             with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
                 f.write("%s" % gpio_id)
+            sleep(0.1)
 
         # Export kernel interface /sys/class/gpio/gpioN
         with open(_SYS_GPIO_ROOT + "export", "w") as f:
             f.write("%s" % gpio_id)
         global _gpio_kernel_interfaces_created
         _gpio_kernel_interfaces_created.append(gpio_id)
-        debug("- kernel interface created for GPIO %s" % gpio_id)
+        debug("- kernel interface exported for GPIO %s" % gpio_id)
 
         # Configure gpio as input
         with open(path_gpio + "direction", "w") as f:
@@ -454,3 +456,8 @@ def cleanup():
     """
     cleanup_interrupts()
     _cleanup_orig()
+
+
+def version():
+    """ Returns a tuple of (VERSION, VERSION_GPIO) """
+    return (VERSION, VERSION_GPIO)
