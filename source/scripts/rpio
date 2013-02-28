@@ -159,7 +159,8 @@ def main():
     show_help = True
     if options.version:
         show_help = False
-        info("RPIO v%s (gpio-lib v%s)" % (RPIO.VERSION, RPIO.VERSION_GPIO))
+        info("RPIO v%s (gpio-lib v%s)" % RPIO.version())
+
 
 
     if options.setoutput:
@@ -330,11 +331,10 @@ def main():
                 raise
 
 
-    # All other parts have exited by now
     if options.sysinfo:
         show_help = False
-        s = "Model %s, Revision %s, RAM: %s MB, Maker: %s" % \
-                RPIO.rpi_sysinfo()
+        s = "%s: Model %s, Revision %s, RAM: %s MB, Maker: %s" % \
+                RPIO.sysinfo()
         info(s)
 
     if show_help:

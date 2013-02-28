@@ -18,12 +18,17 @@ if not env.hosts:
     env.hosts = ["raspberry_dev"]
 
 
+def clean():
+    run("rm -rf /tmp/source/")
+
+
 def upload():
     """ Uploads source/ to raspberrypi:/tmp/source/ """
     local("tar -czf /tmp/rpio.tar.gz source")
     put("/tmp/rpio.tar.gz", "/tmp/")
     with cd("/tmp"):
         run("tar -xf rpio.tar.gz")
+        run("cp source/scripts/rpio source/")
 
 
 def upload_dist():
@@ -81,5 +86,6 @@ def upload_to_pypi():
     with cd("/tmp"):
         run("tar -xf /tmp/%s" % fn)
     with cd("/tmp/RPIO-%s" % version):
+        run("python2.6 setup.py bdist_egg %s" % DO_UPLOAD)
         run("python2.7 setup.py bdist_egg %s" % DO_UPLOAD)
         run("python3.2 setup.py bdist_egg %s" % DO_UPLOAD)

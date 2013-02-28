@@ -1,4 +1,4 @@
-.TH "RPIO" "1" "February 27, 2013" "0.8.2" "RPIO"
+.TH "RPIO" "1" "February 28, 2013" "0.8.3" "RPIO"
 .SH NAME
 rpio \- RPIO Documentation
 .
@@ -31,18 +31,32 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" Man page generated from reStructuredText.
 .
 .sp
-RPIO is a GPIO toolbox for the Raspberry Pi.
+RPIO is an advanced GPIO module for the Raspberry Pi.
 .INDENT 0.0
 .IP \(bu 2
-\fI\%RPIO.py\fP, an extension of \fI\%RPi.GPIO\fP with interrupt handling, socket servers and \fI\%more\fP
+GPIO Input and Output (drop\-in replacement for \fI\%RPi.GPIO\fP)
+.IP \(bu 2
+GPIO Interrupts (callbacks when events occur on input gpios)
+.IP \(bu 2
+TCP Socket Interrupts (callbacks when tcp socket clients send data)
+.IP \(bu 2
+Well documented, tested, fast source code
+.IP \(bu 2
+Minimal CPU and memory profile
+.UNINDENT
+.sp
+RPIO consists of two main components:
+.INDENT 0.0
+.IP \(bu 2
+\fI\%RPIO.py\fP, which you can import in Python 2 or 3 with \fBimport RPIO\fP
 .IP \(bu 2
 \fI\%rpio\fP, a command\-line multitool for inspecting and manipulating GPIOs system\-wide
 .UNINDENT
 .sp
-\fBNew\fP
+New in v0.8.2
 .INDENT 0.0
 .IP \(bu 2
-Socket server callbacks with \fI\%RPIO.add_tcp_callback(port, callback, threaded_callback=False))\fP
+Socket server callbacks with \fI\%RPIO.add_tcp_callback(port, callback, threaded_callback=False)\fP
 .UNINDENT
 .sp
 The easiest way to install/update RPIO on a Raspberry Pi is with either \fBeasy_install\fP or \fBpip\fP:
@@ -58,7 +72,7 @@ $ sudo easy_install \-U RPIO
 .UNINDENT
 .UNINDENT
 .sp
-Another way to get RPIO is directly from the Github repository (make sure you have \fBpython\-dev\fP installed):
+You can also get RPIO from Github repository, which is usually a step ahead of pypi:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -72,11 +86,26 @@ $ sudo python setup.py install
 .UNINDENT
 .UNINDENT
 .sp
-After the installation you can use import \fBRPIO\fP as well as the command\-line tool \fBrpio\fP.
+Or from Github but without Git:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ curl \-L https://github.com/metachris/RPIO/archive/master.tar.gz | tar \-xz
+$ cd RPIO\-master
+$ sudo python setup.py install
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+After the installation you can use \fBimport RPIO\fP as well as the command\-line tool \fBrpio\fP.
 .sp
 \fBrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
 \fBrpio\fP needs to run with superuser privileges (root), else it will restart using \fBsudo\fP. The BCM GPIO numbering
-scheme is used by default.
+scheme is used by default. \fBrpio \-\-inspect\-all\fP (or \fB\-I\fP) is the most popular command; it shows you all gpios
+on the board, with function and state. Here is an overview of all the functions:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -138,7 +167,7 @@ Show Raspberry Pi system info:
     $ rpio \-\-sysinfo
 
     # Example output:
-    Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
+    000e: Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 .ft P
 .fi
 .UNINDENT
@@ -169,15 +198,15 @@ $ man rpio
 .UNINDENT
 .UNINDENT
 .sp
-RPIO.py extends \fI\%RPi.GPIO\fP with
-various methods, and uses the BCM GPIO numbering scheme by default.
+RPIO.py extends \fI\%RPi.GPIO\fP in
+various ways, and uses the BCM GPIO numbering scheme by default.
 .INDENT 0.0
 .IP \(bu 2
+\fI\%GPIO Interrupts\fP
+.IP \(bu 2
+\fI\%TCP Socket Interrupts\fP
+.IP \(bu 2
 \fI\%GPIO Input & Output\fP
-.IP \(bu 2
-\fI\%Interrupt handling\fP
-.IP \(bu 2
-\fI\%Socket servers\fP
 .IP \(bu 2
 \fI\%more\fP
 .UNINDENT
@@ -191,20 +220,23 @@ or pull\-down resistor.
 .INDENT 0.0
 .TP
 .B RPIO.add_interrupt_callback(gpio_id, callback, edge=\(aqboth\(aq, pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
-Adds a callback to receive notifications when a GPIO changes it\(aqs value.. Possible edges are \fBrising\fP,
-\fBfalling\fP and \fBboth\fP (default). Possible \fBpull_up_down\fP values are \fBRPIO.PUD_UP\fP, \fBRPIO.PUD_DOWN\fP and
-\fBRPIO.PUD_OFF\fP (default)
+Adds a callback to receive notifications when a GPIO changes it\(aqs value. Possible \fBpull_up_down\fP values are
+\fBRPIO.PUD_UP\fP, \fBRPIO.PUD_DOWN\fP and \fBRPIO.PUD_OFF\fP (default). Possible edges are \fBrising\fP,
+\fBfalling\fP and \fBboth\fP (default). Note that \fBrising\fP and \fBfalling\fP edges may receive values
+not corresponding to the edge, so be sure to double check.
 .UNINDENT
 .SH TCP SOCKET INTERRUPTS
 .sp
-RPIO makes it easy to open ports for incoming TCP connections with \fBadd_tcp_callback(port, callback, threaded_callback=False)\fP.
-When \fBRPIO.wait_for_interrupts()\fP is running, you can connect to the socket server with \fB$ telnet localhost <your\-port>\fP.
+Its easy to open ports for incoming TCP connections with just this one method:
 .INDENT 0.0
 .TP
 .B RPIO.add_tcp_callback(port, callback, threaded_callback=False)
 Adds a socket server callback, which will be started when a connected socket client sends something. This is implemented
 by RPIO creating a TCP server socket at the specified port. Incoming connections will be accepted when \fBRPIO.wait_for_interrupts()\fP runs.
-The callback must accept exactly two parameters: server and message (eg. \fBdef callback(socket, msg)\fP). The callback can use the socket parameter to send values back to the client (eg. \fBsocket.send("hi there\en")\fP).
+The callback must accept exactly two parameters: socket and message (eg. \fBdef callback(socket, msg)\fP). The callback can use the socket parameter to send values back to the client (eg. \fBsocket.send("hi there\en")\fP).
+.sp
+You can test the TCP socket interrupts with \fB$ telnet <your\-ip> <your\-port>\fP (eg. \fB$ telnet localhost 8080\fP). An empty string
+tells the server to close the client connection (for instance if you just press enter in telnet, you\(aqll get disconnected).
 .UNINDENT
 .SH EXAMPLE
 .sp
@@ -235,18 +267,18 @@ RPIO.add_interrupt_callback(9, gpio_callback, pull_up_down=RPIO.PUD_UP)
 # One TCP socket server callback on port 8080
 RPIO.add_tcp_callback(8080, socket_callback)
 
-# Start the blocking epoll loop
-RPIO.wait_for_interrupts()
+# Start the blocking epoll loop, and catch Ctrl+C KeyboardInterrupt
+try:
+    RPIO.wait_for_interrupts()
+except KeyboardInterrupt:
+    RPIO.cleanup_interrupts()
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
-Now you can connect to the socket server with \fB$ telnet localhost 8080\fP and
-everything you send to the callback will be echoed by the \fBsocket.send(..)\fP command.
-If you want to receive a callback inside a Thread (which won\(aqt block anything
-else on the system), set \fBthreaded_callback\fP to \fBTrue\fP when adding an interrupt\-
-callback. Here is an example:
+If you want to receive a callback inside a Thread (to not block RPIO from returning to wait
+for interrupts), set \fBthreaded_callback\fP to \fBTrue\fP when adding it:
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -256,16 +288,31 @@ callback. Here is an example:
 RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
 # for socket interrupts
-RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True))
+RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True)
 .ft P
 .fi
 .UNINDENT
 .UNINDENT
 .sp
 To stop the \fBwait_for_interrupts()\fP loop you can call \fBRPIO.stop_waiting_for_interrupts()\fP.
-If an exception occurs while waiting for interrupts, all interfaces will be cleaned and reset,
-and you need to re\-add callbacks before waiting for interrupts again. If you use \fBRPIO.stop_waiting_for_interrupts()\fP.
-you should call \fBRPIO.cleanup()\fP before your program exits.
+After using \fBRPIO.wait_for_interrupts()\fP you should call \fBRPIO.cleanup_interrupts()\fP before your
+program quits, to shut everything down nicely.
+.SH LOG OUTPUT
+.sp
+To enable RPIO log output, import \fBlogging\fP and set the loglevel to \fBDEBUG\fP before importing RPIO:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+import logging
+log_format = \(aq%(levelname)s | %(asctime)\-15s | %(message)s\(aq
+logging.basicConfig(format=log_format, level=logging.DEBUG)
+import RPIO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
 .SH GPIO INPUT & OUTPUT
 .sp
 RPIO extends \fI\%RPi.GPIO\fP;
@@ -300,7 +347,10 @@ RPIO.setup(8, RPIO.OUT, initial=RPIO.LOW)
 RPIO.setmode(RPIO.BOARD)
 
 # set software pullup on channel 17
-RPIO.set_pullupdn(17, RPIO.PUD_UP)
+RPIO.set_pullupdn(17, RPIO.PUD_UP)  # new in RPIO
+
+# get the function of channel 8
+RPIO.gpio_function(8)
 
 # reset every channel that has been set up by this program,
 # and unexport interrupt gpio interfaces
@@ -340,9 +390,9 @@ help(RPIO)
 Additional Constants
 .INDENT 0.0
 .IP \(bu 2
-\fBRPIO.RPI_REVISION\fP (either \fB1\fP or \fB2\fP)
+\fBRPIO.RPI_REVISION\fP \- the current board\(aqs revision (either \fB1\fP or \fB2\fP)
 .IP \(bu 2
-\fBRPIO.RPI_REVISION_HEX\fP (\fB0002\fP .. \fB000f\fP)
+\fBRPIO.RPI_REVISION_HEX\fP \- the cpu hex revision code (\fB0002\fP .. \fB000f\fP)
 .UNINDENT
 .sp
 Additional Methods
@@ -357,7 +407,9 @@ Additional Methods
 \fBRPIO.forceoutput(gpio_id, value)\fP \- writes a value to any gpio without needing to call setup() first
 (\fBwarning\fP: this can potentially harm your Raspberry)
 .IP \(bu 2
-\fBRPIO.rpi_sysinfo()\fP \- returns \fB(model, revision, mb\-ram and maker)\fP of this Raspberry
+\fBRPIO.sysinfo()\fP \- returns \fB(hex_rev, model, revision, mb\-ram and maker)\fP of this Raspberry
+.IP \(bu 2
+\fBRPIO.version()\fP \- returns \fB(version_rpio, version_cgpio)\fP
 .UNINDENT
 .sp
 Interrupt Handling
@@ -374,22 +426,6 @@ Interrupt Handling
 \fBRPIO.stop_waiting_for_interrupts()\fP
 .IP \(bu 2
 implemented with \fBepoll\fP
-.UNINDENT
-.sp
-Other Changes
-.INDENT 0.0
-.IP \(bu 2
-Uses \fBBCM\fP GPIO numbering by default
-.IP \(bu 2
-Improved documentation
-.IP \(bu 2
-Refactored, clean, simple C GPIO library
-.IP \(bu 2
-Interrupt handling
-.IP \(bu 2
-Support for P5 header GPIOs (29\-31) [??]
-.IP \(bu 2
-Command\-line tool \fBrpio\fP
 .UNINDENT
 .sp
 Please send feedback and ideas to \fI\%chris@linuxuser.at\fP, and \fI\%open an issue at Github\fP if
@@ -444,6 +480,8 @@ You need to install the \fBpython\-dev\fP package (eg. \fB$ sudo apt\-get instal
 .IP \(bu 2
 \fI\%http://pypi.python.org/pypi/RPi.GPIO\fP
 .IP \(bu 2
+\fI\%http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf\fP
+.IP \(bu 2
 \fI\%http://www.kernel.org/doc/Documentation/gpio.txt\fP
 .UNINDENT
 .INDENT 0.0
@@ -466,10 +504,18 @@ GNU General Public License for more details.
 .UNINDENT
 .INDENT 0.0
 .IP \(bu 2
+v0.8.3: pypi release update with updated documentation and bits of refactoring
+.IP \(bu 2
 v0.8.2
 .INDENT 2.0
 .IP \(bu 2
 Added TCP socket callbacks
+.IP \(bu 2
+\fBRPIO\fP does not auto\-clean interfaces on exceptions anymore, but will auto\-clean them
+as needed. This means you should now call \fBRPIO.cleanup_interrupts()\fP to properly close
+the sockets and unexport the interfaces.
+.IP \(bu 2
+Renamed \fBRPIO.rpi_sysinfo()\fP to \fBRPIO.sysinfo()\fP
 .UNINDENT
 .IP \(bu 2
 v0.8.0
@@ -499,7 +545,7 @@ Refactoring and cleanup of c_gpio
 .IP \(bu 2
 Added new constants and methods (see documentation above)
 .IP \(bu 2
-\fBBugfixes\fP
+Bugfixes
 .INDENT 2.0
 .IP \(bu 2
 \fBwait_for_interrupts()\fP now auto\-cleans interfaces when an exception occurs. Before you needed to call \fBRPIO.cleanup()\fP manually.
