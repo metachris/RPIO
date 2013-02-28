@@ -41,20 +41,11 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-// 8 GPIOs to use for driving servos
-static uint8_t gpio_list[] = {
-    4,    // P1-7
-    17,    // P1-11
-    18,    // P1-12
-    21,    // P1-13
-    22,    // P1-15
-    23,    // P1-16
-    24,    // P1-18
-    25,    // P1-22
-};
+// 8 GPIOs max
+static int gpio_list[8] = {17, -1, -1, -1, -1, -1, -1, -1};
 
-#define DEVFILE         "/dev/rpio-pwm"
-#define NUM_GPIOS       (sizeof(gpio_list)/sizeof(gpio_list[0]))
+//#define DEVFILE         "/dev/rpio-pwm"
+#define NUM_GPIOS           8
 
 // PERIOD_TIME_US is the pulse cycle time (period) per servo, in microseconds.
 // Typically servos expect it to be 20,000us (20ms). If you are using
@@ -68,7 +59,7 @@ static uint8_t gpio_list[] = {
 //memory bandwidth. 10us is a good value, though you might be ok setting it as low as 2us.
 #define PULSE_WIDTH_INCR_US  10
 
-// Timeslot per channel (delay between setting pulse information)
+// Timeslot per channel (maximum on-time per cycle)
 // With this delay it will arrive at the same channel after PERIOD_TIME.
 #define CHANNEL_TIME_US      (PERIOD_TIME_US/NUM_GPIOS)
 
@@ -175,9 +166,6 @@ typedef struct {
 
 page_map_t *page_map;
 
-// pwm_setup: 8 pwm channels. each index contains the corresponding gpio id
-static int pwm_gpios[8];
-
 static uint8_t *virtbase;
 
 static volatile uint32_t *pwm_reg;
@@ -228,12 +216,12 @@ terminate(int dummy)
 
     if (dma_reg && virtbase) {
         for (i = 0; i < NUM_GPIOS; i++)
-            set_servo(i, 0);
+            if (gpio_list[i] != -1)
+                set_servo(i, 0);
         udelay(PERIOD_TIME_US);
         dma_reg[DMA_CS] = DMA_RESET;
         udelay(10);
     }
-    unlink(DEVFILE);
     exit(1);
 }
 
@@ -313,6 +301,57 @@ set_servo(int servo, int width)
     }
 }
 
+
+// init_servo (extracted from init_ctrl_data mass setup)
+static void init_servo(int servo) {
+    struct ctl *ctl = (struct ctl *)virtbase;
+    int i;
+    for (i = 0; i < CHANNEL_SAMPLES; i++)
+        ctl->sample[servo * CHANNEL_SAMPLES + i] = 1 << gpio_list[servo];
+}
+
+static void
+init_ctrl_data(void)
+{
+    struct ctl *ctl = (struct ctl *)virtbase;
+    dma_cb_t *cbp = ctl->cb;
+    uint32_t phys_fifo_addr;
+    uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
+    int i;
+
+    if (delay_hw == DELAY_VIA_PWM)
+        phys_fifo_addr = (PWM_BASE | 0x7e000000) + 0x18;
+    else
+        phys_fifo_addr = (PCM_BASE | 0x7e000000) + 0x04;
+
+    // Clear all servos so to speak (init with init_servo()
+    memset(ctl->sample, 0, sizeof(ctl->sample));
+
+    for (i = 0; i < NUM_SAMPLES; i++) {
+        cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP;
+        cbp->src = mem_virt_to_phys(ctl->sample + i);
+        cbp->dst = phys_gpclr0;
+        cbp->length = 4;
+        cbp->stride = 0;
+        cbp->next = mem_virt_to_phys(cbp + 1);
+        cbp++;
+        // Delay
+        if (delay_hw == DELAY_VIA_PWM)
+            cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP | DMA_D_DREQ | DMA_PER_MAP(5);
+        else
+            cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP | DMA_D_DREQ | DMA_PER_MAP(2);
+        cbp->src = mem_virt_to_phys(ctl);    // Any data will do
+        cbp->dst = phys_fifo_addr;
+        cbp->length = 4;
+        cbp->stride = 0;
+        cbp->next = mem_virt_to_phys(cbp + 1);
+        cbp++;
+    }
+    cbp--;
+    cbp->next = mem_virt_to_phys(ctl->cb);
+}
+
+
 // Initialize the memory pagemap
 static void
 make_pagemap(void)
@@ -351,50 +390,6 @@ make_pagemap(void)
 }
 
 
-
-static void
-init_ctrl_data(void)
-{
-    struct ctl *ctl = (struct ctl *)virtbase;
-    dma_cb_t *cbp = ctl->cb;
-    uint32_t phys_fifo_addr;
-    uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
-    int servo, i;
-
-    if (delay_hw == DELAY_VIA_PWM)
-        phys_fifo_addr = (PWM_BASE | 0x7e000000) + 0x18;
-    else
-        phys_fifo_addr = (PCM_BASE | 0x7e000000) + 0x04;
-
-    memset(ctl->sample, 0, sizeof(ctl->sample));
-    for (servo = 0 ; servo < NUM_GPIOS; servo++) {
-        for (i = 0; i < CHANNEL_SAMPLES; i++)
-            ctl->sample[servo * CHANNEL_SAMPLES + i] = 1 << gpio_list[servo];
-    }
-
-    for (i = 0; i < NUM_SAMPLES; i++) {
-        cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP;
-        cbp->src = mem_virt_to_phys(ctl->sample + i);
-        cbp->dst = phys_gpclr0;
-        cbp->length = 4;
-        cbp->stride = 0;
-        cbp->next = mem_virt_to_phys(cbp + 1);
-        cbp++;
-        // Delay
-        if (delay_hw == DELAY_VIA_PWM)
-            cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP | DMA_D_DREQ | DMA_PER_MAP(5);
-        else
-            cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP | DMA_D_DREQ | DMA_PER_MAP(2);
-        cbp->src = mem_virt_to_phys(ctl);    // Any data will do
-        cbp->dst = phys_fifo_addr;
-        cbp->length = 4;
-        cbp->stride = 0;
-        cbp->next = mem_virt_to_phys(cbp + 1);
-        cbp++;
-    }
-    cbp--;
-    cbp->next = mem_virt_to_phys(ctl->cb);
-}
 
 // Initialize PWM (or PCM) and DMA
 static void
@@ -455,43 +450,74 @@ init_hardware(void)
     }
 }
 
-// Endless loop to read the FIFO DEVFILE and set the servos according
-// to the values in the FIFO
-static void
-go_go_go(void)
-{
-    FILE *fp;
+// Returns the index in gpio_list of the specified gpio
+static int gpio_to_index(int gpio) {
+    // Find gpio in index
+    int i;
+    for (i=0; i<NUM_GPIOS; i++) {
+        if (gpio_list[i] == gpio)
+            return i;
+    }
+    return -1;
+}
 
-    if ((fp = fopen(DEVFILE, "r+")) == NULL)
-        fatal("rpio-pwm: Failed to open %s: %m\n", DEVFILE);
-
-    char *lineptr = NULL, nl;
-    size_t linelen;
-
-    for (;;) {
-        int n, width, servo;
-
-        if ((n = getline(&lineptr, &linelen, fp)) < 0)
-            continue;
-        //fprintf(stderr, "[%d]%s", n, lineptr);
-        n = sscanf(lineptr, "%d=%d%c", &servo, &width, &nl);
-        if (n !=3 || nl != '\n') {
-            fprintf(stderr, "Bad input: %s", lineptr);
-        } else if (servo < 0 || servo >= NUM_GPIOS) {
-            fprintf(stderr, "Invalid servo number %d\n", servo);
-        } else if (width < CHANNEL_WIDTH_MIN || width > CHANNEL_WIDTH_MAX) {
-            fprintf(stderr, "Invalid width %d (must be between %d and %d)\n", width, CHANNEL_WIDTH_MIN, CHANNEL_WIDTH_MAX);
-        } else {
-            set_servo(servo, width);
+// Returns the index of a free slot in gpio_list, or -1
+static int get_free_gpio_list_index() {
+    int i;
+    for (i=0; i<NUM_GPIOS; i++) {
+        printf("- i=%d, gpio=%d", i, gpio_list[i]);
+        if (gpio_list[i] == -1) {
+            return i;
         }
     }
+    return -1;
+}
+
+// Wrapper for set_servo which uses the gpio-id instead of the gpio_list inde
+static void set_gpio(int gpio, int width) {
+    // Set the pulse width in us_increments for this gpio
+    int index;
+    index = gpio_to_index(gpio);
+    if (index < 0) {
+        fatal("Could not find gpio %s in list of pwm-gpios", gpio);
+    }
+    set_servo(index, width);
+}
+
+// Adds a new gpio-id into the pwm pool, and sets this gpio up as such
+static void
+add_gpio(int gpio) {
+    int gpio_index;
+    printf("Adding gpio %d to pwm system\n", gpio);
+
+    gpio_index = get_free_gpio_list_index();
+    if (gpio_index < 0) {
+        fatal("No more free slots (already 8 active pwm gpios)");
+    }
+
+    gpio_list[gpio_index] = gpio;
+
+    gpio_set(gpio, 0);
+    gpio_set_mode(gpio, GPIO_MODE_OUT);
+    init_servo(gpio_index);
+    set_servo(gpio_index, 0);
+}
+
+// Removes a gpio from the pwm pool
+static void
+del_gpio(int gpio) {
+    int gpio_index;
+    gpio_index = gpio_to_index(gpio);
+    if (gpio_index == -1) {
+        fatal("Could not delete gpio %s from pwm, no such gpio", gpio);
+    }
+    set_servo(gpio_index, 0);
+    gpio_list[gpio_index] = -1;
 }
 
 int
 main(int argc, char **argv)
 {
-    int i;
-
     // Very crude...
     if (argc == 2 && !strcmp(argv[1], "--pcm"))
         delay_hw = DELAY_VIA_PCM;
@@ -521,11 +547,6 @@ main(int argc, char **argv)
 
     make_pagemap();
 
-    for (i = 0; i < sizeof(pwm_gpios); i++) {
-        pwm_gpios[i] = -1;
-        printf("init pwm_gpio[%d]\n", i);
-    }
-
     //for (i = 0; i < NUM_GPIOS; i++) {
     //    gpio_set(gpio_list[i], 0);
     //    gpio_set_mode(gpio_list[i], GPIO_MODE_OUT);
@@ -534,16 +555,21 @@ main(int argc, char **argv)
     init_ctrl_data();
     init_hardware();
 
-    unlink(DEVFILE);
-    if (mkfifo(DEVFILE, 0666) < 0)
-        fatal("rpio-pwm: Failed to create %s: %m\n", DEVFILE);
-    if (chmod(DEVFILE, 0666) < 0)
-        fatal("rpio-pwm: Failed to set permissions on %s: %m\n", DEVFILE);
+    // Add something blocking here
+    add_gpio(17);
 
-    if (daemon(0,1) < 0)
-        fatal("rpio-pwm: Failed to daemonize process: %m\n");
+    printf("System up and running. Waiting 30 seconds before exiting...");
+    set_gpio(17, 200);
+    usleep(3000000);
+    set_gpio(17, 20);
+    usleep(3000000);
+    set_gpio(17, 100);
+    usleep(3000000);
 
-    go_go_go();
+    del_gpio(17);
+
+    // terminate
+    terminate(0);
 
     return 0;
 }
