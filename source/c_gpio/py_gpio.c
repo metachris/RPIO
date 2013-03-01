@@ -294,6 +294,8 @@ py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
 
     // printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
     set_pullupdn(gpio, pud);
+
+    Py_INCREF(Py_None);
     return Py_None;
 }
 

@@ -412,7 +412,7 @@ Changes
 
 * v0.8.5
 
-  * Debug-options for ``rpio-curses``
+  * Debug-options for ``rpio-curses``: You can now run it on any Linux/OSX machine with ``rpio-curses dev``
 
 * v0.8.4
 

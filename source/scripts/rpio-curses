@@ -125,7 +125,7 @@ class TimedCallback(Thread):
         # parts is a 'trick' to quit faster
         parts = 10
         timeout_part = float(self.timeout) / parts
-        for i in xrange(parts):
+        for i in range(parts):
             if not self.is_running:
                 return
             time.sleep(timeout_part)
@@ -229,7 +229,7 @@ class Drawer(object):
     def menu2_clear(self):
         self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
         self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
-        for i in xrange(12):
+        for i in range(12):
             self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%50s" % "")
 
     def menu2_move_cursor(self, up=True):
