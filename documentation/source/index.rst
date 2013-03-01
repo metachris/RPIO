@@ -389,6 +389,12 @@ License
 Changes
 =======
 
+* v0.8.4
+
+  * ``rpio-curses``
+  * Bugfix in RPIO: tcp callbacks (first parameter ``socket`` works now)
+  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo``
+
 * v0.8.3: pypi release update with updated documentation and bits of refactoring
 
 * v0.8.2

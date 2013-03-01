@@ -1,13 +1,16 @@
-#!/usr/bin/env python 
-# -*- coding: utf-8 -*- 
+#!python
+# -*- coding: utf-8 -*-
 """
 curses-based rpio interface
 
 TODO:
+- Use real GPIOs
 - Auto-refresh GPIO info
 """
 import curses
 import curses.textpad as textpad
+import time
+from threading import Thread
 
 gpios = []
 for i in range(20):
@@ -53,6 +56,19 @@ def set_low(gpio_id):
     pass
 
 
+class TimedCallback(Thread):
+    is_running = True
+    def __init__(self, timeout, cb):
+        Thread.__init__(self)
+        self.timeout = timeout
+        self.cb = cb
+
+    def run(self):
+        time.sleep(self.timeout)
+        if self.is_running:
+            self.cb()
+
+
 WIDTHS = (30, 23, 17)
 class Drawer(object):
     cursor_index = 0
@@ -68,6 +84,7 @@ class Drawer(object):
     len_options_menu2 = 0
     is_menu2 = False
     is_help = False
+    is_running = True
 
     def __init__(self, screen):
         self.screen = screen
@@ -96,8 +113,8 @@ class Drawer(object):
         self.draw_cursor()
 
     def draw_cursor(self):
-        screen.addstr(self.pos_cursor_y, self.pos_cursor_x, ">")
-        screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, "<")
+        self.screen.addstr(self.pos_cursor_y, self.pos_cursor_x, ">")
+        self.screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, "<")
 
     def draw_gpio_info(self, gpio_index):
         gpio, function, state = gpios[gpio_index]
@@ -105,6 +122,7 @@ class Drawer(object):
         self.function_menu2 = function
         self.cursor_menu2_width = WIDTHS[function]
 
+        screen = self.screen
         screen.addstr(POS_GPIOINFO_Y, POS_GPIOINFO_X, "GPIO %-20s" % gpio)
         #seplen = len(str(gpio)) + 17
         seplen = 12 + len(FUNCTIONS[function])
@@ -143,10 +161,10 @@ class Drawer(object):
 
 
     def menu2_clear(self):
-        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
-        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
+        self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
+        self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
         for i in xrange(12):
-            screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%50s" % "")
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%50s" % "")
 
     def menu2_move_cursor(self, up=True):
         offset = -1 if up else 1
@@ -159,14 +177,14 @@ class Drawer(object):
         elif py == self.len_options_menu2:
             py = 0
 
-        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
-        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
+        self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
+        self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
 
         self.cursor_index_menu2 = py
         self.pos_cursor_menu2_y = self.cursor_index_menu2 + POS_GPIOINFO_Y + 5
 
-        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, ">")
-        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x+self.cursor_menu2_width, "<")
+        self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, ">")
+        self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x+self.cursor_menu2_width, "<")
 
     def move_cursor(self, up=True):
         self.help_clear()
@@ -186,8 +204,8 @@ class Drawer(object):
         elif py == len(gpios) + len(OPTIONS) + 1:
             py = 0
 
-        screen.addstr(self.pos_cursor_y, self.pos_cursor_x, " ")
-        screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, " ")
+        self.screen.addstr(self.pos_cursor_y, self.pos_cursor_x, " ")
+        self.screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, " ")
 
         self.cursor_index = py
         self.pos_cursor_y = self.cursor_index + POS_GPIOLIST_Y
@@ -199,7 +217,7 @@ class Drawer(object):
         lines = HELP.split("\n")
         i = 0
         for line in lines:
-            screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, line)
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, line)
             i += 1
         self.is_help = True
 
@@ -208,7 +226,7 @@ class Drawer(object):
             return
         i = 0
         for i in range(len(HELP.split("\n"))):
-            screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%80s" % "")
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%80s" % "")
         self.is_help = False
 
     def enter(self):
@@ -224,7 +242,7 @@ class Drawer(object):
                 if option_id == 0:
                     self.show_help()
                 elif option_id == 1:
-                    exit(0)
+                    self.quit()
 
         else:
             # gpio info menu
@@ -265,8 +283,8 @@ class Drawer(object):
 
     def go_to_menu2(self, reset_option_index=True):
         self.help_clear()
-        screen.addstr(self.pos_cursor_y, self.pos_cursor_x, " ")
-        screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, " ")
+        self.screen.addstr(self.pos_cursor_y, self.pos_cursor_x, " ")
+        self.screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, " ")
         self.is_menu2 = True
         if reset_option_index:
             self.cursor_index_menu2 = 0
@@ -287,12 +305,43 @@ class Drawer(object):
             self.go_to_menu2()
 
     def log(self, msg):
-        screen.addstr(1, 100, msg)
+        self.screen.addstr(1, 100, "%-20s" % msg)
+
+    def _refresh(self):
+        """ Started by Thread, to refresh everything """
+        if not self.is_running:
+            return
+
+        self.screen.refresh()
+        if self.is_menu2:
+            self.back_to_menu1()
+            self.draw()
+            self.go_to_menu2()
+        else:
+            self.draw()
+
+        self.start_thread()
+
+    def start_thread(self, timeout=0.5):
+        self.thread = None
+        self.thread = TimedCallback(timeout, self._refresh)
+        self.thread.start()
+
+    def start(self):
+        self.draw()
+        self.start_thread()
+
+    def quit(self, retval=0):
+        self.is_running = False
+        self.thread.is_running = False
+        #time.sleep(2)
+        curses.nocbreak(); self.screen.keypad(0); curses.echo()
+        curses.endwin()
+        exit(retval)
 
 
-try:
+def main():
     screen = curses.initscr()
-    # Some curses-friendly terminal settings
     curses.cbreak();
     curses.noecho()
     screen.keypad(1);
@@ -303,13 +352,12 @@ try:
     curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     d = Drawer(screen)
-    d.draw()
-    #screen.addstr(10,10, "RED ALERT!", curses.color_pair(1) )
+    d.start()
 
     while True: 
         event = screen.getch() 
         if event == ord("q"): 
-            break
+            d.quit()
         elif event == 259:
             d.move_cursor(up=True)
         elif event == 258:
@@ -326,7 +374,5 @@ try:
             screen.addstr(0, 100, "Pressed: %-10s" % event)
 
 
-finally:
-    # Reverse curses-friendly terminal settings
-    curses.nocbreak(); screen.keypad(0); curses.echo()
-    curses.endwin()
+if __name__ == "__main__":
+    main()

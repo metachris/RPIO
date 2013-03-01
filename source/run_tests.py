@@ -124,7 +124,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test6_interrupts(self):
         logging.info(" ")
         logging.info(" ")
-        logging.info("=== INTERRUPT TESTS (3x 5sec) ==")
+        logging.info("=== INTERRUPT TESTS ==")
 
         def test_callback(*args):
             logging.info("- interrupt callback received: %s", (args))
@@ -187,9 +187,9 @@ class TestSequenceFunctions(unittest.TestCase):
                 pull_up_down=RPIO.PUD_OFF)
         RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
                 pull_up_down=RPIO.PUD_UP)
-        logging.info("- waiting 5s for interrupts on gpio %s and %s...", \
+        logging.info("- waiting 3s for interrupts on gpio %s and %s...", \
                 GPIO_IN, GPIO_OUT)
-        Thread(target=stop_interrupts, args=(5,)).start()
+        Thread(target=stop_interrupts, args=(3,)).start()
         RPIO.wait_for_interrupts()
         logging.info("-")
         RPIO.cleanup()
