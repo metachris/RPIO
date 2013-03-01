@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name="RPIO",
-    version="0.8.4",
+    version="0.8.5",
     package_dir={"": "source"},
     packages=['RPIO'],
     ext_modules=[Extension('RPIO.GPIO', ['source/c_gpio/py_gpio.c', \

@@ -410,6 +410,10 @@ License
 Changes
 =======
 
+* v0.8.5
+
+  * Debug-options for ``rpio-curses``
+
 * v0.8.4
 
   * ``rpio-curses``
