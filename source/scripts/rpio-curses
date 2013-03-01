@@ -1,0 +1,332 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*- 
+"""
+curses-based rpio interface
+
+TODO:
+- Auto-refresh GPIO info
+"""
+import curses
+import curses.textpad as textpad
+
+gpios = []
+for i in range(20):
+    gpios.append((i+2, i%3, i%2))
+
+FUNCTIONS = ("INPUT", "OUTPUT", "ALT0")
+STATES = ["Low", "High"]
+
+POS_GPIOLIST_X = 5
+POS_GPIOLIST_Y = 2
+
+POS_GPIOINFO_X = 40
+POS_GPIOINFO_Y = 2
+
+
+OPTIONS = ("Help [h]", "Quit [q]")
+
+HELP = """Interactive RPIO tool. Move up and down with the keyboard 
+and select GPIOs that you want to update.
+
+This tool is fully experimental, but it seems to work :)
+"""
+
+def set_input(gpio_id):
+    pass
+
+def set_output(gpio_id):
+    pass
+
+def set_pullup(gpio_id):
+    pass
+
+def set_pulldown(gpio_id):
+    pass
+
+def set_pulloff(gpio_id):
+    pass
+
+def set_high(gpio_id):
+    pass
+
+def set_low(gpio_id):
+    pass
+
+
+WIDTHS = (30, 23, 17)
+class Drawer(object):
+    cursor_index = 0
+    cursor_index_menu2 = 0
+    cursor_menu2_width = 30
+
+    pos_cursor_y = POS_GPIOLIST_Y
+    pos_cursor_x = POS_GPIOLIST_X - 3
+
+    pos_cursor_menu2_y = POS_GPIOINFO_Y + 5
+    pos_cursor_menu2_x = POS_GPIOINFO_X - 1
+
+    len_options_menu2 = 0
+    is_menu2 = False
+    is_help = False
+
+    def __init__(self, screen):
+        self.screen = screen
+
+    def draw(self):
+        screen = self.screen
+        #screen.clear()
+        #screen.refresh()
+
+        screen.addstr(0, 0, "RPIO v%s\n\n" % "0.8.4")
+
+        pos_y = POS_GPIOLIST_Y
+        for gpio in gpios:
+            gpio_id, func, state = gpio
+            screen.addstr(pos_y, POS_GPIOLIST_X, "GPIO %s:" % (gpio_id))
+            screen.addstr(pos_y, POS_GPIOLIST_X+9, "%s    " % (FUNCTIONS[func]), curses.color_pair(3) if func == 2 else 0)
+            #screen.addstr(pos_y, pos_x+17, "( )")
+            screen.addstr(pos_y, POS_GPIOLIST_X+18, "%s" % STATES[state], curses.color_pair(2) if state else 0)
+            pos_y += 1
+
+        for option in OPTIONS:
+            pos_y += 1
+            screen.addstr(pos_y, POS_GPIOLIST_X, option)
+
+        # Cursor
+        self.draw_cursor()
+
+    def draw_cursor(self):
+        screen.addstr(self.pos_cursor_y, self.pos_cursor_x, ">")
+        screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, "<")
+
+    def draw_gpio_info(self, gpio_index):
+        gpio, function, state = gpios[gpio_index]
+        self.gpio_menu2 = gpio
+        self.function_menu2 = function
+        self.cursor_menu2_width = WIDTHS[function]
+
+        screen.addstr(POS_GPIOINFO_Y, POS_GPIOINFO_X, "GPIO %-20s" % gpio)
+        #seplen = len(str(gpio)) + 17
+        seplen = 12 + len(FUNCTIONS[function])
+        screen.addstr(POS_GPIOINFO_Y+1, POS_GPIOINFO_X, "%s" % ("-" * seplen))
+        screen.addstr(POS_GPIOINFO_Y+2, POS_GPIOINFO_X, "- Function:")
+        screen.addstr(POS_GPIOINFO_Y+2, POS_GPIOINFO_X+12, "%-10s" % FUNCTIONS[function], curses.color_pair(3) if function == 2 else 0)
+        screen.addstr(POS_GPIOINFO_Y+3, POS_GPIOINFO_X, "- State:")
+        screen.addstr(POS_GPIOINFO_Y+3, POS_GPIOINFO_X+12, "%-10s" % STATES[state], curses.color_pair(2) if state else 0)
+
+        if function == 0:
+            # INPUT
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to OUTPUT               ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set resistor to pull-up     ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set resistor to pull-down   ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "Set resistor to off         ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "back                        ")
+            self.len_options_menu2 = 5
+        elif function == 1:
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT                ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set output to High          ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set output to Low           ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "back                        ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                            ")
+            self.len_options_menu2 = 4
+        elif function == 2:
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT                ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set to OUTPUT               ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "back                        ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "                            ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                            ")
+            self.len_options_menu2 = 3
+
+        self.pos_cursor_menu2_y = self.cursor_index_menu2 + POS_GPIOINFO_Y + 5
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, ">")
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x+self.cursor_menu2_width, "<")
+
+
+    def menu2_clear(self):
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
+        for i in xrange(12):
+            screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%50s" % "")
+
+    def menu2_move_cursor(self, up=True):
+        offset = -1 if up else 1
+        py = self.cursor_index_menu2 + offset
+        _py = py
+
+        if py < 0:
+            py = self.len_options_menu2 - 1
+
+        elif py == self.len_options_menu2:
+            py = 0
+
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
+
+        self.cursor_index_menu2 = py
+        self.pos_cursor_menu2_y = self.cursor_index_menu2 + POS_GPIOINFO_Y + 5
+
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, ">")
+        screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x+self.cursor_menu2_width, "<")
+
+    def move_cursor(self, up=True):
+        self.help_clear()
+        if self.is_menu2:
+            return self.menu2_move_cursor(up)
+
+        offset = -1 if up else 1
+        py = self.cursor_index + offset
+        _py = py
+
+        if py < 0:
+            py = len(gpios) + len(OPTIONS)
+
+        elif py == len(gpios):
+            py += -1 if up else 1 
+
+        elif py == len(gpios) + len(OPTIONS) + 1:
+            py = 0
+
+        screen.addstr(self.pos_cursor_y, self.pos_cursor_x, " ")
+        screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, " ")
+
+        self.cursor_index = py
+        self.pos_cursor_y = self.cursor_index + POS_GPIOLIST_Y
+
+        self.draw_cursor()
+
+    def show_help(self):
+        self.back_to_menu1()
+        lines = HELP.split("\n")
+        i = 0
+        for line in lines:
+            screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, line)
+            i += 1
+        self.is_help = True
+
+    def help_clear(self):
+        if not self.is_help:
+            return
+        i = 0
+        for i in range(len(HELP.split("\n"))):
+            screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%80s" % "")
+        self.is_help = False
+
+    def enter(self):
+        #self.log("enter on index %s  " % self.cursor_index)
+        if not self.is_menu2:
+            if self.cursor_index < len(gpios):
+                #self.log("gpio %s selected" % self.cursor_index)
+                self.go_to_menu2()
+
+            else:
+                option_id = self.cursor_index - len(gpios) - 1
+                #self.log("option %s          " % option_id)
+                if option_id == 0:
+                    self.show_help()
+                elif option_id == 1:
+                    exit(0)
+
+        else:
+            # gpio info menu
+            option_id = self.cursor_index_menu2
+            #self.log("option2: %-20s" % option_id)
+            if self.function_menu2 == 0:
+                # Input GPIO
+                if option_id == 0:
+                    set_output(self.gpio_menu2)
+                elif option_id == 1:
+                    set_pullup(self.gpio_menu2)
+                elif option_id == 2:
+                    set_pulldown(self.gpio_menu2)
+                elif option_id == 3:
+                    set_pulloff(self.gpio_menu2)
+                elif option_id == 4:
+                    self.back_to_menu1()
+
+            elif self.function_menu2 == 1:
+                # OUTPUT
+                if option_id == 0:
+                    set_input(self.gpio_menu2)
+                elif option_id == 1:
+                    set_high(self.gpio_menu2)
+                elif option_id == 2:
+                    set_low(self.gpio_menu2)
+                elif option_id == 3:
+                    self.back_to_menu1()
+
+            elif self.function_menu2 == 2:
+                # ALT0
+                if option_id == 0:
+                    set_input(self.gpio_menu2)
+                elif option_id == 1:
+                    set_output(self.gpio_menu2)
+                elif option_id == 2:
+                    self.back_to_menu1()
+
+    def go_to_menu2(self, reset_option_index=True):
+        self.help_clear()
+        screen.addstr(self.pos_cursor_y, self.pos_cursor_x, " ")
+        screen.addstr(self.pos_cursor_y, self.pos_cursor_x+27, " ")
+        self.is_menu2 = True
+        if reset_option_index:
+            self.cursor_index_menu2 = 0
+        self.draw_gpio_info(self.cursor_index)
+
+    def back_to_menu1(self):
+        if self.is_menu2:
+            self.menu2_clear()
+            self.draw_cursor()
+            self.is_menu2 = False
+
+    def left(self):
+        if self.is_menu2:
+            self.back_to_menu1()
+
+    def right(self):
+        if not self.is_menu2:
+            self.go_to_menu2()
+
+    def log(self, msg):
+        screen.addstr(1, 100, msg)
+
+
+try:
+    screen = curses.initscr()
+    # Some curses-friendly terminal settings
+    curses.cbreak();
+    curses.noecho()
+    screen.keypad(1);
+    curses.curs_set(0)
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+
+    d = Drawer(screen)
+    d.draw()
+    #screen.addstr(10,10, "RED ALERT!", curses.color_pair(1) )
+
+    while True: 
+        event = screen.getch() 
+        if event == ord("q"): 
+            break
+        elif event == 259:
+            d.move_cursor(up=True)
+        elif event == 258:
+            d.move_cursor(up=False)
+        elif event == 10:
+            d.enter()
+        elif event == 260 or event == 27:
+            d.left()  # 27=ESC
+        elif event == 261:
+            d.right()
+        elif event == 104:
+            d.show_help()
+        else:
+            screen.addstr(0, 100, "Pressed: %-10s" % event)
+
+
+finally:
+    # Reverse curses-friendly terminal settings
+    curses.nocbreak(); screen.keypad(0); curses.echo()
+    curses.endwin()

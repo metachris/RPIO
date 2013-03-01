@@ -256,9 +256,6 @@ def socket_callback(socket, val):
     print("socket %s: \(aq%s\(aq" % (socket.fileno(), val))
     socket.send("echo: %s\en" % val)
 
-def do_something(gpio_id, value):
-    logging.info("New value for GPIO %s: %s" % (gpio_id, value))
-
 # Three GPIO interrupt callbacks
 RPIO.add_interrupt_callback(7, gpio_callback)
 RPIO.add_interrupt_callback(8, gpio_callback, edge=\(aqrising\(aq)

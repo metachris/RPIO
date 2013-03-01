@@ -17,9 +17,6 @@ server on port 8080. The interrupts can have optional `edge` and
         print("socket %s: '%s'" % (socket.fileno(), val))
         socket.send("echo: %s\n" % val)
 
-    def do_something(gpio_id, value):
-        logging.info("New value for GPIO %s: %s" % (gpio_id, value))
-
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
     RPIO.add_interrupt_callback(8, gpio_callback, edge='rising')

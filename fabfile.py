@@ -15,7 +15,7 @@ env.use_ssh_config = True
 
 # Set default hosts
 if not env.hosts:
-    env.hosts = ["raspberry_dev"]
+    env.hosts = ["raspberry_dev_local"]
 
 
 def clean():
@@ -35,6 +35,13 @@ def upload_dist():
     """ Makes an sdist and uploads it to /tmp """
     local("python setup.py sdist")
     put("dist/*.tar.gz", "/tmp/")
+
+
+def test_pwm():
+    upload()
+    with cd("/tmp/source/c_pwm"):
+        run("make dirty")
+        run("sudo ./pwm")
 
 
 def build():

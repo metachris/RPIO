@@ -42,7 +42,7 @@
 #include <sys/mman.h>
 
 // 8 GPIOs max
-static int gpio_list[8] = {17, -1, -1, -1, -1, -1, -1, -1};
+static int gpio_list[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
 //#define DEVFILE         "/dev/rpio-pwm"
 #define NUM_GPIOS           8
@@ -210,7 +210,7 @@ udelay(int us)
 
 // Shutdown -- its super important to reset the DMA before quitting
 static void
-terminate(int dummy)
+shutdown()
 {
     int i;
 
@@ -222,6 +222,13 @@ terminate(int dummy)
         dma_reg[DMA_CS] = DMA_RESET;
         udelay(10);
     }
+}
+
+// Terminate is triggered by signals or fatal
+static void
+terminate()
+{
+    shutdown();
     exit(1);
 }
 
@@ -234,7 +241,7 @@ fatal(char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
-    terminate(0);
+    terminate();
 }
 
 // Catch all signals possible - it is vital we kill the DMA engine
@@ -465,7 +472,6 @@ static int gpio_to_index(int gpio) {
 static int get_free_gpio_list_index() {
     int i;
     for (i=0; i<NUM_GPIOS; i++) {
-        printf("- i=%d, gpio=%d", i, gpio_list[i]);
         if (gpio_list[i] == -1) {
             return i;
         }
@@ -491,6 +497,7 @@ add_gpio(int gpio) {
     printf("Adding gpio %d to pwm system\n", gpio);
 
     gpio_index = get_free_gpio_list_index();
+    printf("- gpio index %d", gpio_index);
     if (gpio_index < 0) {
         fatal("No more free slots (already 8 active pwm gpios)");
     }
@@ -498,9 +505,13 @@ add_gpio(int gpio) {
     gpio_list[gpio_index] = gpio;
 
     gpio_set(gpio, 0);
+    printf("x1 - ");
     gpio_set_mode(gpio, GPIO_MODE_OUT);
+    printf("x2 - ");
     init_servo(gpio_index);
+    printf("x3 - ");
     set_servo(gpio_index, 0);
+    printf("x4 - ");
 }
 
 // Removes a gpio from the pwm pool
@@ -555,21 +566,36 @@ main(int argc, char **argv)
     init_ctrl_data();
     init_hardware();
 
+#define TIMEOUT 3000000
+
     // Add something blocking here
     add_gpio(17);
-
-    printf("System up and running. Waiting 30 seconds before exiting...");
+    printf("System up and running.\n");
     set_gpio(17, 200);
-    usleep(3000000);
+    usleep(TIMEOUT);
     set_gpio(17, 20);
-    usleep(3000000);
+    usleep(TIMEOUT);
     set_gpio(17, 100);
-    usleep(3000000);
+    usleep(TIMEOUT);
 
+    printf("Delete gpio 17\n");
     del_gpio(17);
 
-    // terminate
-    terminate(0);
+    printf("TESTS2");
+    printf("Adding gpio 17\n");
+    add_gpio(17);
+    set_gpio(17, 100);
+    usleep(TIMEOUT);
 
+    printf("Adding gpio 17 a second time\n");
+    add_gpio(17);
+    usleep(TIMEOUT);
+
+    printf("Closing\n");
+
+    // terminate
+    shutdown(0);
+
+    printf("done\n");
     return 0;
 }
