@@ -54,24 +54,34 @@ URL: http://pythonhosted.org/RPIO
 License: GPLv3+
 """
 
-import RPIO
-RPIO.setwarnings(False)
-def get_gpiolist():
-    pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
-            else RPIO.GPIO_LIST_R2
-    id_list = list(pins)
-    id_list.sort()
+# command line options include 'no_rpio' (use dummy data), 'no_thread'
+# and 'dev' (which just sets no_rpio and no_thread)
+CMD_OPTIONS = sys.argv[1:] if len(sys.argv) > 1 else []
+if "dev" in CMD_OPTIONS:
+    CMD_OPTIONS += ("no_rpio", "no_thread")
 
-    gpios = []
-    for gpio_id_str in id_list:
-        gpio_id = int(gpio_id_str)
-        function = RPIO.gpio_function(gpio_id)
-        state = RPIO.forceinput(gpio_id)
-        gpios.append((gpio_id, function, 1 if state else 0))
+if "no_rpio" not in CMD_OPTIONS:
+    import RPIO
+    RPIO.setwarnings(False)
+    def get_gpiolist():
+        pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
+                else RPIO.GPIO_LIST_R2
+        id_list = list(pins)
+        id_list.sort()
 
-    return gpios
-GPIO_LIST = get_gpiolist()
+        gpios = []
+        for gpio_id_str in id_list:
+            gpio_id = int(gpio_id_str)
+            function = RPIO.gpio_function(gpio_id)
+            state = RPIO.forceinput(gpio_id)
+            gpios.append((gpio_id, function, 1 if state else 0))
 
+        return gpios
+    GPIO_LIST = get_gpiolist()
+
+#
+# GPIO methods
+#
 def set_input(gpio_id):
     RPIO.setup(int(gpio_id), RPIO.IN)
 
@@ -95,6 +105,7 @@ def set_low(gpio_id):
 
 
 class TimedCallback(Thread):
+    """ Simple callback after timeout via thread. Used for auto-update """
     is_running = True
     def __init__(self, timeout, cb):
         Thread.__init__(self)
@@ -102,13 +113,20 @@ class TimedCallback(Thread):
         self.cb = cb
 
     def run(self):
-        time.sleep(self.timeout)
+        # parts is a 'trick' to quit faster
+        parts = 10
+        timeout_part = float(self.timeout) / parts
+        for i in xrange(parts):
+            if not self.is_running:
+                return
+            time.sleep(timeout_part)
         if self.is_running:
             self.cb()
 
 
 WIDTHS = {0: 23, 1: 30, 4: 17}
 class Drawer(object):
+    """ All in one. Does the curses drawing as well as everything else. """
     gpios = GPIO_LIST
 
     cursor_index = 0
@@ -120,6 +138,8 @@ class Drawer(object):
 
     pos_cursor_menu2_y = POS_GPIOINFO_Y + 5
     pos_cursor_menu2_x = POS_GPIOINFO_X - 1
+
+    thread = None
 
     len_options_menu2 = 0
     is_menu2 = False
@@ -382,11 +402,13 @@ class Drawer(object):
 
     def start(self):
         self.draw()
-        self.start_thread()
+        if "no_thread" not in CMD_OPTIONS:
+            self.start_thread()
 
     def quit(self, retval=0):
         self.is_running = False
-        self.thread.is_running = False
+        if self.thread:
+            self.thread.is_running = False
         #time.sleep(2)
         curses.nocbreak(); self.screen.keypad(0); curses.echo()
         curses.endwin()
@@ -425,10 +447,14 @@ def main():
             elif event == 104:
                 d.show_help()
             else:
-                screen.addstr(0, 100, "Pressed: %-10s" % event)
+                #screen.addstr(0, 100, "Pressed: %-10s" % event)
+                pass
     finally:
-        curses.nocbreak(); screen.keypad(0); curses.echo()
+        curses.nocbreak()
+        screen.keypad(0)
+        curses.echo()
         curses.endwin()
+
 
 if __name__ == "__main__":
     main()

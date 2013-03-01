@@ -17,12 +17,13 @@ RPIO is an advanced GPIO module for the Raspberry Pi.
 RPIO consists of two main components:
 
 * :ref:`RPIO.py <ref-rpio-py>`, which you can import in Python 2 or 3 with ``import RPIO``
-* :ref:`rpio <ref-rpio-cmd>`, a command-line multitool for inspecting and manipulating GPIOs system-wide
+* :ref:`rpio <ref-rpio-cmd>`, command-line tools for inspecting and manipulating GPIOs system-wide
 
 
-New in v0.8.2
+News
 
-* Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
+* v0.8.4: ``rpio-curses``
+* v0.8.2: Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
 
 
 .. _ref-installation:
@@ -52,8 +53,8 @@ After the installation you can use ``import RPIO`` as well as the command-line t
 
 .. _ref-rpio-cmd:
 
-``rpio``, the command line tool
-===============================
+``rpio``, the command line tools
+================================
 
 ``rpio`` includes two command-line tools which allow you to inspect and manipulate GPIO's system wide, 
 including those used by other processes:
@@ -61,10 +62,13 @@ including those used by other processes:
 * ``rpio`` - command line program
 * ``rpio-curses`` - rpio with a graphical user interface for the terminal
 
+
 ``rpio-curses``
 ---------------
-``rpio-curses`` is a curses-based graphical user interface for the terminal. It updates
-the gpio infos (function and state) every second by default. Here are a few screenshots:
+``rpio-curses`` is a graphical user interface for the terminal to inspect and manipulate GPIOs. Its part of RPIO since
+version 0.8.4. With ``rpio-curses`` you can see all GPIOs on the board with function and state, and change every 
+possible parameter. The list is updated every second, and instantly if you change something. Here are a few screenshots 
+of it in action:
 
 * http://imgur.com/rOl9VvG
 * http://imgur.com/iB1LkW6
