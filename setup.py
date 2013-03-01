@@ -13,7 +13,7 @@ setup(
     packages=['RPIO'],
     ext_modules=[Extension('RPIO.GPIO', ['source/c_gpio/py_gpio.c', \
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
-    scripts=["source/scripts/rpio"],
+    scripts=["source/scripts/rpio", "source/scripts/rpio-curses"],
 
     description=(("Advanced GPIO for the Raspberry Pi. Extends RPi.GPIO with "
             "GPIO interrups, TCP socket interrupts, a command line tool and "

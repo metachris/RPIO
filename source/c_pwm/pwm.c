@@ -23,7 +23,8 @@
  *
  *
  * Author: Chris Hager <chris@linuxuser.at>
- * URL: https://github.com/metachris/raspberrypi-pwm
+ * URL: https://github.com/metachris/RPIO
+ * License: GPLv3+
  */
 
 #include <stdio.h>

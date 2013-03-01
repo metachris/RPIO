@@ -55,7 +55,24 @@ After the installation you can use ``import RPIO`` as well as the command-line t
 ``rpio``, the command line tool
 ===============================
 
-``rpio`` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
+``rpio`` includes two command-line tools which allow you to inspect and manipulate GPIO's system wide, 
+including those used by other processes:
+
+* ``rpio`` - command line program
+* ``rpio-curses`` - rpio with a graphical user interface for the terminal
+
+``rpio-curses``
+---------------
+``rpio-curses`` is a curses-based graphical user interface for the terminal. It updates
+the gpio infos (function and state) every second by default. Here are a few screenshots:
+
+* http://imgur.com/rOl9VvG
+* http://imgur.com/iB1LkW6
+* http://imgur.com/lhRvjIl
+
+
+``rpio``
+--------
 ``rpio`` needs to run with superuser privileges (root), else it will restart using ``sudo``. The BCM GPIO numbering
 scheme is used by default. ``rpio --inspect-all`` (or ``-I``) is the most popular command; it shows you all gpios
 on the board, with function and state. Here is an overview of all the functions:

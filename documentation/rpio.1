@@ -1,4 +1,4 @@
-.TH "RPIO" "1" "February 28, 2013" "0.8.3" "RPIO"
+.TH "RPIO" "1" "March 01, 2013" "0.8.4" "RPIO"
 .SH NAME
 rpio \- RPIO Documentation
 .
@@ -102,7 +102,28 @@ $ sudo python setup.py install
 .sp
 After the installation you can use \fBimport RPIO\fP as well as the command\-line tool \fBrpio\fP.
 .sp
-\fBrpio\fP allows you to inspect and manipulate GPIO\(aqs system wide, including those used by other processes.
+\fBrpio\fP includes two command\-line tools which allow you to inspect and manipulate GPIO\(aqs system wide,
+including those used by other processes:
+.INDENT 0.0
+.IP \(bu 2
+\fBrpio\fP \- command line program
+.IP \(bu 2
+\fBrpio\-curses\fP \- rpio with a graphical user interface for the terminal
+.UNINDENT
+.SH RPIO-CURSES
+.sp
+\fBrpio\-curses\fP is a curses\-based graphical user interface for the terminal. It updates
+the gpio infos (function and state) every second by default. Here are a few screenshots:
+.INDENT 0.0
+.IP \(bu 2
+\fI\%http://imgur.com/rOl9VvG\fP
+.IP \(bu 2
+\fI\%http://imgur.com/iB1LkW6\fP
+.IP \(bu 2
+\fI\%http://imgur.com/lhRvjIl\fP
+.UNINDENT
+.SH RPIO
+.sp
 \fBrpio\fP needs to run with superuser privileges (root), else it will restart using \fBsudo\fP. The BCM GPIO numbering
 scheme is used by default. \fBrpio \-\-inspect\-all\fP (or \fB\-I\fP) is the most popular command; it shows you all gpios
 on the board, with function and state. Here is an overview of all the functions:
@@ -500,6 +521,16 @@ GNU General Public License for more details.
 .UNINDENT
 .UNINDENT
 .INDENT 0.0
+.IP \(bu 2
+v0.8.4
+.INDENT 2.0
+.IP \(bu 2
+\fBrpio\-curses\fP
+.IP \(bu 2
+Bugfix in RPIO: tcp callbacks (first parameter \fBsocket\fP works now)
+.IP \(bu 2
+Renamed \fBRPIO.rpi_sysinfo()\fP to \fBRPIO.sysinfo\fP
+.UNINDENT
 .IP \(bu 2
 v0.8.3: pypi release update with updated documentation and bits of refactoring
 .IP \(bu 2

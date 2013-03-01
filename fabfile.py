@@ -29,6 +29,7 @@ def upload():
     with cd("/tmp"):
         run("tar -xf rpio.tar.gz")
         run("cp source/scripts/rpio source/")
+        run("cp source/scripts/rpio-curses source/")
 
 
 def upload_dist():
