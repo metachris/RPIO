@@ -9,8 +9,15 @@ License: GPLv3+
 """
 import os
 import sys
-# Automatically invoke sudo if non-root
-if os.geteuid() != 0:
+
+# Command line options include 'no_rpio' (use dummy data), 'no_thread'
+# and 'dev' (which just sets no_rpio and no_thread)
+CMD_OPTIONS = sys.argv[1:] if len(sys.argv) > 1 else []
+if "dev" in CMD_OPTIONS:
+    CMD_OPTIONS += ("no_rpio", "no_thread")
+
+# Automatically invoke sudo if non-root (if not on dev-machine)
+if os.geteuid() != 0 and "no_rpio" not in CMD_OPTIONS:
     print("Script not started as root. Running sudo...")
     args = ['sudo', sys.executable] + sys.argv + [os.environ]
     # the next line replaces the currently-running process with the sudo
@@ -22,23 +29,7 @@ import curses.textpad as textpad
 import time
 from threading import Thread
 
-GPIO_LIST = []
-for i in range(20):
-    func = i%3 if i%3 < 2 else 4
-    GPIO_LIST.append((i+2, func, i%2))
-
-GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
-STATES = ["Low", "High"]
-
-POS_GPIOLIST_X = 5
-POS_GPIOLIST_Y = 2
-
-POS_GPIOINFO_X = 40
-POS_GPIOINFO_Y = 2
-
-
-OPTIONS = ("Help [h]", "Quit [q]")
-
+# This help is displayed inside the program
 HELP = """rpio-curses is an interactive RPIO management tool.
 
 You can view and change gpios as well as simply observe them.
@@ -54,12 +45,30 @@ URL: http://pythonhosted.org/RPIO
 License: GPLv3+
 """
 
-# command line options include 'no_rpio' (use dummy data), 'no_thread'
-# and 'dev' (which just sets no_rpio and no_thread)
-CMD_OPTIONS = sys.argv[1:] if len(sys.argv) > 1 else []
-if "dev" in CMD_OPTIONS:
-    CMD_OPTIONS += ("no_rpio", "no_thread")
+# Timeout between refreshing the GPIO states. You can adjust
+# this to your needs (eg. `= 0.5`, ...)
+THREAD_TIMEOUT_SECONDS = 1
 
+# Dummy GPIO list to use on dev machines (gpio-id, function, state)
+GPIO_LIST = [(i+2, i%3 if i%3 < 2 else 4, i%2) for i in range(20)]
+
+# Main windows options
+OPTIONS = ("Help [h]", "Quit [q]")
+
+# Pretty print states and functions
+GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
+STATES = ["Low", "High"]
+
+# X/Y positioning of 'windows' in curses
+POS_GPIOLIST_X = 5
+POS_GPIOLIST_Y = 2
+POS_GPIOINFO_X = 40
+POS_GPIOINFO_Y = 2
+
+# The cursor width depends on the options of this pins function
+CURSOR_WIDTHS = {0: 23, 1: 30, 4: 17}
+
+# Only import RPIO if not on a dev machine
 if "no_rpio" not in CMD_OPTIONS:
     import RPIO
     RPIO.setwarnings(False)
@@ -124,7 +133,6 @@ class TimedCallback(Thread):
             self.cb()
 
 
-WIDTHS = {0: 23, 1: 30, 4: 17}
 class Drawer(object):
     """ All in one. Does the curses drawing as well as everything else. """
     gpios = GPIO_LIST
@@ -179,7 +187,7 @@ class Drawer(object):
         gpio, function, state = self.gpios[gpio_index]
         self.gpio_menu2 = gpio
         self.function_menu2 = function
-        self.cursor_menu2_width = WIDTHS[function]
+        self.cursor_menu2_width = CURSOR_WIDTHS[function]
 
         screen = self.screen
         screen.addstr(POS_GPIOINFO_Y, POS_GPIOINFO_X, "GPIO %-20s" % gpio)
@@ -192,25 +200,25 @@ class Drawer(object):
 
         if function == 1:
             # INPUT
-            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to OUTPUT               ")
-            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set resistor to pull-up     ")
-            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set resistor to pull-down   ")
-            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "Set resistor to off         ")
-            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "back                        ")
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to OUTPUT             ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set resistor to pull-up   ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set resistor to pull-down ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "Set resistor to off       ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "back                      ")
             self.len_options_menu2 = 5
         elif function == 0:
-            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT                ")
-            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set output to High          ")
-            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set output to Low           ")
-            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "back                        ")
-            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                            ")
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT              ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set output to High        ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set output to Low         ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "back                      ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                          ")
             self.len_options_menu2 = 4
         elif function == 4:
-            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT                ")
-            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set to OUTPUT               ")
-            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "back                        ")
-            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "                            ")
-            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                            ")
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT              ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set to OUTPUT             ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "back                      ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "                          ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                          ")
             self.len_options_menu2 = 3
 
         self.pos_cursor_menu2_y = self.cursor_index_menu2 + POS_GPIOINFO_Y + 5

@@ -72,6 +72,8 @@ def test3():
         run("cp GPIO32.so GPIO.so")
     with cd("/tmp/source"):
         run("sudo python3 run_tests.py")
+    with cd("/tmp/source/RPIO"):
+        run("cp GPIO27.so GPIO.so")
 
 
 def upload_to_pypi():
