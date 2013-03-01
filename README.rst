@@ -49,7 +49,24 @@ After the installation you can use ``import RPIO`` as well as the command-line t
 ``rpio``, the command line tool
 ===============================
 
-``rpio`` allows you to inspect and manipulate GPIO's system wide, including those used by other processes.
+``rpio`` includes two command-line tools which allow you to inspect and manipulate GPIO's system wide, 
+including those used by other processes:
+
+* ``rpio`` - command line program
+* ``rpio-curses`` - rpio with a graphical user interface for the terminal
+
+``rpio-curses``
+---------------
+``rpio-curses`` is a curses-based graphical user interface for the terminal. It updates
+the gpio infos (function and state) every second by default. Here are a few screenshots:
+
+* http://imgur.com/rOl9VvG
+* http://imgur.com/iB1LkW6
+* http://imgur.com/lhRvjIl
+
+
+``rpio``
+--------
 ``rpio`` needs to run with superuser privileges (root), else it will restart using ``sudo``. The BCM GPIO numbering
 scheme is used by default. ``rpio --inspect-all`` (or ``-I``) is the most popular command; it shows you all gpios
 on the board, with function and state. Here is an overview of all the functions:
@@ -113,7 +130,6 @@ on the board, with function and state. Here is an overview of all the functions:
 
         # Example output:
         000e: Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
-
 
 
 You can update the ``RPIO`` package to the latest version::
@@ -190,9 +206,6 @@ server on port 8080::
     def socket_callback(socket, val):
         print("socket %s: '%s'" % (socket.fileno(), val))
         socket.send("echo: %s\n" % val)
-
-    def do_something(gpio_id, value):
-        logging.info("New value for GPIO %s: %s" % (gpio_id, value))
 
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
@@ -359,6 +372,42 @@ FAQ
   You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see Installation).
 
 
+Feedback
+========
+
+Please send feedback and ideas to chris@linuxuser.at, and `open an issue at Github <https://github.com/metachris/RPIO/issues/new>`_ if
+you've encountered a bug.
+
+
+FAQ
+===
+
+**How does RPIO work?**
+
+  RPIO extends RPi.GPIO, a GPIO controller written in C which uses a low-level memory interface. Interrupts are
+  implemented  with ``epoll`` via ``/sys/class/gpio/``. For more detailled information take a look at the `source <https://github.com/metachris/RPIO/tree/master/source>`_, it's well documented and easy to build.
+
+
+**Should I update RPIO often?**
+
+  Yes, because RPIO is getting better by the day. You can use ``$ rpio --update-rpio`` or see Installation for more information about methods to update.
+
+
+**I've encountered a bug, what next?**
+
+  * Make sure you are using the latest version of RPIO (see Installation)
+  * Open an issue at Github
+
+    * Go to https://github.com/metachris/RPIO/issues/new
+    * Describe the problem and steps to replicate
+    * Add the output of ``$ rpio --version`` and ``$ rpio --sysinfo``
+
+
+**pip is throwing an error during the build:** ``source/c_gpio/py_gpio.c:9:20: fatal error: Python.h: No such file or directory``
+
+  You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see Installation).
+
+
 Links
 =====
 
@@ -387,6 +436,12 @@ License
 
 Changes
 =======
+
+* v0.8.4
+
+  * ``rpio-curses``
+  * Bugfix in RPIO: tcp callbacks (first parameter ``socket`` works now)
+  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo``
 
 * v0.8.3: pypi release update with updated documentation and bits of refactoring
 

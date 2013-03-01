@@ -1,4 +1,5 @@
 #!python
+# -*- coding: utf-8 -*-
 """
 Command-line interface to RPIO. Its a multitool which allows you to inspect
 and manipulate GPIO's system wide; including gpios used by other processes.
@@ -160,7 +161,6 @@ def main():
     if options.version:
         show_help = False
         info("RPIO v%s (gpio-lib v%s)" % RPIO.version())
-
 
 
     if options.setoutput:

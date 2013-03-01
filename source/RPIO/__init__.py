@@ -17,9 +17,6 @@ server on port 8080. The interrupts can have optional `edge` and
         print("socket %s: '%s'" % (socket.fileno(), val))
         socket.send("echo: %s\n" % val)
 
-    def do_something(gpio_id, value):
-        logging.info("New value for GPIO %s: %s" % (gpio_id, value))
-
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
     RPIO.add_interrupt_callback(8, gpio_callback, edge='rising')
@@ -105,7 +102,7 @@ from GPIO import *
 from GPIO import cleanup as _cleanup_orig
 from GPIO import setmode as _setmode
 
-VERSION = "0.8.3"
+VERSION = "0.8.4"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -166,7 +163,7 @@ def _threaded_callback(callback, *args):
     Thread(target=callback, args=args).start()
 
 
-def rpi_sysinfo():
+def sysinfo():
     """ Returns (model, revision, mb-ram and maker) for this raspberry """
     return (RPI_REVISION_HEX,) + MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
 
@@ -368,7 +365,7 @@ def wait_for_interrupts(epoll_timeout=1):
                     _close_tcp_client(fileno)
                 else:
                     sock, cb = _tcp_client_sockets[fileno]
-                    cb(_tcp_client_sockets[fileno], content.strip())
+                    cb(_tcp_client_sockets[fileno][0], content.strip())
 
             elif event & select.EPOLLHUP:
                 # TCP Socket Hangup
