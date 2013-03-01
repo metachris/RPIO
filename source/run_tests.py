@@ -28,16 +28,16 @@ class TestSequenceFunctions(unittest.TestCase):
     def test1_version(self):
         logging.info("Version: %s (%s)", RPIO.VERSION, RPIO.VERSION_GPIO)
 
-     def test2_rpio_cmd(self):
-         logging.info(" ")
-         cmd = "sudo python rpio" if sys.version_info[0] == 2 else \
-               "sudo python3 rpio"
-         logging.info("=== rpio COMMAND LINE TOOL TESTS (`%s`)===", cmd)
-         run("%s --version" % cmd)
-         run("%s -v -I" % cmd)
-         run("%s -v -i 5,%s,%s" % (cmd, GPIO_IN, GPIO_OUT))
-         # run("sudo python rpio --update-man")
-         run("%s --sysinfo" % cmd)
+    def test2_rpio_cmd(self):
+        logging.info(" ")
+        cmd = "sudo python rpio" if sys.version_info[0] == 2 else \
+              "sudo python3 rpio"
+        logging.info("=== rpio COMMAND LINE TOOL TESTS (`%s`)===", cmd)
+        run("%s --version" % cmd)
+        run("%s -v -I" % cmd)
+        run("%s -v -i 5,%s,%s" % (cmd, GPIO_IN, GPIO_OUT))
+        # run("sudo python rpio --update-man")
+        run("%s --sysinfo" % cmd)
 
     def test3_input(self):
         logging.info(" ")
