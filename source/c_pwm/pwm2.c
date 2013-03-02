@@ -43,35 +43,27 @@
 #include <sys/mman.h>
 
 // 8 GPIOs max
-static int gpio_list[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+#define MAX_GPIOS 8 // one GPIO uses 1 DMA channel
+static int gpio_list[MAX_GPIOS];
 static int num_gpios = 0;
 
-// PERIOD_TIME_US is the pulse cycle time (period) per servo, in microseconds.
-// Typically servos expect it to be 20,000us (20ms). If you are using
-// 8 channels (gpios), this results in a 2.5ms timeslot per gpio channel. A
-// servo output is set high at the start of its 2.5ms timeslot, and set low
-// after the appropriate delay.
-#define PERIOD_TIME_US       20000
+// Fixed period time
+#define PERIOD_TIME_US       10000
 
 // PULSE_WIDTH_INCR_US is the pulse width increment granularity, again in microseconds.
 // Setting it too low will likely cause problems as the DMA controller will use too much
 // memory bandwidth. 10us is a good value, though you might be ok setting it as low as 2us.
 #define PULSE_WIDTH_INCR_US  10
 
-// Timeslot per channel (maximum on-time per cycle)
-// With this delay it will arrive at the same channel after PERIOD_TIME.
-#define CHANNEL_TIME_US      PERIOD_TIME_US
-
-// CHANNEL_SAMPLES is the maximum number of PULSE_WIDTH_INCR_US that fit into one gpio
+// SAMPLES is the maximum number of PULSE_WIDTH_INCR_US that fit into one gpio
 // channels timeslot. (eg. 250 for a 2500us timeslot with 10us PULSE_WIDTH_INCREMENT)
-#define CHANNEL_SAMPLES      (CHANNEL_TIME_US/PULSE_WIDTH_INCR_US)
+#define NUM_SAMPLES  (PERIOD_TIME_US/PULSE_WIDTH_INCR_US)
 
 // Min and max channel width settings (used only for controlling user input)
-#define CHANNEL_WIDTH_MIN    0
-#define CHANNEL_WIDTH_MAX    (CHANNEL_SAMPLES - 1)
+#define WIDTH_MIN    0
+#define WIDTH_MAX    (NUM_SAMPLES - 1)
 
 // Various
-#define NUM_SAMPLES          (PERIOD_TIME_US/PULSE_WIDTH_INCR_US)
 #define NUM_CBS              (NUM_SAMPLES*2)
 
 #define PAGE_SIZE            4096
@@ -81,6 +73,7 @@ static int num_gpios = 0;
 
 // Memory Addresses
 #define DMA_BASE        0x20007000
+#define DMA_CHANNEL_INC 0x100
 #define DMA_LEN         0x24
 #define PWM_BASE        0x2020C000
 #define PWM_LEN         0x28
@@ -223,7 +216,7 @@ shutdown()
     int i;
 
     if (dma_reg && virtbase) {
-        for (i = 0; i < num_gpios; i++)
+        for (i = 0; i < MAX_GPIOS; i++)
             if (gpio_list[i] != -1)
                 set_servo(i, 0);
         udelay(PERIOD_TIME_US);
@@ -304,10 +297,10 @@ set_servo(int servo, int width)
     struct ctl *ctl = (struct ctl *)virtbase;
 
     // The servos initial DMA control block
-    dma_cb_t *cbp = ctl->cb + servo * CHANNEL_SAMPLES * 2;
+    dma_cb_t *cbp = ctl->cb + servo * NUM_SAMPLES * 2;
 
     // The servos initial sample setting
-    uint32_t *dp = ctl->sample + servo * CHANNEL_SAMPLES;
+    uint32_t *dp = ctl->sample + servo * NUM_SAMPLES;
 
     // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
     uint32_t mask = 1 << gpio_list[servo];
@@ -316,7 +309,7 @@ set_servo(int servo, int width)
     // dp[width] = mask; // done in next block
 
     // Update all samples for this channel with the respective GPIO-ID
-    for (i = 0; i < CHANNEL_SAMPLES; i++) {
+    for (i = 0; i < NUM_SAMPLES; i++) {
         dp[i] = 1 << gpio_list[servo];
     }
 
@@ -466,7 +459,7 @@ init_hardware(void)
         udelay(100);
     }
 
-    // Initialise the DMA channel 0 (p46, 47)
+    // Initialize the DMA channel 0 (p46, 47)
     dma_reg[DMA_CS] = DMA_RESET; // DMA channel reset
     udelay(10);
     dma_reg[DMA_CS] = DMA_INT | DMA_END; // Interrupt status & DMA end flag
@@ -483,7 +476,7 @@ init_hardware(void)
 static int gpio_to_index(int gpio) {
     // Find gpio in index
     int i;
-    for (i=0; i<num_gpios; i++) {
+    for (i=0; i<MAX_GPIOS; i++) {
         if (gpio_list[i] == gpio)
             return i;
     }
@@ -507,21 +500,18 @@ add_gpio(int gpio) {
     int gpio_index;
 
     printf("Adding gpio %d to pwm system\n", gpio);
-    if (num_gpios == sizeof(gpio_list)) {
+    if (num_gpios == sizeof(MAX_GPIOS)) {
         fatal("Cannot add more gpios (max reached)");
     }
 
     gpio_index = num_gpios;
     num_gpios += 1;
-    printf("- gpio index %d", gpio_index);
+    printf("- gpio index %d\n", gpio_index);
 
     gpio_list[gpio_index] = gpio;
     gpio_set(gpio, 0);
-    printf("x1 - ");
     gpio_set_mode(gpio, GPIO_MODE_OUT);
-    printf("x2 - ");
     set_servo(gpio_index, 0);
-    printf("x4 - ");
 }
 
 // Removes a gpio from the pwm pool
@@ -539,20 +529,30 @@ del_gpio(int gpio) {
 int
 main(int argc, char **argv)
 {
+    int i;
+
     // Very crude...
     if (argc == 2 && !strcmp(argv[1], "--pcm"))
         delay_hw = DELAY_VIA_PCM;
 
     printf("Using hardware:       %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
-    //printf("Number of servos:     %d\n", NUM_GPIOS);
     printf("Servo cycle time:     %dus\n", PERIOD_TIME_US);
     printf("Pulse width units:    %dus\n", PULSE_WIDTH_INCR_US);
-    printf("Maximum width value:  %d (%dus)\n", CHANNEL_WIDTH_MAX,
-                        CHANNEL_WIDTH_MAX * PULSE_WIDTH_INCR_US);
+    printf("Maximum width value:  %d (%dus)\n", WIDTH_MAX,
+                        WIDTH_MAX * PULSE_WIDTH_INCR_US);
+
+    // initialize gpio list
+    for (i=0; i<sizeof(MAX_GPIOS); i++)
+        gpio_list[i] = -1;
 
     setup_sighandlers();
 
-    dma_reg = map_peripheral(DMA_BASE, DMA_LEN);
+    int gpio = 15;
+    int channel = 0;
+
+    dma_reg = map_peripheral(DMA_BASE, DMA_LEN) + (DMA_CHANNEL_INC * channel);
+    printf("DMA reg: %x\n", (uint32_t) dma_reg);
+
     pwm_reg = map_peripheral(PWM_BASE, PWM_LEN);
     pcm_reg = map_peripheral(PCM_BASE, PCM_LEN);
     clk_reg = map_peripheral(CLK_BASE, CLK_LEN);
@@ -576,61 +576,20 @@ main(int argc, char **argv)
     init_ctrl_data();
     init_hardware();
 
-#define TIMEOUT 30000000
+#define TIMEOUT 20000000
 
     // Add something blocking here
-    add_gpio(17);
+    add_gpio(gpio);
 
-    printf("- 200\n");
-    set_gpio(17, 200);
-    usleep(TIMEOUT);
-
-    shutdown(0);
-    exit(0);
-
-    printf("- 100\n");
-    set_gpio(17, 100);
-    usleep(TIMEOUT);
-
-    printf("- 50\n");
-    set_gpio(17, 50);
+    printf("- 400\n");
+    set_gpio(gpio, 400);
     usleep(TIMEOUT);
 
     printf("- 10\n");
-    set_gpio(17, 10);
+    set_gpio(gpio, 10);
     usleep(TIMEOUT);
 
-    printf("- 50\n");
-    set_gpio(17, 50);
-    usleep(TIMEOUT);
-
-    printf("- 100\n");
-    set_gpio(17, 100);
-    usleep(TIMEOUT);
-
-    printf("- 200\n");
-    set_gpio(17, 200);
-    usleep(TIMEOUT);
-
-    printf("Delete gpio 17\n");
-    del_gpio(17);
-
-    printf("\nTESTS2\n");
-    printf("Adding gpio 17\n");
-    add_gpio(17);
-
-    printf("- 100\n");
-    set_gpio(17, 100);
-    usleep(TIMEOUT);
-
-    printf("Adding gpio 17 a second time\n");
-    add_gpio(17);
-
-    printf("All done.\n");
-
-    // terminate
-    shutdown(0);
-
-    printf("done\n");
-    return 0;
+    shutdown();
+    printf("finished\n");
+    exit(0);
 }
