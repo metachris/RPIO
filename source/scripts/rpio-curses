@@ -141,7 +141,7 @@ class Drawer(object):
     cursor_index_menu2 = 0
     cursor_menu2_width = 30
 
-    pos_cursor_y = POS_GPIOLIST_Y
+    pos_cursor_y = None  # gets set from __init__ to allow adjustments
     pos_cursor_x = POS_GPIOLIST_X - 3
 
     pos_cursor_menu2_y = POS_GPIOINFO_Y + 5
@@ -156,13 +156,14 @@ class Drawer(object):
 
     def __init__(self, screen):
         self.screen = screen
+        self.pos_cursor_y = POS_GPIOLIST_Y
 
     def draw(self):
         screen = self.screen
         #screen.clear()
         #screen.refresh()
 
-        screen.addstr(0, 0, "RPIO v%s\n\n" % "0.8.4")
+        screen.addstr(0, 0, "RPIO v%s" % "0.8.4")
 
         pos_y = POS_GPIOLIST_Y
         for gpio in self.gpios:
@@ -230,7 +231,7 @@ class Drawer(object):
         self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
         self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
         for i in range(12):
-            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%50s" % "")
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%30s" % "")
 
     def menu2_move_cursor(self, up=True):
         offset = -1 if up else 1
@@ -292,7 +293,7 @@ class Drawer(object):
             return
         i = 0
         for i in range(len(HELP.split("\n"))):
-            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%80s" % "")
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%63s" % "")
         self.is_help = False
 
     def enter(self):
@@ -384,7 +385,7 @@ class Drawer(object):
             self.go_to_menu2()
 
     def log(self, msg):
-        self.screen.addstr(1, 100, "%-20s" % msg)
+        self.screen.addstr(1, 20, "%-20s" % msg)
 
     def _refresh(self, start_thread=True):
         """ Started by Thread, to refresh everything """
@@ -424,8 +425,24 @@ class Drawer(object):
 
 
 def main():
+    exit_msg = ""
     try:
         screen = curses.initscr()
+
+        # Check that the screen size is within minimum limits
+        min_h, min_w = (25, 70)
+        win_h, win_w = screen.getmaxyx()
+        if win_w > min_w and win_h == min_h - 1:
+            # We can cut one line
+            global POS_GPIOLIST_Y
+            POS_GPIOLIST_Y -= 1
+        elif win_h < min_h or win_w < min_w:
+            exit_msg = ("Your terminal window is too small. `rpio-curses` "
+                    "needs 24 lines and 70 columns (you have %s lines, %s "
+                    "columns).") % (win_h, win_w)
+            exit(-1)
+
+        # Start the fun
         curses.cbreak();
         curses.noecho()
         screen.keypad(1);
@@ -435,9 +452,11 @@ def main():
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
+        # Our dear all-in-one magic class
         d = Drawer(screen)
         d.start()
 
+        # And the event loop
         while True:
             event = screen.getch()
             if event == ord("q"):
@@ -457,11 +476,15 @@ def main():
             else:
                 #screen.addstr(0, 100, "Pressed: %-10s" % event)
                 pass
+
     finally:
+        # Any way, this is gonna happen at the end of the program
         curses.nocbreak()
         screen.keypad(0)
         curses.echo()
         curses.endwin()
+        if exit_msg:
+            print(exit_msg)
 
 
 if __name__ == "__main__":
