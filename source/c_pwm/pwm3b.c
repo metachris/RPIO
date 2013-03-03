@@ -133,12 +133,13 @@ typedef struct {
     uint32_t pad[2]; // _reserved_
 } dma_cb_t;
 
-
+// Memory mapping
 typedef struct {
     uint8_t *virtaddr;
     uint32_t physaddr;
 } page_map_t;
 
+// Main control structure per channel
 struct ctl {
     uint8_t *virtbase;
     uint32_t *sample;
@@ -147,18 +148,18 @@ struct ctl {
     volatile uint32_t *dma_reg;
 };
 
-// Each gpio gets its own DMA channel. This
+// One control structure per channel
 static struct ctl ctl_arr[MAX_GPIOS];
 
+// Common registers
 static volatile uint32_t *pwm_reg;
 static volatile uint32_t *pcm_reg;
 static volatile uint32_t *clk_reg;
-//static volatile uint32_t *dma_reg;
 static volatile uint32_t *gpio_reg;
 
 static int delay_hw = DELAY_VIA_PWM;
 
-static void set_servo(int servo, int width);
+static void set_servo(int channel, int width);
 
 // Sets a GPIO to either GPIO_MODE_IN(=0) or GPIO_MODE_OUT(=1)
 static void
@@ -196,13 +197,14 @@ shutdown()
 {
     int i;
 
-    if (ctl_arr[0].dma_reg && ctl_arr[0].virtbase) {
-        for (i = 0; i < MAX_GPIOS; i++)
-            if (gpio_list[i] != -1)
-                set_servo(i, 0);
-        udelay(PERIOD_TIME_US);
-        ctl_arr[0].dma_reg[DMA_CS] = DMA_RESET;
-        udelay(10);
+    for (i = 0; i < MAX_GPIOS; i++) {
+        if (ctl_arr[i].dma_reg && ctl_arr[i].virtbase) {
+            printf("shutdown channel %d\n", i);
+            set_servo(i, 0);
+            udelay(PERIOD_TIME_US);
+            ctl_arr[i].dma_reg[DMA_CS] = DMA_RESET;
+            udelay(10);
+        }
     }
 }
 
@@ -242,11 +244,10 @@ setup_sighandlers(void)
 
 // Memory mapping
 static uint32_t
-mem_virt_to_phys(void *virt)
+mem_virt_to_phys(int channel, void *virt)
 {
-    uint32_t offset = (uint8_t *)virt - ctl_arr[0].virtbase;
-
-    return ctl_arr[0].page_map[offset >> PAGE_SHIFT].physaddr + (offset % PAGE_SIZE);
+    uint32_t offset = (uint8_t *)virt - ctl_arr[channel].virtbase;
+    return ctl_arr[channel].page_map[offset >> PAGE_SHIFT].physaddr + (offset % PAGE_SIZE);
 }
 
 // More memory mapping
@@ -267,30 +268,30 @@ map_peripheral(uint32_t base, uint32_t len)
 }
 
 // Returns the pointer to the control block in DMA memory
-uint8_t* get_cb(void) {
-    return ctl_arr[0].virtbase + (sizeof(uint32_t) * NUM_SAMPLES);
+uint8_t* get_cb(int channel) {
+    return ctl_arr[channel].virtbase + (sizeof(uint32_t) * NUM_SAMPLES);
 }
 
 // Set one servo to a specific pulse
 static void
-set_servo(int servo, int width)
+set_servo(int channel, int width)
 {
     int i;
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
     uint32_t phys_gpset0 = 0x7e200000 + 0x1c;
 
     // The servos initial DMA control block
-    dma_cb_t *cbp = (dma_cb_t *) get_cb();
+    dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
 
     // The servos initial sample setting
-    uint32_t *dp = (uint32_t *) ctl_arr[0].virtbase;
+    uint32_t *dp = (uint32_t *) ctl_arr[channel].virtbase;
 
     // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
-    uint32_t mask = 1 << gpio_list[servo];
+    uint32_t mask = 1 << gpio_list[channel];
 
     // Update all samples for this channel with the respective GPIO-ID
     for (i = 0; i < NUM_SAMPLES; i++) {
-        *(dp + i) = 1 << gpio_list[servo];
+        *(dp + i) = 1 << gpio_list[channel];
     }
 
     if (width == 0) {
@@ -311,15 +312,14 @@ set_servo(int servo, int width)
 
 // Initialize the memory pagemap
 static void
-make_pagemap(void)
+make_pagemap(int channel)
 {
     int i, fd, memfd, pid;
     char pagemap_fn[64];
 
-    ctl_arr[0].page_map = malloc(NUM_PAGES * sizeof(*ctl_arr[0].page_map));
-    printf("bytes in page_map: %d\n", NUM_PAGES * sizeof(*ctl_arr[0].page_map));
+    ctl_arr[channel].page_map = malloc(NUM_PAGES * sizeof(*ctl_arr[channel].page_map));
 
-    if (ctl_arr[0].page_map == 0)
+    if (ctl_arr[channel].page_map == 0)
         fatal("rpio-pwm: Failed to malloc page_map: %m\n");
     memfd = open("/dev/mem", O_RDWR);
     if (memfd < 0)
@@ -329,20 +329,20 @@ make_pagemap(void)
     fd = open(pagemap_fn, O_RDONLY);
     if (fd < 0)
         fatal("rpio-pwm: Failed to open %s: %m\n", pagemap_fn);
-    if (lseek(fd, (uint32_t)ctl_arr[0].virtbase >> 9, SEEK_SET) !=
-                        (uint32_t)ctl_arr[0].virtbase >> 9) {
+    if (lseek(fd, (uint32_t)ctl_arr[channel].virtbase >> 9, SEEK_SET) !=
+                        (uint32_t)ctl_arr[channel].virtbase >> 9) {
         fatal("rpio-pwm: Failed to seek on %s: %m\n", pagemap_fn);
     }
     for (i = 0; i < NUM_PAGES; i++) {
         uint64_t pfn;
-        ctl_arr[0].page_map[i].virtaddr = ctl_arr[0].virtbase + i * PAGE_SIZE;
+        ctl_arr[channel].page_map[i].virtaddr = ctl_arr[channel].virtbase + i * PAGE_SIZE;
         // Following line forces page to be allocated
-        ctl_arr[0].page_map[i].virtaddr[0] = 0;
+        ctl_arr[channel].page_map[i].virtaddr[0] = 0;
         if (read(fd, &pfn, sizeof(pfn)) != sizeof(pfn))
             fatal("rpio-pwm: Failed to read %s: %m\n", pagemap_fn);
         if (((pfn >> 55) & 0x1bf) != 0x10c)
             fatal("rpio-pwm: Page %d not present (pfn 0x%016llx)\n", i, pfn);
-        ctl_arr[0].page_map[i].physaddr = (uint32_t)pfn << PAGE_SHIFT | 0x40000000;
+        ctl_arr[channel].page_map[i].physaddr = (uint32_t)pfn << PAGE_SHIFT | 0x40000000;
     }
     close(fd);
     close(memfd);
@@ -350,28 +350,25 @@ make_pagemap(void)
 
 static void
 init_virtbase(int channel) {
-    ctl_arr[0].virtbase = mmap(NULL, NUM_PAGES * PAGE_SIZE, PROT_READ|PROT_WRITE,
+    ctl_arr[channel].virtbase = mmap(NULL, NUM_PAGES * PAGE_SIZE, PROT_READ|PROT_WRITE,
             MAP_SHARED|MAP_ANONYMOUS|MAP_NORESERVE|MAP_LOCKED, -1, 0);
-    if (ctl_arr[0].virtbase == MAP_FAILED)
+    if (ctl_arr[channel].virtbase == MAP_FAILED)
         fatal("rpio-pwm: Failed to mmap physical pages: %m\n");
-    if ((unsigned long)ctl_arr[0].virtbase & (PAGE_SIZE-1))
+    if ((unsigned long)ctl_arr[channel].virtbase & (PAGE_SIZE-1))
         fatal("rpio-pwm: Virtual address is not page aligned\n");
 }
 
 static void
-init_ctrl_data(void)
+init_ctrl_data(int channel)
 {
-    dma_cb_t *cbp = (dma_cb_t *) get_cb();
-    uint32_t *sample = (uint32_t *) ctl_arr[0].virtbase;
+    dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
+    uint32_t *sample = (uint32_t *) ctl_arr[channel].virtbase;
 
     uint32_t phys_fifo_addr;
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
     int i;
 
-    ctl_arr[0].dma_reg = map_peripheral(DMA_BASE, DMA_LEN) + (DMA_CHANNEL_INC * 0);
-
-
-    make_pagemap();
+    ctl_arr[channel].dma_reg = map_peripheral(DMA_BASE, DMA_LEN) + (DMA_CHANNEL_INC * channel);
 
     if (delay_hw == DELAY_VIA_PWM)
         phys_fifo_addr = (PWM_BASE | 0x7e000000) + 0x18;
@@ -386,11 +383,11 @@ init_ctrl_data(void)
     // - second: jump to next CB
     for (i = 0; i < NUM_SAMPLES; i++) {
         cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP;
-        cbp->src = mem_virt_to_phys(sample + i);  // src contains mask of which gpios need change at this sample
+        cbp->src = mem_virt_to_phys(channel, sample + i);  // src contains mask of which gpios need change at this sample
         cbp->dst = phys_gpclr0;  // set each sample to clear set gpios by default
         cbp->length = 4;
         cbp->stride = 0;
-        cbp->next = mem_virt_to_phys(cbp + 1);
+        cbp->next = mem_virt_to_phys(channel, cbp + 1);
         cbp++;
 
         // Delay
@@ -398,28 +395,35 @@ init_ctrl_data(void)
             cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP | DMA_D_DREQ | DMA_PER_MAP(5);
         else
             cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP | DMA_D_DREQ | DMA_PER_MAP(2);
-        cbp->src = mem_virt_to_phys(sample); // Any data will do
+        cbp->src = mem_virt_to_phys(channel, sample); // Any data will do
         cbp->dst = phys_fifo_addr;
         cbp->length = 4;
         cbp->stride = 0;
-        cbp->next = mem_virt_to_phys(cbp + 1);
+        cbp->next = mem_virt_to_phys(channel, cbp + 1);
         cbp++;
     }
 
     // The last control block links back to the first (= endless loop)
     cbp--;
-    cbp->next = mem_virt_to_phys(get_cb());
+    cbp->next = mem_virt_to_phys(channel, get_cb(channel));
 
     // Initialize the DMA channel 0 (p46, 47)
-    ctl_arr[0].dma_reg[DMA_CS] = DMA_RESET; // DMA channel reset
+    ctl_arr[channel].dma_reg[DMA_CS] = DMA_RESET; // DMA channel reset
     udelay(10);
-    ctl_arr[0].dma_reg[DMA_CS] = DMA_INT | DMA_END; // Interrupt status & DMA end flag
-    ctl_arr[0].dma_reg[DMA_CONBLK_AD] = mem_virt_to_phys(get_cb());  // initial CB
-    ctl_arr[0].dma_reg[DMA_DEBUG] = 7; // clear debug error flags
-    ctl_arr[0].dma_reg[DMA_CS] = 0x10880001;    // go, mid priority, wait for outstanding writes
+    ctl_arr[channel].dma_reg[DMA_CS] = DMA_INT | DMA_END; // Interrupt status & DMA end flag
+    ctl_arr[channel].dma_reg[DMA_CONBLK_AD] = mem_virt_to_phys(channel, get_cb(channel));  // initial CB
+    ctl_arr[channel].dma_reg[DMA_DEBUG] = 7; // clear debug error flags
+    ctl_arr[channel].dma_reg[DMA_CS] = 0x10880001;    // go, mid priority, wait for outstanding writes
 }
 
-
+// Takes care of initializing one channel (virtbase, pagemap, ctrl_data)
+static void
+init_channel(int channel)
+{
+    init_virtbase(channel);
+    make_pagemap(channel);
+    init_ctrl_data(channel);
+}
 
 // Initialize PWM (or PCM) and DMA
 static void
@@ -545,33 +549,42 @@ main(int argc, char **argv)
     for (i=0; i<sizeof(MAX_GPIOS); i++)
         gpio_list[i] = -1;
 
+    // Catch all kind of kill signals
     setup_sighandlers();
 
-    int gpio = 17;
-    int channel = 0;
-
+    // Initialize common stuff
     pcm_reg = map_peripheral(PCM_BASE, PCM_LEN);
     clk_reg = map_peripheral(CLK_BASE, CLK_LEN);
     gpio_reg = map_peripheral(GPIO_BASE, GPIO_LEN);
     pwm_reg = map_peripheral(PWM_BASE, PWM_LEN);
-
     init_hardware();
 
-    init_virtbase(0);
-    init_ctrl_data();
-
+    // CUSTOM PROGRAM //
 #define TIMEOUT 20000000
 
+    int gpio = 17;
+    int channel = 1;
+
+    // Initialize one channel
+    init_channel(channel);
+    gpio_list[channel] = gpio;
+    gpio_set(gpio, 0);
+    gpio_set_mode(gpio, GPIO_MODE_OUT);
+    set_servo(channel, 400);
+    usleep(TIMEOUT);
+
+    //    set_gpio(gpio, 400);
+
     // Add something blocking here
-    add_gpio(gpio);
-
-    printf("- 400\n");
-    set_gpio(gpio, 400);
-    usleep(TIMEOUT);
-
-    printf("- 10\n");
-    set_gpio(gpio, 10);
-    usleep(TIMEOUT);
+    //add_gpio(gpio);
+//
+//    printf("- 400\n");
+//    set_gpio(gpio, 400);
+//    usleep(TIMEOUT);
+//
+//    printf("- 10\n");
+//    set_gpio(gpio, 10);
+//    usleep(TIMEOUT);
 
     shutdown();
     printf("finished\n");
