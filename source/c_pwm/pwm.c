@@ -4,6 +4,11 @@
  * License: GPLv3+
  * Author: Chris Hager <chris@linuxuser.at>
  * URL: https://github.com/metachris/RPIO
+ *
+ * Flexible PWM via DMA for the Raspberry Pi. Multiple DMA channels are
+ * supported.
+ *
+ * Based on the excellent servod.c by Richard Hirst.
  */
 
 #include <stdio.h>
@@ -21,14 +26,16 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-// 8 GPIOs max
-#define MAX_GPIOS 8 // one GPIO uses 1 DMA channel
+// This pulse-width-increment is the same for all channels
+static uint8_t pulse_width_incr_us = 10;
+
+// 8 GPIOs max; one GPIO uses one DMA channel
+#define MAX_GPIOS 8
 static int gpio_list[MAX_GPIOS];
-//static int num_gpios = 0;
 
 // Standard page sizes
-#define PAGE_SIZE            4096
-#define PAGE_SHIFT           12
+#define PAGE_SIZE       4096
+#define PAGE_SHIFT      12
 
 // Memory Addresses
 #define DMA_BASE        0x20007000
@@ -129,7 +136,6 @@ struct channel {
 
     // Set by user
     uint32_t period_time_us;
-    //uint32_t pulse_width;
 
     // Set by system
     uint32_t num_samples;
@@ -139,7 +145,6 @@ struct channel {
 
 // One control structure per channel
 static struct channel channel_arr[MAX_GPIOS];
-static uint8_t pulse_width_incr_us = 10;
 
 // Common registers
 static volatile uint32_t *pwm_reg;
@@ -172,7 +177,7 @@ gpio_set(int pin, int level)
         gpio_reg[GPIO_CLR0] = 1 << pin;
 }
 
-// Very short delay
+// Very short delay as demanded per datasheet
 static void
 udelay(int us)
 {
@@ -181,7 +186,7 @@ udelay(int us)
     nanosleep(&ts, NULL);
 }
 
-// Shutdown -- its super important to reset the DMA before quitting
+// Shutdown -- its important to reset the DMA before quitting
 static void
 shutdown()
 {
@@ -240,7 +245,7 @@ mem_virt_to_phys(int channel, void *virt)
     return channel_arr[channel].page_map[offset >> PAGE_SHIFT].physaddr + (offset % PAGE_SIZE);
 }
 
-// More memory mapping
+// Peripherals memory mapping
 static void *
 map_peripheral(uint32_t base, uint32_t len)
 {
@@ -257,12 +262,12 @@ map_peripheral(uint32_t base, uint32_t len)
     return vaddr;
 }
 
-// Returns the pointer to the control block in DMA memory
+// Returns a pointer to the control block of this channel in DMA memory
 uint8_t* get_cb(int channel) {
     return channel_arr[channel].virtbase + (sizeof(uint32_t) * channel_arr[channel].num_samples);
 }
 
-// Set one servo to a specific pulse
+// Set channel servo to a specific pulse. pulse-width-us = width * pulse_width_incr_us
 static void
 set_channel_pulse(int channel, int width)
 {
@@ -302,7 +307,7 @@ set_channel_pulse(int channel, int width)
 }
 
 
-// Initialize the memory pagemap
+// Get a channel's pagemap
 static void
 make_pagemap(int channel)
 {
@@ -455,65 +460,8 @@ init_hardware(void)
     }
 }
 
-// Returns the index in gpio_list of the specified gpio
-//static int
-//gpio_to_index(int gpio) {
-//    // Find gpio in index
-//    int i;
-//    for (i=0; i<MAX_GPIOS; i++) {
-//        if (gpio_list[i] == gpio)
-//            return i;
-//    }
-//    return -1;
-//}
-
-// Wrapper for set_servo which uses the gpio-id instead of the gpio_list inde
-//static void
-//set_gpio(int gpio, int width) {
-//    // Set the pulse width in us_increments for this gpio
-//    int index;
-//    index = gpio_to_index(gpio);
-//    if (index < 0) {
-//        fatal("Could not find gpio %s in list of pwm-gpios", gpio);
-//    }
-//    set_servo(index, width);
-//}
-
-// Adds a new gpio-id into the pwm pool, and sets this gpio up as such
-//static void
-//add_gpio(int gpio) {
-//    int gpio_index;
-//
-//    printf("Adding gpio %d to pwm system\n", gpio);
-//    if (num_gpios == sizeof(MAX_GPIOS)) {
-//        fatal("Cannot add more gpios (max reached)");
-//    }
-//
-//    gpio_index = num_gpios;
-//    num_gpios += 1;
-//    printf("- gpio index %d\n", gpio_index);
-//
-//    gpio_list[gpio_index] = gpio;
-//    gpio_set(gpio, 0);
-//    gpio_set_mode(gpio, GPIO_MODE_OUT);
-//    set_servo(gpio_index, 0);
-//}
-
-// Removes a gpio from the pwm pool
-//static void
-//del_gpio(int gpio) {
-//    int gpio_index;
-//    gpio_index = gpio_to_index(gpio);
-//    if (gpio_index == -1) {
-//        fatal("Could not delete gpio %s from pwm, no such gpio", gpio);
-//    }
-//    set_servo(gpio_index, 0);
-//    gpio_list[gpio_index] = -1;
-//}
-
-
-// Takes care of initializing one channel (virtbase, pagemap, ctrl_data)
-// all these steps need to be taken when changing pulse/period widths
+// Setup a channel with a specific period time. After that pulse-widths can be
+// changed at any time.
 static void
 init_channel(int channel, int gpio, int period_time_us)
 {
@@ -537,6 +485,7 @@ init_channel(int channel, int gpio, int period_time_us)
     gpio_set_mode(gpio, GPIO_MODE_OUT);
 }
 
+// Print some info about a channel
 static void
 print_channel(int channel)
 {
