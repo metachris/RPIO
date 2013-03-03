@@ -6,7 +6,7 @@
  * URL: https://github.com/metachris/RPIO
  *
  * Flexible PWM via DMA for the Raspberry Pi. Multiple DMA channels are
- * supported.
+ * supported. You can use PCM instead of PWM with the "--pcm" argument.
  *
  * Based on the excellent servod.c by Richard Hirst.
  */
@@ -144,7 +144,7 @@ struct channel {
 };
 
 // One control structure per channel
-static struct channel channel_arr[MAX_GPIOS];
+static struct channel channels[MAX_GPIOS];
 
 // Common registers
 static volatile uint32_t *pwm_reg;
@@ -152,8 +152,10 @@ static volatile uint32_t *pcm_reg;
 static volatile uint32_t *clk_reg;
 static volatile uint32_t *gpio_reg;
 
+// Default timer hardware is PWM
 static int delay_hw = DELAY_VIA_PWM;
 
+// Function declarations for early use
 static void set_channel_pulse(int channel, int width);
 
 // Sets a GPIO to either GPIO_MODE_IN(=0) or GPIO_MODE_OUT(=1)
@@ -193,11 +195,11 @@ shutdown()
     int i;
 
     for (i = 0; i < MAX_GPIOS; i++) {
-        if (channel_arr[i].dma_reg && channel_arr[i].virtbase) {
+        if (channels[i].dma_reg && channels[i].virtbase) {
             printf("shutdown channel %d\n", i);
             set_channel_pulse(i, 0);
-            udelay(channel_arr[i].period_time_us);
-            channel_arr[i].dma_reg[DMA_CS] = DMA_RESET;
+            udelay(channels[i].period_time_us);
+            channels[i].dma_reg[DMA_CS] = DMA_RESET;
             udelay(10);
         }
     }
@@ -241,8 +243,8 @@ setup_sighandlers(void)
 static uint32_t
 mem_virt_to_phys(int channel, void *virt)
 {
-    uint32_t offset = (uint8_t *)virt - channel_arr[channel].virtbase;
-    return channel_arr[channel].page_map[offset >> PAGE_SHIFT].physaddr + (offset % PAGE_SIZE);
+    uint32_t offset = (uint8_t *)virt - channels[channel].virtbase;
+    return channels[channel].page_map[offset >> PAGE_SHIFT].physaddr + (offset % PAGE_SIZE);
 }
 
 // Peripherals memory mapping
@@ -263,11 +265,12 @@ map_peripheral(uint32_t base, uint32_t len)
 }
 
 // Returns a pointer to the control block of this channel in DMA memory
-uint8_t* get_cb(int channel) {
-    return channel_arr[channel].virtbase + (sizeof(uint32_t) * channel_arr[channel].num_samples);
+uint8_t* get_cb(int channel)
+{
+    return channels[channel].virtbase + (sizeof(uint32_t) * channels[channel].num_samples);
 }
 
-// Set channel servo to a specific pulse. pulse-width-us = width * pulse_width_incr_us
+// Set channel to a specific pulse. pulse-width-us = width * pulse_width_incr_us
 static void
 set_channel_pulse(int channel, int width)
 {
@@ -275,11 +278,8 @@ set_channel_pulse(int channel, int width)
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
     uint32_t phys_gpset0 = 0x7e200000 + 0x1c;
 
-    // The servos initial DMA control block
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
-
-    // The servos initial sample setting
-    uint32_t *dp = (uint32_t *) channel_arr[channel].virtbase;
+    uint32_t *dp = (uint32_t *) channels[channel].virtbase;
 
     // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
     uint32_t mask = 1 << gpio_list[channel];
@@ -287,7 +287,7 @@ set_channel_pulse(int channel, int width)
     printf("set_channel_pulse: channel=%d, width=%d\n", channel, width);
 
     // Update all samples for this channel with the respective GPIO-ID
-    for (i = 0; i < channel_arr[channel].num_samples; i++) {
+    for (i = 0; i < channels[channel].num_samples; i++) {
         *(dp + i) = 1 << gpio_list[channel];
     }
 
@@ -314,10 +314,9 @@ make_pagemap(int channel)
     int i, fd, memfd, pid;
     char pagemap_fn[64];
 
-//    printf("make_pagemap: num_pages=%d\n", channel_arr[channel].num_pages);
-    channel_arr[channel].page_map = malloc(channel_arr[channel].num_pages * sizeof(*channel_arr[channel].page_map));
+    channels[channel].page_map = malloc(channels[channel].num_pages * sizeof(*channels[channel].page_map));
 
-    if (channel_arr[channel].page_map == 0)
+    if (channels[channel].page_map == 0)
         fatal("rpio-pwm: Failed to malloc page_map: %m\n");
     memfd = open("/dev/mem", O_RDWR);
     if (memfd < 0)
@@ -327,46 +326,48 @@ make_pagemap(int channel)
     fd = open(pagemap_fn, O_RDONLY);
     if (fd < 0)
         fatal("rpio-pwm: Failed to open %s: %m\n", pagemap_fn);
-    if (lseek(fd, (uint32_t)channel_arr[channel].virtbase >> 9, SEEK_SET) !=
-                        (uint32_t)channel_arr[channel].virtbase >> 9) {
+    if (lseek(fd, (uint32_t)channels[channel].virtbase >> 9, SEEK_SET) !=
+                        (uint32_t)channels[channel].virtbase >> 9) {
         fatal("rpio-pwm: Failed to seek on %s: %m\n", pagemap_fn);
     }
-    for (i = 0; i < channel_arr[channel].num_pages; i++) {
+    for (i = 0; i < channels[channel].num_pages; i++) {
         uint64_t pfn;
-        channel_arr[channel].page_map[i].virtaddr = channel_arr[channel].virtbase + i * PAGE_SIZE;
+        channels[channel].page_map[i].virtaddr = channels[channel].virtbase + i * PAGE_SIZE;
         // Following line forces page to be allocated
-        channel_arr[channel].page_map[i].virtaddr[0] = 0;
+        channels[channel].page_map[i].virtaddr[0] = 0;
         if (read(fd, &pfn, sizeof(pfn)) != sizeof(pfn))
             fatal("rpio-pwm: Failed to read %s: %m\n", pagemap_fn);
         if (((pfn >> 55) & 0x1bf) != 0x10c)
             fatal("rpio-pwm: Page %d not present (pfn 0x%016llx)\n", i, pfn);
-        channel_arr[channel].page_map[i].physaddr = (uint32_t)pfn << PAGE_SHIFT | 0x40000000;
+        channels[channel].page_map[i].physaddr = (uint32_t)pfn << PAGE_SHIFT | 0x40000000;
     }
     close(fd);
     close(memfd);
 }
 
 static void
-init_virtbase(int channel) {
-    channel_arr[channel].virtbase = mmap(NULL, channel_arr[channel].num_pages * PAGE_SIZE, PROT_READ|PROT_WRITE,
+init_virtbase(int channel)
+{
+    channels[channel].virtbase = mmap(NULL, channels[channel].num_pages * PAGE_SIZE, PROT_READ|PROT_WRITE,
             MAP_SHARED|MAP_ANONYMOUS|MAP_NORESERVE|MAP_LOCKED, -1, 0);
-    if (channel_arr[channel].virtbase == MAP_FAILED)
+    if (channels[channel].virtbase == MAP_FAILED)
         fatal("rpio-pwm: Failed to mmap physical pages: %m\n");
-    if ((unsigned long)channel_arr[channel].virtbase & (PAGE_SIZE-1))
+    if ((unsigned long)channels[channel].virtbase & (PAGE_SIZE-1))
         fatal("rpio-pwm: Virtual address is not page aligned\n");
 }
 
+// Initialize control block for this channel
 static void
 init_ctrl_data(int channel)
 {
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
-    uint32_t *sample = (uint32_t *) channel_arr[channel].virtbase;
+    uint32_t *sample = (uint32_t *) channels[channel].virtbase;
 
     uint32_t phys_fifo_addr;
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
     int i;
 
-    channel_arr[channel].dma_reg = map_peripheral(DMA_BASE, DMA_LEN) + (DMA_CHANNEL_INC * channel);
+    channels[channel].dma_reg = map_peripheral(DMA_BASE, DMA_LEN) + (DMA_CHANNEL_INC * channel);
 
     if (delay_hw == DELAY_VIA_PWM)
         phys_fifo_addr = (PWM_BASE | 0x7e000000) + 0x18;
@@ -374,12 +375,12 @@ init_ctrl_data(int channel)
         phys_fifo_addr = (PCM_BASE | 0x7e000000) + 0x04;
 
     // Reset complete per-sample gpio mask to 0
-    memset(sample, 0, sizeof(channel_arr[channel].num_samples * sizeof(uint32_t)));
+    memset(sample, 0, sizeof(channels[channel].num_samples * sizeof(uint32_t)));
 
     // For each sample we add 2 control blocks:
     // - first: clear gpio and jump to second
     // - second: jump to next CB
-    for (i = 0; i < channel_arr[channel].num_samples; i++) {
+    for (i = 0; i < channels[channel].num_samples; i++) {
         cbp->info = DMA_NO_WIDE_BURSTS | DMA_WAIT_RESP;
         cbp->src = mem_virt_to_phys(channel, sample + i);  // src contains mask of which gpios need change at this sample
         cbp->dst = phys_gpclr0;  // set each sample to clear set gpios by default
@@ -406,12 +407,12 @@ init_ctrl_data(int channel)
     cbp->next = mem_virt_to_phys(channel, get_cb(channel));
 
     // Initialize the DMA channel 0 (p46, 47)
-    channel_arr[channel].dma_reg[DMA_CS] = DMA_RESET; // DMA channel reset
+    channels[channel].dma_reg[DMA_CS] = DMA_RESET; // DMA channel reset
     udelay(10);
-    channel_arr[channel].dma_reg[DMA_CS] = DMA_INT | DMA_END; // Interrupt status & DMA end flag
-    channel_arr[channel].dma_reg[DMA_CONBLK_AD] = mem_virt_to_phys(channel, get_cb(channel));  // initial CB
-    channel_arr[channel].dma_reg[DMA_DEBUG] = 7; // clear debug error flags
-    channel_arr[channel].dma_reg[DMA_CS] = 0x10880001;    // go, mid priority, wait for outstanding writes
+    channels[channel].dma_reg[DMA_CS] = DMA_INT | DMA_END; // Interrupt status & DMA end flag
+    channels[channel].dma_reg[DMA_CONBLK_AD] = mem_virt_to_phys(channel, get_cb(channel));  // initial CB
+    channels[channel].dma_reg[DMA_DEBUG] = 7; // clear debug error flags
+    channels[channel].dma_reg[DMA_CS] = 0x10880001;    // go, mid priority, wait for outstanding writes
 }
 
 // Initialize PWM or PCM hardware once for all channels (10MHz)
@@ -468,10 +469,10 @@ init_channel(int channel, int gpio, int period_time_us)
     printf("Initializing channel %d...\n", channel);
 
     // Setup Data
-    channel_arr[channel].period_time_us = period_time_us;
-    channel_arr[channel].num_samples = channel_arr[channel].period_time_us / pulse_width_incr_us;
-    channel_arr[channel].num_cbs = channel_arr[channel].num_samples * 2;
-    channel_arr[channel].num_pages = ((channel_arr[channel].num_cbs * 32 + channel_arr[channel].num_samples * 4 + \
+    channels[channel].period_time_us = period_time_us;
+    channels[channel].num_samples = channels[channel].period_time_us / pulse_width_incr_us;
+    channels[channel].num_cbs = channels[channel].num_samples * 2;
+    channels[channel].num_pages = ((channels[channel].num_cbs * 32 + channels[channel].num_samples * 4 + \
                                        PAGE_SIZE - 1) >> PAGE_SHIFT);
 
     // Initialize channel
@@ -489,11 +490,11 @@ init_channel(int channel, int gpio, int period_time_us)
 static void
 print_channel(int channel)
 {
-    printf("Period time:   %dus\n", channel_arr[channel].period_time_us);
+    printf("Period time:   %dus\n", channels[channel].period_time_us);
     printf("PW Increments: %dus\n\n", pulse_width_incr_us);
-    printf("Num samples:   %d\n", channel_arr[channel].num_samples);
-    printf("Num CBS:       %d\n", channel_arr[channel].num_cbs);
-    printf("Num pages:     %d\n", channel_arr[channel].num_pages);
+    printf("Num samples:   %d\n", channels[channel].num_samples);
+    printf("Num CBS:       %d\n", channels[channel].num_cbs);
+    printf("Num pages:     %d\n", channels[channel].num_pages);
 }
 
 int
