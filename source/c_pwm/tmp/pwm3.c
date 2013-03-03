@@ -358,6 +358,8 @@ make_pagemap(void)
     char pagemap_fn[64];
 
     page_map = malloc(NUM_PAGES * sizeof(*page_map));
+    printf("bytes in page_map: %d\n", NUM_PAGES * sizeof(*page_map));
+
     if (page_map == 0)
         fatal("rpio-pwm: Failed to malloc page_map: %m\n");
     memfd = open("/dev/mem", O_RDWR);
