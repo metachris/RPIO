@@ -129,7 +129,7 @@ struct channel {
 
     // Set by user
     uint32_t period_time_us;
-    uint32_t pulse_width;
+    //uint32_t pulse_width;
 
     // Set by system
     uint32_t num_samples;
@@ -278,6 +278,8 @@ set_channel_pulse(int channel, int width)
 
     // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
     uint32_t mask = 1 << gpio_list[channel];
+
+    printf("set_channel_pulse: channel=%d, width=%d\n", channel, width);
 
     // Update all samples for this channel with the respective GPIO-ID
     for (i = 0; i < channel_arr[channel].num_samples; i++) {
@@ -513,13 +515,12 @@ init_hardware(void)
 // Takes care of initializing one channel (virtbase, pagemap, ctrl_data)
 // all these steps need to be taken when changing pulse/period widths
 static void
-init_channel(int channel, int gpio, int pulse_width, int pause_width)
+init_channel(int channel, int gpio, int period_time_us)
 {
     printf("Initializing channel %d...\n", channel);
 
     // Setup Data
-    channel_arr[channel].pulse_width = pulse_width;
-    channel_arr[channel].period_time_us = (pulse_width + pause_width) * pulse_width_incr_us;
+    channel_arr[channel].period_time_us = period_time_us;
     channel_arr[channel].num_samples = channel_arr[channel].period_time_us / pulse_width_incr_us;
     channel_arr[channel].num_cbs = channel_arr[channel].num_samples * 2;
     channel_arr[channel].num_pages = ((channel_arr[channel].num_cbs * 32 + channel_arr[channel].num_samples * 4 + \
@@ -534,17 +535,16 @@ init_channel(int channel, int gpio, int pulse_width, int pause_width)
     gpio_list[channel] = gpio;
     gpio_set(gpio, 0);
     gpio_set_mode(gpio, GPIO_MODE_OUT);
-    set_channel_pulse(channel, pulse_width);
 }
 
 static void
 print_channel(int channel)
 {
-    printf("Pulse time:   %dus\n", channel_arr[channel].pulse_width * pulse_width_incr_us);
-    printf("Period time:  %dus\n\n", channel_arr[channel].period_time_us);
-    printf("Num samples:  %d\n", channel_arr[channel].num_samples);
-    printf("Num CBS:      %d\n", channel_arr[channel].num_cbs);
-    printf("Num pages:    %d\n", channel_arr[channel].num_pages);
+    printf("Period time:   %dus\n", channel_arr[channel].period_time_us);
+    printf("PW Increments: %dus\n\n", pulse_width_incr_us);
+    printf("Num samples:   %d\n", channel_arr[channel].num_samples);
+    printf("Num CBS:       %d\n", channel_arr[channel].num_cbs);
+    printf("Num pages:     %d\n", channel_arr[channel].num_pages);
 }
 
 int
@@ -573,17 +573,21 @@ main(int argc, char **argv)
     init_hardware();
 
     // CUSTOM PROGRAM //
-#define TIMEOUT 10000000
+#define TIMEOUT 5000000
 
     // SETUP CHANNEL
     int gpio = 17;
     int channel = 0;
-    int pulse_width = 20;
-    int pause_width = 800;
-    init_channel(channel, gpio, pulse_width, pause_width);
+    int period_time_us = 2000;
+    init_channel(channel, gpio, period_time_us);
     print_channel(channel);
 
-    // Wait a bit now
+    // Wait a bit now and change pulse
+    set_channel_pulse(channel, 100);
+    usleep(TIMEOUT);
+    set_channel_pulse(channel, 10);
+    usleep(TIMEOUT);
+    set_channel_pulse(channel, 50);
     usleep(TIMEOUT);
 
     shutdown();

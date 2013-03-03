@@ -27,7 +27,7 @@ static int gpio_list[MAX_GPIOS];
 //static int num_gpios = 0;
 
 // Fixed period time
-#define PERIOD_TIME_US       10000
+#define PERIOD_TIME_US       2000
 
 // PULSE_WIDTH_INCR_US is the pulse width increment granularity, again in microseconds.
 // Setting it too low will likely cause problems as the DMA controller will use too much
@@ -289,6 +289,8 @@ set_servo(int channel, int width)
     // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
     uint32_t mask = 1 << gpio_list[channel];
 
+    printf("set_channel_pulse: channel=%d, width=%d\n", channel, width);
+
     // Update all samples for this channel with the respective GPIO-ID
     for (i = 0; i < NUM_SAMPLES; i++) {
         *(dp + i) = 1 << gpio_list[channel];
@@ -537,10 +539,10 @@ main(int argc, char **argv)
         delay_hw = DELAY_VIA_PCM;
 
     printf("Using hardware:       %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
-    printf("Servo cycle time:     %dus\n", PERIOD_TIME_US);
-    printf("Pulse width units:    %dus\n", PULSE_WIDTH_INCR_US);
-    printf("Maximum width value:  %d (%dus)\n", WIDTH_MAX,
-                        WIDTH_MAX * PULSE_WIDTH_INCR_US);
+//    printf("Servo cycle time:     %dus\n", PERIOD_TIME_US);
+//    printf("Pulse width units:    %dus\n", PULSE_WIDTH_INCR_US);
+//    printf("Maximum width value:  %d (%dus)\n", WIDTH_MAX,
+//                        WIDTH_MAX * PULSE_WIDTH_INCR_US);
 
     // initialize gpio list
     for (i=0; i<sizeof(MAX_GPIOS); i++)
@@ -564,14 +566,22 @@ main(int argc, char **argv)
 
     // Initialize one channel
     init_channel(channel);
+
+    //printf("Pulse time:   %dus\n", PUchannel_arr[channel].pulse_width * pulse_width_incr_us);
+    printf("Period time:   %dus\n", PERIOD_TIME_US);
+    printf("PW Increments: %dus\n\n", PULSE_WIDTH_INCR_US);
+    printf("Num samples:   %d\n", NUM_SAMPLES);
+    printf("Num CBS:       %d\n", NUM_CBS);
+    printf("Num pages:     %d\n", NUM_PAGES);
+
     gpio_list[channel] = gpio;
     gpio_set(gpio, 0);
     gpio_set_mode(gpio, GPIO_MODE_OUT);
-    set_servo(channel, 200);
-    usleep(TIMEOUT);
     set_servo(channel, 100);
     usleep(TIMEOUT);
-    set_servo(channel, 200);
+    set_servo(channel, 10);
+    usleep(TIMEOUT);
+    set_servo(channel, 50);
     usleep(TIMEOUT);
 
     shutdown();
