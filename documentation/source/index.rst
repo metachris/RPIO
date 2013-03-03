@@ -195,11 +195,12 @@ Its easy to open ports for incoming TCP connections with just this one method:
 
    Adds a socket server callback, which will be started when a connected socket client sends something. This is implemented
    by RPIO creating a TCP server socket at the specified port. Incoming connections will be accepted when ``RPIO.wait_for_interrupts()`` runs.
-   The callback must accept exactly two parameters: socket and message (eg. ``def callback(socket, msg)``). The callback can use the socket parameter to send values back to the client (eg. ``socket.send("hi there\n")``).
+   The callback must accept exactly two parameters: socket and message (eg. ``def callback(socket, msg)``).
 
-   You can test the TCP socket interrupts with ``$ telnet <your-ip> <your-port>`` (eg. ``$ telnet localhost 8080``). An empty string
-   tells the server to close the client connection (for instance if you just press enter in telnet, you'll get disconnected).
+   The callback can use the socket parameter to send values back to the client (eg. ``socket.send("hi there\n")``). To close the connection to a client, you can use ``socket.close()``. A client can close the connection the same way or by sending an empty message to the server.
 
+You can test the TCP socket interrupts with ``$ telnet <your-ip> <your-port>`` (eg. ``$ telnet localhost 8080``). An empty string
+tells the server to close the client connection (for instance if you just press enter in telnet, you'll get disconnected).
 
 
 Example
@@ -219,7 +220,6 @@ server on port 8080::
 
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
-    RPIO.add_interrupt_callback(8, gpio_callback, edge='rising')
     RPIO.add_interrupt_callback(9, gpio_callback, pull_up_down=RPIO.PUD_UP)
 
     # One TCP socket server callback on port 8080
