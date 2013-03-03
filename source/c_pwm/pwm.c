@@ -9,6 +9,8 @@
  * supported. You can use PCM instead of PWM with the "--pcm" argument.
  *
  * Based on the excellent servod.c by Richard Hirst.
+ *
+ * Build it with `gcc -Wall -g -O2 -o pwm pwm.c`
  */
 
 #include <stdio.h>
@@ -25,6 +27,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include "pwm.h"
 
 // This pulse-width-increment is the same for all channels
 static uint8_t pulse_width_incr_us = 10;
@@ -106,9 +109,6 @@ static int gpio_list[MAX_GPIOS];
 #define PCMCLK_CNTL     38
 #define PCMCLK_DIV      39
 
-#define DELAY_VIA_PWM   0
-#define DELAY_VIA_PCM   1
-
 // DMA Control Block Data Structure (p40): 8 words (256 bits)
 typedef struct {
     uint32_t info;   // TI: transfer information
@@ -154,9 +154,6 @@ static volatile uint32_t *gpio_reg;
 
 // Default timer hardware is PWM
 static int delay_hw = DELAY_VIA_PWM;
-
-// Function declarations for early use
-static void set_channel_pulse(int channel, int width);
 
 // Sets a GPIO to either GPIO_MODE_IN(=0) or GPIO_MODE_OUT(=1)
 static void
@@ -497,15 +494,13 @@ print_channel(int channel)
     printf("Num pages:     %d\n", channels[channel].num_pages);
 }
 
+// hw: 0=PWM, 1=PCM
 int
-main(int argc, char **argv)
+setup(int hw)
 {
     int i;
 
-    // Very crude...
-    if (argc == 2 && !strcmp(argv[1], "--pcm"))
-        delay_hw = DELAY_VIA_PCM;
-
+    delay_hw = hw;
     printf("Using hardware:       %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
 
     // initialize gpio list
@@ -521,26 +516,35 @@ main(int argc, char **argv)
     gpio_reg = map_peripheral(GPIO_BASE, GPIO_LEN);
     pwm_reg = map_peripheral(PWM_BASE, PWM_LEN);
     init_hardware();
+    return 1;
+}
 
-    // CUSTOM PROGRAM //
-#define TIMEOUT 5000000
+int
+main(int argc, char **argv)
+{
+    // Very crude...
+    if (argc == 2 && !strcmp(argv[1], "--pcm"))
+        setup(DELAY_VIA_PCM);
+    else
+        setup(DELAY_VIA_PWM);
 
-    // SETUP CHANNEL
+    // Setup channel
     int gpio = 17;
     int channel = 0;
     int period_time_us = 2000;
     init_channel(channel, gpio, period_time_us);
     print_channel(channel);
 
-    // Wait a bit now and change pulse
+    // Use the channel for various pulse widths
+    const int demo_timeout = 5 * 1000000;  // 5 seconds
     set_channel_pulse(channel, 100);
-    usleep(TIMEOUT);
+    usleep(demo_timeout);
     set_channel_pulse(channel, 10);
-    usleep(TIMEOUT);
+    usleep(demo_timeout);
     set_channel_pulse(channel, 50);
-    usleep(TIMEOUT);
+    usleep(demo_timeout);
 
+    // All done
     shutdown();
-    printf("finished\n");
     exit(0);
 }
