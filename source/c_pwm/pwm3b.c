@@ -24,7 +24,7 @@
 // 8 GPIOs max
 #define MAX_GPIOS 8 // one GPIO uses 1 DMA channel
 static int gpio_list[MAX_GPIOS];
-static int num_gpios = 0;
+//static int num_gpios = 0;
 
 // Fixed period time
 #define PERIOD_TIME_US       10000
@@ -425,7 +425,7 @@ init_channel(int channel)
     init_ctrl_data(channel);
 }
 
-// Initialize PWM (or PCM) and DMA
+// Initialize PWM or PCM hardware once for all channels (10MHz)
 static void
 init_hardware(void)
 {
@@ -467,68 +467,65 @@ init_hardware(void)
         udelay(100);
         pcm_reg[PCM_CS_A] |= 1<<9;            // Enable DMA
         udelay(100);
-    }
-
-    if (delay_hw == DELAY_VIA_PCM) {
         pcm_reg[PCM_CS_A] |= 1<<2;            // Enable Tx
     }
 }
 
 // Returns the index in gpio_list of the specified gpio
-static int
-gpio_to_index(int gpio) {
-    // Find gpio in index
-    int i;
-    for (i=0; i<MAX_GPIOS; i++) {
-        if (gpio_list[i] == gpio)
-            return i;
-    }
-    return -1;
-}
+//static int
+//gpio_to_index(int gpio) {
+//    // Find gpio in index
+//    int i;
+//    for (i=0; i<MAX_GPIOS; i++) {
+//        if (gpio_list[i] == gpio)
+//            return i;
+//    }
+//    return -1;
+//}
 
 // Wrapper for set_servo which uses the gpio-id instead of the gpio_list inde
-static void
-set_gpio(int gpio, int width) {
-    // Set the pulse width in us_increments for this gpio
-    int index;
-    index = gpio_to_index(gpio);
-    if (index < 0) {
-        fatal("Could not find gpio %s in list of pwm-gpios", gpio);
-    }
-    set_servo(index, width);
-}
+//static void
+//set_gpio(int gpio, int width) {
+//    // Set the pulse width in us_increments for this gpio
+//    int index;
+//    index = gpio_to_index(gpio);
+//    if (index < 0) {
+//        fatal("Could not find gpio %s in list of pwm-gpios", gpio);
+//    }
+//    set_servo(index, width);
+//}
 
 // Adds a new gpio-id into the pwm pool, and sets this gpio up as such
-static void
-add_gpio(int gpio) {
-    int gpio_index;
-
-    printf("Adding gpio %d to pwm system\n", gpio);
-    if (num_gpios == sizeof(MAX_GPIOS)) {
-        fatal("Cannot add more gpios (max reached)");
-    }
-
-    gpio_index = num_gpios;
-    num_gpios += 1;
-    printf("- gpio index %d\n", gpio_index);
-
-    gpio_list[gpio_index] = gpio;
-    gpio_set(gpio, 0);
-    gpio_set_mode(gpio, GPIO_MODE_OUT);
-    set_servo(gpio_index, 0);
-}
+//static void
+//add_gpio(int gpio) {
+//    int gpio_index;
+//
+//    printf("Adding gpio %d to pwm system\n", gpio);
+//    if (num_gpios == sizeof(MAX_GPIOS)) {
+//        fatal("Cannot add more gpios (max reached)");
+//    }
+//
+//    gpio_index = num_gpios;
+//    num_gpios += 1;
+//    printf("- gpio index %d\n", gpio_index);
+//
+//    gpio_list[gpio_index] = gpio;
+//    gpio_set(gpio, 0);
+//    gpio_set_mode(gpio, GPIO_MODE_OUT);
+//    set_servo(gpio_index, 0);
+//}
 
 // Removes a gpio from the pwm pool
-static void
-del_gpio(int gpio) {
-    int gpio_index;
-    gpio_index = gpio_to_index(gpio);
-    if (gpio_index == -1) {
-        fatal("Could not delete gpio %s from pwm, no such gpio", gpio);
-    }
-    set_servo(gpio_index, 0);
-    gpio_list[gpio_index] = -1;
-}
+//static void
+//del_gpio(int gpio) {
+//    int gpio_index;
+//    gpio_index = gpio_to_index(gpio);
+//    if (gpio_index == -1) {
+//        fatal("Could not delete gpio %s from pwm, no such gpio", gpio);
+//    }
+//    set_servo(gpio_index, 0);
+//    gpio_list[gpio_index] = -1;
+//}
 
 int
 main(int argc, char **argv)
@@ -560,7 +557,7 @@ main(int argc, char **argv)
     init_hardware();
 
     // CUSTOM PROGRAM //
-#define TIMEOUT 20000000
+#define TIMEOUT 5000000
 
     int gpio = 17;
     int channel = 1;
@@ -570,21 +567,12 @@ main(int argc, char **argv)
     gpio_list[channel] = gpio;
     gpio_set(gpio, 0);
     gpio_set_mode(gpio, GPIO_MODE_OUT);
-    set_servo(channel, 400);
+    set_servo(channel, 200);
     usleep(TIMEOUT);
-
-    //    set_gpio(gpio, 400);
-
-    // Add something blocking here
-    //add_gpio(gpio);
-//
-//    printf("- 400\n");
-//    set_gpio(gpio, 400);
-//    usleep(TIMEOUT);
-//
-//    printf("- 10\n");
-//    set_gpio(gpio, 10);
-//    usleep(TIMEOUT);
+    set_servo(channel, 100);
+    usleep(TIMEOUT);
+    set_servo(channel, 200);
+    usleep(TIMEOUT);
 
     shutdown();
     printf("finished\n");
