@@ -1,5 +1,5 @@
 """
-    import PWM
+    import RPIO.PWM as PWM
     PWM.setup()
     PWM.init_channel(0, 17, 2000)
     PWM.set_channel_pulse(0, 100)

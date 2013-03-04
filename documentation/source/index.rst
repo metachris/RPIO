@@ -22,6 +22,7 @@ RPIO consists of two main components:
 
 News
 
+* v0.9.0: PWM via DMA
 * v0.8.4: ``rpio-curses``
 * v0.8.2: Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
 
@@ -409,6 +410,11 @@ License
 
 Changes
 =======
+
+* v0.9.0
+
+  * PWM
+  * ``rpio-curses`` quits gracefully if terminal too small
 
 * v0.8.5
 
