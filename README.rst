@@ -1,7 +1,7 @@
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
 * Hardware PWM
-* GPIO Input and Output (drop-in replacement for [RPi.GPIO](http://pypi.python.org/pypi/RPi.GPIO))
+* GPIO Input and Output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO Interrupts (callbacks when events occur on input gpios)
 * TCP Socket Interrupts (callbacks when tcp socket clients send data)
 * Well documented, tested, fast source code
@@ -9,7 +9,7 @@ RPIO is an advanced GPIO module for the Raspberry Pi.
 * Open source (GPLv3+)
 
 
-**[Visit pythonhosted.org/RPIO for the full documentation.](http://pythonhosted.org/RPIO)**
+`Visit pythonhosted.org/RPIO for the full documentation. <http://pythonhosted.org/RPIO>`_
 
 
 Installation
@@ -19,13 +19,14 @@ The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_i
 
     $ sudo apt-get install python-setuptools
     $ sudo easy_install -U RPIO
+
 After the installation you can use ``import RPIO`` as well as the command-line tools ``rpio`` and ``rpio-curses``.
 
 
 Feedback
 --------
 
-Please send feedback and ideas to chris@linuxuser.at, and [open an issue at Github](https://github.com/metachris/RPIO/issues/new)
+Please send feedback and ideas to chris@linuxuser.at, and `open an issue at Github <https://github.com/metachris/RPIO/issues/new>`_
 if you've encountered a bug.
 
 
