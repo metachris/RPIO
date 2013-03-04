@@ -1,11 +1,12 @@
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
 * Hardware PWM
-* GPIO Input and Output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
-* GPIO Interrupts (callbacks when events occur on input gpios)
-* TCP Socket Interrupts (callbacks when tcp socket clients send data)
-* Well documented, tested, fast source code
-* Minimal CPU and memory profile
+* GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
+* GPIO interrupts (callbacks when events occur on input gpios)
+* TCP socket interrupts (callbacks when tcp socket clients send data)
+* Command-line tools ``rpio`` and ``rpio-curses``
+* Well documented, fast source code
+* Minimal CPU and memory usage
 * Open source (GPLv3+)
 
 
