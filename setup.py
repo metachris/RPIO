@@ -11,7 +11,7 @@ setup(
     version="0.9.0",
     package_dir={"": "source"},
     packages=['RPIO'],
-    ext_modules=[Extension('RPIO.GPIO', ['source/c_gpio/py_gpio.c', \
+    ext_modules=[Extension('RPIO._GPIO', ['source/c_gpio/py_gpio.c', \
             'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
     scripts=["source/scripts/rpio", "source/scripts/rpio-curses"],
 

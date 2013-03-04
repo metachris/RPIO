@@ -90,7 +90,7 @@ on the board, with function and state. Here is an overview of all the functions 
         000e: Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
 
-You can update the ``RPIO`` package to the latest version::
+You can update the ``RPIO`` package to the latest version (equivalent to ``easy_install -U RPIO``)::
 
     $ rpio --update-rpio
 

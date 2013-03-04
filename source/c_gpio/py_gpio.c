@@ -424,7 +424,7 @@ PyMethodDef rpi_gpio_methods[] = {
 #if PY_MAJOR_VERSION > 2
 static struct PyModuleDef rpigpiomodule = {
     PyModuleDef_HEAD_INIT,
-    "GPIO", /* name of module */
+    "_GPIO", /* name of module */
     NULL,         /* module documentation, may be NULL */
     -1,            /* size of per-interpreter state of the module,
                         or -1 if the module keeps state in global variables. */
@@ -433,9 +433,9 @@ static struct PyModuleDef rpigpiomodule = {
 #endif
 
 #if PY_MAJOR_VERSION > 2
-PyMODINIT_FUNC PyInit_GPIO(void)
+PyMODINIT_FUNC PyInit__GPIO(void)
 #else
-PyMODINIT_FUNC initGPIO(void)
+PyMODINIT_FUNC init_GPIO(void)
 #endif
 {
     PyObject *module = NULL;
@@ -444,7 +444,7 @@ PyMODINIT_FUNC initGPIO(void)
     if ((module = PyModule_Create(&rpigpiomodule)) == NULL)
         goto exit;
 #else
-    if ((module = Py_InitModule("GPIO", rpi_gpio_methods)) == NULL)
+    if ((module = Py_InitModule("_GPIO", rpi_gpio_methods)) == NULL)
         goto exit;
 #endif
 

@@ -9,6 +9,8 @@ import _PWM
 DELAY_VIA_PWM = 0
 DELAY_VIA_PCM = 1
 
+VERSION = _PWM.VERSION
+
 
 def setup(pulse_incr_us=10, delay_hw=DELAY_VIA_PWM):
     _PWM.setup(pulse_incr_us, delay_hw)

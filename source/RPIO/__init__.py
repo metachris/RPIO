@@ -97,9 +97,9 @@ from threading import Thread
 from functools import partial
 from time import sleep
 
-from GPIO import *
-from GPIO import cleanup as _cleanup_orig
-from GPIO import setmode as _setmode
+from _GPIO import *
+from _GPIO import cleanup as _cleanup_orig
+from _GPIO import setmode as _setmode
 
 VERSION = "0.9.0"
 
