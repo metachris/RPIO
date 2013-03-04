@@ -10,7 +10,7 @@ RPIO is an advanced GPIO module for the Raspberry Pi.
 * Open source (GPLv3+)
 
 
-`Visit pythonhosted.org/RPIO for the full documentation. <http://pythonhosted.org/RPIO>`_
+`Visit pythonhosted.org/RPIO for the documentation. <http://pythonhosted.org/RPIO>`_
 
 
 Installation
