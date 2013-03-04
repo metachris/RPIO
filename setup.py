@@ -10,9 +10,12 @@ setup(
     name="RPIO",
     version="0.9.0",
     package_dir={"": "source"},
-    packages=['RPIO'],
-    ext_modules=[Extension('RPIO._GPIO', ['source/c_gpio/py_gpio.c', \
-            'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c'])],
+    packages=['RPIO', 'RPIO.PWM'],
+    ext_modules=[
+            Extension('RPIO._GPIO', ['source/c_gpio/py_gpio.c', \
+                    'source/c_gpio/c_gpio.c', 'source/c_gpio/cpuinfo.c']),
+            Extension('RPIO.PWM._PWM', ['source/c_pwm/pwm.c', \
+                    'source/c_pwm/pwm_py.c'])],
     scripts=["source/scripts/rpio", "source/scripts/rpio-curses"],
 
     description=(("Advanced GPIO for the Raspberry Pi. Extends RPi.GPIO with "
