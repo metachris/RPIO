@@ -29,9 +29,6 @@
 #include <sys/mman.h>
 #include "pwm.h"
 
-// This pulse-width-increment is the same for all channels
-static uint8_t pulse_width_incr_us = 10;
-
 // 8 GPIOs max; one GPIO uses one DMA channel
 #define MAX_GPIOS 8
 static int gpio_list[MAX_GPIOS];
@@ -186,8 +183,8 @@ udelay(int us)
 }
 
 // Shutdown -- its important to reset the DMA before quitting
-static void
-shutdown()
+void
+shutdown(void)
 {
     int i;
 
@@ -204,7 +201,7 @@ shutdown()
 
 // Terminate is triggered by signals or fatal
 static void
-terminate()
+terminate(void)
 {
     shutdown();
     exit(1);
@@ -231,7 +228,7 @@ setup_sighandlers(void)
     for (i = 0; i < 64; i++) {
         struct sigaction sa;
         memset(&sa, 0, sizeof(sa));
-        sa.sa_handler = terminate;
+        sa.sa_handler = (void *) terminate;
         sigaction(i, &sa, NULL);
     }
 }
@@ -268,7 +265,7 @@ uint8_t* get_cb(int channel)
 }
 
 // Set channel to a specific pulse. pulse-width-us = width * pulse_width_incr_us
-static void
+void
 set_channel_pulse(int channel, int width)
 {
     int i;
@@ -460,7 +457,7 @@ init_hardware(void)
 
 // Setup a channel with a specific period time. After that pulse-widths can be
 // changed at any time.
-static void
+void
 init_channel(int channel, int gpio, int period_time_us)
 {
     printf("Initializing channel %d...\n", channel);
@@ -484,7 +481,7 @@ init_channel(int channel, int gpio, int period_time_us)
 }
 
 // Print some info about a channel
-static void
+void
 print_channel(int channel)
 {
     printf("Period time:   %dus\n", channels[channel].period_time_us);
@@ -496,12 +493,14 @@ print_channel(int channel)
 
 // hw: 0=PWM, 1=PCM
 int
-setup(int hw)
+setup(int hw, int pw_incr_us)
 {
     int i;
 
     delay_hw = hw;
-    printf("Using hardware:       %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
+    pulse_width_incr_us = pw_incr_us;
+    printf("Using hardware: %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
+    printf("PW increments:  %dus\n", pulse_width_incr_us);
 
     // initialize gpio list
     for (i=0; i<sizeof(MAX_GPIOS); i++)
@@ -524,9 +523,9 @@ main(int argc, char **argv)
 {
     // Very crude...
     if (argc == 2 && !strcmp(argv[1], "--pcm"))
-        setup(DELAY_VIA_PCM);
+        setup(DELAY_VIA_PCM, pulse_width_incr_us);
     else
-        setup(DELAY_VIA_PWM);
+        setup(DELAY_VIA_PWM, pulse_width_incr_us);
 
     // Setup channel
     int gpio = 17;
