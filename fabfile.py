@@ -2,7 +2,8 @@
 Fabric makes it super easy to build and test the code on a Raspberry.
 You can see all commands with `$ fab -l`. Typical usages:
 
-    $ fab upload build test
+    $ fab upload build_gpio test_gpio
+    $ fab upload build_pwm
     $ fab upload test
 
 You'll need to have Fabric installed ('$ sudo pip install fabric'),
@@ -45,17 +46,35 @@ def test_pwm():
         run("sudo ./pwm")
 
 
-def build():
+def build_gpio():
     """ Builds source with Python 2.7 and 3.2, and tests import """
     with cd("/tmp/source/c_gpio"):
-        run("""echo "import GPIO\nprint(GPIO.VERSION_GPIO)" > test.py""")
+        test = "import GPIO; print(GPIO.VERSION_GPIO)"
         run("make gpio2.7 && cp build/GPIO.so .")
-        run("sudo python2.7 test.py")
+        run('sudo python2.7 -c "%s"' % test)
         run("cp GPIO.so ../RPIO/")
         run("cp GPIO.so ../RPIO/GPIO27.so")
         run("make gpio3.2 && cp build/GPIO.so .")
-        run("sudo python3.2 test.py")
+        run('python3.2 -c "%s"' % test)
         run("mv GPIO.so ../RPIO/GPIO32.so")
+
+
+def build_pwm():
+    """ Builds source with Python 2.7 and 3.2, and tests import """
+    with cd("/tmp/source/c_pwm"):
+        test = "import _PWM; print(_PWM.VERSION)"
+        run("make py2.7")
+        run('sudo python2.7 -c "%s"' % test)
+        run("cp _PWM.so ../RPIO/")
+        run("mv _PWM.so ../RPIO/_PWM27.so")
+        run("make py3.2")
+        run('python3.2 -c "%s"' % test)
+        run("mv _PWM.so ../RPIO/_PWM32.so")
+
+
+def build():
+    build_gpio()
+    build_pwm()
 
 
 def test():

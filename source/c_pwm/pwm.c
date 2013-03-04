@@ -493,7 +493,7 @@ print_channel(int channel)
 
 // hw: 0=PWM, 1=PCM
 int
-setup(int hw, int pw_incr_us)
+setup(int pw_incr_us, int hw)
 {
     int i;
 
@@ -523,9 +523,9 @@ main(int argc, char **argv)
 {
     // Very crude...
     if (argc == 2 && !strcmp(argv[1], "--pcm"))
-        setup(DELAY_VIA_PCM, pulse_width_incr_us);
+        setup(pulse_width_incr_us, DELAY_VIA_PCM);
     else
-        setup(DELAY_VIA_PWM, pulse_width_incr_us);
+        setup(pulse_width_incr_us, DELAY_VIA_PWM);
 
     // Setup channel
     int gpio = 17;

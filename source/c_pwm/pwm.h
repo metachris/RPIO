@@ -1,4 +1,11 @@
-int setup(int hw, int pw_incr_us);
+/*
+ * This file is part of RPIO.
+ *
+ * License: GPLv3+
+ * Author: Chris Hager <chris@linuxuser.at>
+ * URL: https://github.com/metachris/RPIO
+ */
+int setup(int pw_incr_us, int hw);
 void shutdown(void);
 void init_channel(int channel, int gpio, int period_time_us);
 void set_channel_pulse(int channel, int width);

@@ -1,25 +1,30 @@
 /*
-*/
+ * This file is part of RPIO.
+ *
+ * License: GPLv3+
+ * Author: Chris Hager <chris@linuxuser.at>
+ * URL: https://github.com/metachris/RPIO
+ */
 #include "Python.h"
 #include "pwm.h"
 
 static PyObject *version;
 
-// python function setup(int delay_hw=DELAY_PWM, int pw_incr_us)
+// python function int setup(int pw_incr_us, int hw)
 static PyObject*
 py_setup(PyObject *self, PyObject *args)
 {
     int delay_hw=-1, pw_incr_us=-1;
 
-    if (!PyArg_ParseTuple(args, "|ii", &delay_hw, &pw_incr_us))
+    if (!PyArg_ParseTuple(args, "|ii", &pw_incr_us, &delay_hw))
         return NULL;
 
-    if (delay_hw == -1)
-        delay_hw = DELAY_VIA_PWM;
     if (pw_incr_us == -1)
         pw_incr_us = pulse_width_incr_us;
+    if (delay_hw == -1)
+        delay_hw = DELAY_VIA_PWM;
 
-    setup(delay_hw, pw_incr_us);
+    setup(pw_incr_us, delay_hw);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -96,7 +101,7 @@ static PyMethodDef pwm_methods[] = {
 #if PY_MAJOR_VERSION > 2
 static struct PyModuleDef pwmmodule = {
     PyModuleDef_HEAD_INIT,
-    "PWM", /* name of module */
+    "_PWM", /* name of module */
     NULL,         /* module documentation, may be NULL */
     -1,            /* size of per-interpreter state of the module,
                         or -1 if the module keeps state in global variables. */
@@ -105,9 +110,9 @@ static struct PyModuleDef pwmmodule = {
 #endif
 
 #if PY_MAJOR_VERSION > 2
-PyMODINIT_FUNC PyInit_CPWM(void)
+PyMODINIT_FUNC PyInit__PWM(void)
 #else
-PyMODINIT_FUNC initCPWM(void)
+PyMODINIT_FUNC init_PWM(void)
 #endif
 {
     PyObject *module = NULL;
@@ -116,12 +121,12 @@ PyMODINIT_FUNC initCPWM(void)
     if ((module = PyModule_Create(&pwmmodule)) == NULL)
         return module;
 #else
-    if ((module = Py_InitModule("CPWM", pwm_methods)) == NULL)
+    if ((module = Py_InitModule("_PWM", pwm_methods)) == NULL)
         return;
 #endif
 
-    version = Py_BuildValue("s", "0.10");
-    PyModule_AddObject(module, "VERSION_CPWM", version);
+    version = Py_BuildValue("s", "0.1.0");
+    PyModule_AddObject(module, "VERSION", version);
 
     if (Py_AtExit(shutdown) != 0) {
       shutdown();
