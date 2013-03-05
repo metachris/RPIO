@@ -29,8 +29,8 @@
 #include <sys/mman.h>
 #include "pwm.h"
 
-// 8 GPIOs max; one GPIO uses one DMA channel
-#define MAX_GPIOS 8
+// 15 DMA channels are usable on the RPi (0..14)
+#define DMA_CHANNELS    15
 
 // Standard page sizes
 #define PAGE_SIZE       4096
@@ -144,7 +144,7 @@ struct channel {
 };
 
 // One control structure per channel
-static struct channel channels[MAX_GPIOS];
+static struct channel channels[DMA_CHANNELS];
 
 // Pulse width increment granularity
 static uint16_t pulse_width_incr_us = -1;
@@ -228,9 +228,9 @@ shutdown(void)
 {
     int i;
 
-    for (i = 0; i < MAX_GPIOS; i++) {
+    for (i = 0; i < DMA_CHANNELS; i++) {
         if (channels[i].dma_reg && channels[i].virtbase) {
-            log_debug("shutdown channel %d\n", i);
+            log_debug("shutting down dma channel %d\n", i);
             clear_channel_pulses(i);
             udelay(channels[i].period_time_us);
             channels[i].dma_reg[DMA_CS] = DMA_RESET;
@@ -530,11 +530,13 @@ init_hardware(void)
 }
 
 // Setup a channel with a specific period time. After that pulse-widths can be
-// changed at any time.
+// added at any time.
 void
 init_channel(int channel, int period_time_us)
 {
     log_debug("Initializing channel %d...\n", channel);
+    if (channel > DMA_CHANNELS-1)
+        fatal("Error: maximum channel is %d (requested channel %d)\n", DMA_CHANNELS-1, channel);
     if (channels[channel].dma_reg || channels[channel].virtbase)
         fatal("Error: channel %d already initialized.\n", channel);
     if (period_time_us < PERIOD_TIME_US_MIN)
