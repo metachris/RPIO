@@ -31,7 +31,6 @@
 
 // 8 GPIOs max; one GPIO uses one DMA channel
 #define MAX_GPIOS 8
-static int gpio_list[MAX_GPIOS];
 
 // Standard page sizes
 #define PAGE_SIZE       4096
@@ -147,6 +146,10 @@ struct channel {
 // One control structure per channel
 static struct channel channels[MAX_GPIOS];
 
+// Pulse width increment granularity
+static uint8_t pulse_width_incr_us = -1;
+static uint8_t is_setup = 0;
+
 // Common registers
 static volatile uint32_t *pwm_reg;
 static volatile uint32_t *pcm_reg;
@@ -195,7 +198,7 @@ shutdown(void)
     for (i = 0; i < MAX_GPIOS; i++) {
         if (channels[i].dma_reg && channels[i].virtbase) {
             printf("shutdown channel %d\n", i);
-            set_channel_pulse(i, 0);
+            clear_channel_pulses(i);
             udelay(channels[i].period_time_us);
             channels[i].dma_reg[DMA_CS] = DMA_RESET;
             udelay(10);
@@ -263,67 +266,60 @@ map_peripheral(uint32_t base, uint32_t len)
 }
 
 // Returns a pointer to the control block of this channel in DMA memory
-uint8_t* get_cb(int channel)
+uint8_t*
+get_cb(int channel)
 {
     return channels[channel].virtbase + (sizeof(uint32_t) * channels[channel].num_samples);
 }
 
-// Set channel to a specific initial pulse (this also clears all other pulses).
-// pulse-width-us = width * pulse_width_incr_us
+// Reset this channel to original state (all samples=0, all cbs=clr0)
 void
-set_channel_pulse(int channel, int width)
+clear_channel_pulses(int channel)
 {
     int i;
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
-    uint32_t phys_gpset0 = 0x7e200000 + 0x1c;
-
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
     uint32_t *dp = (uint32_t *) channels[channel].virtbase;
 
-    // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
-    uint32_t mask = 1 << gpio_list[channel];
+    printf("clear_channel_pulses: channel=%d\n", channel);
 
-    printf("set_channel_pulse: channel=%d, width=%d\n", channel, width);
-
-    // Update all samples for this channel with the respective GPIO-ID
+    // First we have to stop all currently enabled pulses
     for (i = 0; i < channels[channel].num_samples; i++) {
-        *(dp + i) = 1 << gpio_list[channel];
+        cbp->dst = phys_gpclr0;
+        cbp += 2;
     }
 
-    if (width == 0) {
-        // Update controlblock dest to clear gpio at sample start
-        cbp->dst = phys_gpclr0;
-    } else {
-        for (i = width - 1; i > 0; i--)
-            *(dp + i) = 0;
+    // Let DMA do one cycle to actually clear them
+    udelay(channels[channel].period_time_us);
 
-        // Set mask at gpio sample startpoint
-        *dp = mask;
-
-        // Update controlblock dest to set gpio at sample start
-        cbp->dst = phys_gpset0;
+    // Finally set all samples to 0 (instead of gpio_mask)
+    for (i = 0; i < channels[channel].num_samples; i++) {
+        *(dp + i) = 0;
     }
 }
 
 
-// Update the channel with another pulse within one full cycle
+// Update the channel with another pulse within one full cycle. Its possible to
+// add more gpios to the same timeslots (width_start). width_start and width are
+// multiplied with pulse_width_incr_us to get the pulse width in microseconds [us].
 void
-add_channel_pulse(int channel, int width_start, int width)
+add_channel_pulse(int channel, int gpio, int width_start, int width)
 {
     int i;
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
     uint32_t phys_gpset0 = 0x7e200000 + 0x1c;
-
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel) + (width_start * 2);
     uint32_t *dp = (uint32_t *) channels[channel].virtbase;
 
-    // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
-    uint32_t mask = 1 << gpio_list[channel];
+    printf("add_channel_pulse: channel=%d, start=%d, width=%d\n", channel, width_start, width);
+    if (width_start + width > channels[channel].width_max || width_start < 0)
+        fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channels[channel].width_max);
 
-    printf("update_channel_pulse: channel=%d, start=%d, width=%d\n", channel, width_start, width);
+    // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
+    uint32_t mask = 1 << gpio;
 
     // enable or disable gpio at this point in the cycle
-    *(dp + width_start) = mask;
+    *(dp + width_start) |= mask;
     cbp->dst = phys_gpset0;
 
     // Do nothing for the specified width
@@ -333,7 +329,7 @@ add_channel_pulse(int channel, int width_start, int width)
     }
 
     // Clear GPIO at end
-    *(dp + width_start + width) = mask;
+    *(dp + width_start + width) |= mask;
     cbp->dst = phys_gpclr0;
 }
 
@@ -499,6 +495,11 @@ void
 init_channel(int channel, int gpio, int period_time_us)
 {
     printf("Initializing channel %d...\n", channel);
+    if (channels[channel].dma_reg || channels[channel].virtbase)
+        fatal("Error: channel %d already initialized.\n", channel);
+
+    if (period_time_us < PERIOD_TIME_US_MIN)
+        fatal("Error: period time %dus is too small (min=%dus)\n", period_time_us, PERIOD_TIME_US_MIN);
 
     // Setup Data
     channels[channel].period_time_us = period_time_us;
@@ -514,7 +515,6 @@ init_channel(int channel, int gpio, int period_time_us)
     init_ctrl_data(channel);
 
     // Set GPIO
-    gpio_list[channel] = gpio;
     gpio_set(gpio, 0);
     gpio_set_mode(gpio, GPIO_MODE_OUT);
 }
@@ -531,19 +531,18 @@ print_channel(int channel)
 }
 
 // hw: 0=PWM, 1=PCM
-int
+void
 setup(int pw_incr_us, int hw)
 {
-    int i;
-
     delay_hw = hw;
     pulse_width_incr_us = pw_incr_us;
+
+    if (is_setup == 1)
+        fatal("Error: setup(..) has already been called before\n");
+    is_setup = 1;
+
     printf("Using hardware: %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
     printf("PW increments:  %dus\n", pulse_width_incr_us);
-
-    // initialize gpio list
-    for (i=0; i<sizeof(MAX_GPIOS); i++)
-        gpio_list[i] = -1;
 
     // Catch all kind of kill signals
     setup_sighandlers();
@@ -554,7 +553,6 @@ setup(int pw_incr_us, int hw)
     gpio_reg = map_peripheral(GPIO_BASE, GPIO_LEN);
     pwm_reg = map_peripheral(PWM_BASE, PWM_LEN);
     init_hardware();
-    return 1;
 }
 
 int
@@ -562,28 +560,26 @@ main(int argc, char **argv)
 {
     // Very crude...
     if (argc == 2 && !strcmp(argv[1], "--pcm"))
-        setup(pulse_width_incr_us, DELAY_VIA_PCM);
+        setup(PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT, DELAY_VIA_PCM);
     else
-        setup(pulse_width_incr_us, DELAY_VIA_PWM);
+        setup(PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT, DELAY_VIA_PWM);
 
-    // Setup channel
+    // Setup demo parameters
+    int demo_timeout = 10 * 1000000;
     int gpio = 17;
     int channel = 0;
-    int period_time_us = 10000;
+    int period_time_us = PERIOD_TIME_US_DEFAULT; //10ms;
+
+    // Setup channel
     init_channel(channel, gpio, period_time_us);
     print_channel(channel);
 
     // Use the channel for various pulse widths
-    const int demo_timeout = 5 * 1000000;  // 5 seconds
-    set_channel_pulse(channel, 50);
-    add_channel_pulse(0, 100, 50);
-    add_channel_pulse(0, 200, 50);
-    add_channel_pulse(0, 300, 50);
+    add_channel_pulse(channel, gpio, 0, 50);
+    add_channel_pulse(channel, gpio, 100, 50);
+    add_channel_pulse(channel, gpio, 200, 50);
+    add_channel_pulse(channel, gpio, 300, 50);
     usleep(demo_timeout);
-//    set_channel_pulse(channel, 10);
-//    usleep(demo_timeout);
-//    set_channel_pulse(channel, 50);
-//    usleep(demo_timeout);
 
     // All done
     shutdown();

@@ -7,12 +7,21 @@
  */
 int setup(int pw_incr_us, int hw);
 void shutdown(void);
+
 void init_channel(int channel, int gpio, int period_time_us);
-void set_channel_pulse(int channel, int width);
+void clear_channel_pulses(int channel);
 void print_channel(int channel);
+
+void add_channel_pulse(int channel, int gpio, int width_start, int width);
 
 #define DELAY_VIA_PWM   0
 #define DELAY_VIA_PCM   1
 
-// This pulse-width-increment must be the same for all channels
-static uint8_t pulse_width_incr_us = 10;
+// Full period time in microseconds. Defaults to 10ms within
+// which you can add pulses. Cannot be lower than 2000; because
+// we see no signals and strange Raspberry behavious.
+#define PERIOD_TIME_US_MIN 2000
+#define PERIOD_TIME_US_DEFAULT 10000
+
+// The pulse-width-increment will be the same for all channels
+#define PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT 10

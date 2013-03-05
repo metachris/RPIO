@@ -20,7 +20,7 @@ py_setup(PyObject *self, PyObject *args)
         return NULL;
 
     if (pw_incr_us == -1)
-        pw_incr_us = pulse_width_incr_us;
+        pw_incr_us = PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT;
     if (delay_hw == -1)
         delay_hw = DELAY_VIA_PWM;
 
@@ -44,10 +44,13 @@ py_cleanup(PyObject *self, PyObject *args)
 static PyObject*
 py_init_channel(PyObject *self, PyObject *args)
 {
-    int channel, gpio, period_time_us;
+    int channel, gpio, period_time_us=-1;
 
-    if (!PyArg_ParseTuple(args, "iii", &channel, &gpio, &period_time_us))
+    if (!PyArg_ParseTuple(args, "ii|i", &channel, &gpio, &period_time_us))
         return NULL;
+
+    if (period_time_us == -1)
+        period_time_us = PERIOD_TIME_US_DEFAULT;
 
     init_channel(channel, gpio, period_time_us);
 
@@ -55,16 +58,31 @@ py_init_channel(PyObject *self, PyObject *args)
     return Py_None;
 }
 
-// python function set_channel_pulse(int channel, int width);
+// python function init_channel(int channel, int gpio, int period_time_us)
 static PyObject*
-py_set_channel_pulse(PyObject *self, PyObject *args)
+py_clear_channel_pulses(PyObject *self, PyObject *args)
 {
-    int channel, width;
+    int channel;
 
-    if (!PyArg_ParseTuple(args, "ii", &channel, &width))
+    if (!PyArg_ParseTuple(args, "i", &channel))
         return NULL;
 
-    set_channel_pulse(channel, width);
+    clear_channel_pulses(channel);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+// python function (void) add_channel_pulse(int channel, int gpio, int width_start, int width)
+static PyObject*
+py_add_channel_pulse(PyObject *self, PyObject *args)
+{
+    int channel, gpio, width_start, width;
+
+    if (!PyArg_ParseTuple(args, "iiii", &channel, &gpio, &width_start, &width))
+        return NULL;
+
+    add_channel_pulse(channel, gpio, width_start, width);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -90,7 +108,8 @@ static PyMethodDef pwm_methods[] = {
     {"setup", (PyCFunction)py_setup, METH_VARARGS, "Setup the DMA-PWM system"},
     {"cleanup", py_cleanup, METH_VARARGS, "Stop all pwms and clean up DMA engine"},
     {"init_channel", (PyCFunction)py_init_channel, METH_VARARGS, "Setup a channel with a specific period time and hardware"},
-    {"set_channel_pulse", py_set_channel_pulse, METH_VARARGS, "Set a specific pulse width for a channel"},
+    {"clear_channel_pulses", (PyCFunction)py_clear_channel_pulses, METH_VARARGS, "Clear all pulses on this channel"},
+    {"add_channel_pulse", py_add_channel_pulse, METH_VARARGS, "Add a specific pulse to a channel"},
     {"print_channel", py_print_channel, METH_VARARGS, "Print info about a specific channel"},
     {NULL, NULL, 0, NULL}
 };
