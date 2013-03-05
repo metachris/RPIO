@@ -5,10 +5,11 @@
  * Author: Chris Hager <chris@linuxuser.at>
  * URL: https://github.com/metachris/RPIO
  */
-int setup(int pw_incr_us, int hw);
+void setup(int pw_incr_us, int hw);
 void shutdown(void);
+void set_loglevel(uint8_t level);
 
-void init_channel(int channel, int gpio, int period_time_us);
+void init_channel(int channel, int period_time_us);
 void clear_channel_pulses(int channel);
 void print_channel(int channel);
 
@@ -16,6 +17,9 @@ void add_channel_pulse(int channel, int gpio, int width_start, int width);
 
 #define DELAY_VIA_PWM   0
 #define DELAY_VIA_PCM   1
+
+#define LOG_LEVEL_DEBUG 0
+#define LOG_LEVEL_ERRORS 1
 
 // Full period time in microseconds. Defaults to 10ms within
 // which you can add pulses. Cannot be lower than 2000; because

@@ -147,8 +147,9 @@ struct channel {
 static struct channel channels[MAX_GPIOS];
 
 // Pulse width increment granularity
-static uint8_t pulse_width_incr_us = -1;
+static uint16_t pulse_width_incr_us = -1;
 static uint8_t is_setup = 0;
+static uint8_t gpio_setup[32] = { 0 }; // 1 if gpio has been set to out/low
 
 // Common registers
 static volatile uint32_t *pwm_reg;
@@ -158,6 +159,28 @@ static volatile uint32_t *gpio_reg;
 
 // Default timer hardware is PWM
 static int delay_hw = DELAY_VIA_PWM;
+
+// log_level: 0=debug, 1=errors
+static int log_level = LOG_LEVEL_DEBUG;
+
+// Debug logging
+void
+set_loglevel(uint8_t level)
+{
+    log_level = level;
+}
+
+static void
+log_debug(char* fmt, ...)
+{
+    if (log_level > LOG_LEVEL_DEBUG)
+        return;
+
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+}
 
 // Sets a GPIO to either GPIO_MODE_IN(=0) or GPIO_MODE_OUT(=1)
 static void
@@ -180,6 +203,16 @@ gpio_set(int pin, int level)
         gpio_reg[GPIO_CLR0] = 1 << pin;
 }
 
+// Set GPIO to OUTPUT, Low
+static void
+init_gpio(int gpio)
+{
+    log_debug("init_gpio %d\n", gpio);
+    gpio_set(gpio, 0);
+    gpio_set_mode(gpio, GPIO_MODE_OUT);
+    gpio_setup[gpio] = 1;
+}
+
 // Very short delay as demanded per datasheet
 static void
 udelay(int us)
@@ -197,7 +230,7 @@ shutdown(void)
 
     for (i = 0; i < MAX_GPIOS; i++) {
         if (channels[i].dma_reg && channels[i].virtbase) {
-            printf("shutdown channel %d\n", i);
+            log_debug("shutdown channel %d\n", i);
             clear_channel_pulses(i);
             udelay(channels[i].period_time_us);
             channels[i].dma_reg[DMA_CS] = DMA_RESET;
@@ -281,7 +314,9 @@ clear_channel_pulses(int channel)
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
     uint32_t *dp = (uint32_t *) channels[channel].virtbase;
 
-    printf("clear_channel_pulses: channel=%d\n", channel);
+    log_debug("clear_channel_pulses: channel=%d\n", channel);
+    if (!channels[channel].virtbase)
+        fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
 
     // First we have to stop all currently enabled pulses
     for (i = 0; i < channels[channel].num_samples; i++) {
@@ -311,9 +346,14 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel) + (width_start * 2);
     uint32_t *dp = (uint32_t *) channels[channel].virtbase;
 
-    printf("add_channel_pulse: channel=%d, start=%d, width=%d\n", channel, width_start, width);
+    log_debug("add_channel_pulse: channel=%d, gpio=%d, start=%d, width=%d\n", channel, gpio, width_start, width);
+    if (!channels[channel].virtbase)
+        fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
     if (width_start + width > channels[channel].width_max || width_start < 0)
         fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channels[channel].width_max);
+
+    if (gpio_setup[gpio] == 0)
+        init_gpio(gpio);
 
     // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
     uint32_t mask = 1 << gpio;
@@ -492,12 +532,11 @@ init_hardware(void)
 // Setup a channel with a specific period time. After that pulse-widths can be
 // changed at any time.
 void
-init_channel(int channel, int gpio, int period_time_us)
+init_channel(int channel, int period_time_us)
 {
-    printf("Initializing channel %d...\n", channel);
+    log_debug("Initializing channel %d...\n", channel);
     if (channels[channel].dma_reg || channels[channel].virtbase)
         fatal("Error: channel %d already initialized.\n", channel);
-
     if (period_time_us < PERIOD_TIME_US_MIN)
         fatal("Error: period time %dus is too small (min=%dus)\n", period_time_us, PERIOD_TIME_US_MIN);
 
@@ -513,21 +552,17 @@ init_channel(int channel, int gpio, int period_time_us)
     init_virtbase(channel);
     make_pagemap(channel);
     init_ctrl_data(channel);
-
-    // Set GPIO
-    gpio_set(gpio, 0);
-    gpio_set_mode(gpio, GPIO_MODE_OUT);
 }
 
 // Print some info about a channel
 void
 print_channel(int channel)
 {
-    printf("Period time:   %dus\n", channels[channel].period_time_us);
-    printf("PW Increments: %dus\n\n", pulse_width_incr_us);
-    printf("Num samples:   %d\n", channels[channel].num_samples);
-    printf("Num CBS:       %d\n", channels[channel].num_cbs);
-    printf("Num pages:     %d\n", channels[channel].num_pages);
+    log_debug("Period time:   %dus\n", channels[channel].period_time_us);
+    log_debug("PW Increments: %dus\n", pulse_width_incr_us);
+    log_debug("Num samples:   %d\n", channels[channel].num_samples);
+//    log_debug("Num CBS:       %d\n", channels[channel].num_cbs);
+//    log_debug("Num pages:     %d\n", channels[channel].num_pages);
 }
 
 // hw: 0=PWM, 1=PCM
@@ -541,8 +576,8 @@ setup(int pw_incr_us, int hw)
         fatal("Error: setup(..) has already been called before\n");
     is_setup = 1;
 
-    printf("Using hardware: %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
-    printf("PW increments:  %dus\n", pulse_width_incr_us);
+    log_debug("Using hardware: %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
+    log_debug("PW increments:  %dus\n", pulse_width_incr_us);
 
     // Catch all kind of kill signals
     setup_sighandlers();
@@ -571,7 +606,7 @@ main(int argc, char **argv)
     int period_time_us = PERIOD_TIME_US_DEFAULT; //10ms;
 
     // Setup channel
-    init_channel(channel, gpio, period_time_us);
+    init_channel(channel, period_time_us);
     print_channel(channel);
 
     // Use the channel for various pulse widths
