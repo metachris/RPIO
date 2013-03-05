@@ -70,6 +70,7 @@ def build_pwm():
         run("make py3.2")
         run('python3.2 -c "%s"' % test)
         run("mv _PWM.so ../RPIO/PWM/_PWM32.so")
+        run("make pwm")
 
 
 def build():

@@ -132,12 +132,16 @@ struct channel {
     volatile uint32_t *dma_reg;
 
     // Set by user
+    uint32_t gpio_mask;
     uint32_t period_time_us;
 
     // Set by system
     uint32_t num_samples;
     uint32_t num_cbs;
     uint32_t num_pages;
+
+    // Used only for control purposes
+    uint32_t width_max;
 };
 
 // One control structure per channel
@@ -264,7 +268,8 @@ uint8_t* get_cb(int channel)
     return channels[channel].virtbase + (sizeof(uint32_t) * channels[channel].num_samples);
 }
 
-// Set channel to a specific pulse. pulse-width-us = width * pulse_width_incr_us
+// Set channel to a specific initial pulse (this also clears all other pulses).
+// pulse-width-us = width * pulse_width_incr_us
 void
 set_channel_pulse(int channel, int width)
 {
@@ -299,6 +304,39 @@ set_channel_pulse(int channel, int width)
         cbp->dst = phys_gpset0;
     }
 }
+
+
+// Update the channel with another pulse within one full cycle
+void
+add_channel_pulse(int channel, int width_start, int width)
+{
+    int i;
+    uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
+    uint32_t phys_gpset0 = 0x7e200000 + 0x1c;
+
+    dma_cb_t *cbp = (dma_cb_t *) get_cb(channel) + (width_start * 2);
+    uint32_t *dp = (uint32_t *) channels[channel].virtbase;
+
+    // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
+    uint32_t mask = 1 << gpio_list[channel];
+
+    printf("update_channel_pulse: channel=%d, start=%d, width=%d\n", channel, width_start, width);
+
+    // enable or disable gpio at this point in the cycle
+    *(dp + width_start) = mask;
+    cbp->dst = phys_gpset0;
+
+    // Do nothing for the specified width
+    for (i = 1; i < width - 1; i++) {
+        *(dp + width_start + i) = 0;
+        cbp += 2;
+    }
+
+    // Clear GPIO at end
+    *(dp + width_start + width) = mask;
+    cbp->dst = phys_gpclr0;
+}
+
 
 
 // Get a channel's pagemap
@@ -465,6 +503,7 @@ init_channel(int channel, int gpio, int period_time_us)
     // Setup Data
     channels[channel].period_time_us = period_time_us;
     channels[channel].num_samples = channels[channel].period_time_us / pulse_width_incr_us;
+    channels[channel].width_max = channels[channel].num_samples - 1;
     channels[channel].num_cbs = channels[channel].num_samples * 2;
     channels[channel].num_pages = ((channels[channel].num_cbs * 32 + channels[channel].num_samples * 4 + \
                                        PAGE_SIZE - 1) >> PAGE_SHIFT);
@@ -530,18 +569,21 @@ main(int argc, char **argv)
     // Setup channel
     int gpio = 17;
     int channel = 0;
-    int period_time_us = 2000;
+    int period_time_us = 10000;
     init_channel(channel, gpio, period_time_us);
     print_channel(channel);
 
     // Use the channel for various pulse widths
     const int demo_timeout = 5 * 1000000;  // 5 seconds
-    set_channel_pulse(channel, 100);
-    usleep(demo_timeout);
-    set_channel_pulse(channel, 10);
-    usleep(demo_timeout);
     set_channel_pulse(channel, 50);
+    add_channel_pulse(0, 100, 50);
+    add_channel_pulse(0, 200, 50);
+    add_channel_pulse(0, 300, 50);
     usleep(demo_timeout);
+//    set_channel_pulse(channel, 10);
+//    usleep(demo_timeout);
+//    set_channel_pulse(channel, 50);
+//    usleep(demo_timeout);
 
     // All done
     shutdown();
