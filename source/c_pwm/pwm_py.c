@@ -47,26 +47,26 @@ py_cleanup(PyObject *self, PyObject *args)
     return Py_None;
 }
 
-// python function init_channel(int channel, int gpio, int period_time_us)
+// python function init_channel(int channel, int subcycle_time_us)
 static PyObject*
 py_init_channel(PyObject *self, PyObject *args)
 {
-    int channel, period_time_us=-1;
+    int channel, subcycle_time_us=-1;
 
-    if (!PyArg_ParseTuple(args, "i|i", &channel, &period_time_us))
+    if (!PyArg_ParseTuple(args, "i|i", &channel, &subcycle_time_us))
         return NULL;
 
-    if (period_time_us == -1)
-        period_time_us = PERIOD_TIME_US_DEFAULT;
+    if (subcycle_time_us == -1)
+        subcycle_time_us = SUBCYCLE_TIME_US_DEFAULT;
 
-    if (init_channel(channel, period_time_us) == EXIT_FAILURE)
+    if (init_channel(channel, subcycle_time_us) == EXIT_FAILURE)
         return raise_error();
 
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-// python function init_channel(int channel, int gpio, int period_time_us)
+// python function clear_channel_pulses(int channel)
 static PyObject*
 py_clear_channel_pulses(PyObject *self, PyObject *args)
 {
@@ -114,7 +114,7 @@ py_print_channel(PyObject *self, PyObject *args)
     return Py_None;
 }
 
-// python function (void) set_loglevel(uint8_t level);
+// python function (void) set_loglevel(level);
 static PyObject*
 py_set_loglevel(PyObject *self, PyObject *args)
 {
@@ -175,7 +175,8 @@ PyMODINIT_FUNC init_PWM(void)
     PyModule_AddObject(module, "DELAY_VIA_PCM", Py_BuildValue("i", DELAY_VIA_PCM));
     PyModule_AddObject(module, "LOG_LEVEL_DEBUG", Py_BuildValue("i", LOG_LEVEL_DEBUG));
     PyModule_AddObject(module, "LOG_LEVEL_ERRORS", Py_BuildValue("i", LOG_LEVEL_ERRORS));
-    PyModule_AddObject(module, "PERIOD_TIME_US_DEFAULT", Py_BuildValue("i", PERIOD_TIME_US_DEFAULT));
+    PyModule_AddObject(module, "LOG_LEVEL_DEFAULT", Py_BuildValue("i", LOG_LEVEL_DEFAULT));
+    PyModule_AddObject(module, "SUBCYCLE_TIME_US_DEFAULT", Py_BuildValue("i", SUBCYCLE_TIME_US_DEFAULT));
     PyModule_AddObject(module, "PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT", Py_BuildValue("i", PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT));
 
     // Enable PWM.C soft-fatal mode in order to convert them to python exceptions

@@ -10,6 +10,10 @@
  *
  * Based on the excellent servod.c by Richard Hirst.
  *
+ * TODO:
+ * - doc
+ * - explain subcycle concept
+ *
  * Build it with `gcc -Wall -g -O2 -o pwm pwm.c`
  */
 
@@ -132,7 +136,7 @@ struct channel {
 
     // Set by user
     uint32_t gpio_mask;
-    uint32_t period_time_us;
+    uint32_t subcycle_time_us;
 
     // Set by system
     uint32_t num_samples;
@@ -149,7 +153,7 @@ static struct channel channels[DMA_CHANNELS];
 // Pulse width increment granularity
 static uint16_t pulse_width_incr_us = -1;
 static uint8_t is_setup = 0;
-static uint8_t gpio_setup[32] = { 0 }; // 1 if gpio has been set to out/low
+static int gpio_setup = 0; // bitfield for setup gpios (setup = out/low)
 
 // Common registers
 static volatile uint32_t *pwm_reg;
@@ -159,7 +163,7 @@ static volatile uint32_t *gpio_reg;
 
 // Defaults
 static int delay_hw = DELAY_VIA_PWM;
-static int log_level = LOG_LEVEL_DEBUG;
+static int log_level = LOG_LEVEL_DEFAULT;
 
 // if set to 1, calls to fatal will not exit the program but set the error_message and
 // return an error code. soft_fatal is enabled by default by the python wrapper, in order
@@ -216,7 +220,7 @@ init_gpio(int gpio)
     log_debug("init_gpio %d\n", gpio);
     gpio_set(gpio, 0);
     gpio_set_mode(gpio, GPIO_MODE_OUT);
-    gpio_setup[gpio] = 1;
+    gpio_setup |= 1 << gpio;
 }
 
 // Very short delay as demanded per datasheet
@@ -238,7 +242,7 @@ shutdown(void)
         if (channels[i].dma_reg && channels[i].virtbase) {
             log_debug("shutting down dma channel %d\n", i);
             clear_channel_pulses(i);
-            udelay(channels[i].period_time_us);
+            udelay(channels[i].subcycle_time_us);
             channels[i].dma_reg[DMA_CS] = DMA_RESET;
             udelay(10);
         }
@@ -343,7 +347,7 @@ clear_channel_pulses(int channel)
     }
 
     // Let DMA do one cycle to actually clear them
-    udelay(channels[channel].period_time_us);
+    udelay(channels[channel].subcycle_time_us);
 
     // Finally set all samples to 0 (instead of gpio_mask)
     for (i = 0; i < channels[channel].num_samples; i++) {
@@ -372,14 +376,11 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
     if (width_start + width > channels[channel].width_max || width_start < 0)
         return fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channels[channel].width_max);
 
-    if (gpio_setup[gpio] == 0)
+    if ((gpio_setup & 1<<gpio) == 0)
         init_gpio(gpio);
 
-    // Mask tells the DMA which gpios to set/unset (when it reaches a specific sample)
-    uint32_t mask = 1 << gpio;
-
     // enable or disable gpio at this point in the cycle
-    *(dp + width_start) |= mask;
+    *(dp + width_start) |= 1 << gpio;
     cbp->dst = phys_gpset0;
 
     // Do nothing for the specified width
@@ -389,7 +390,7 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
     }
 
     // Clear GPIO at end
-    *(dp + width_start + width) |= mask;
+    *(dp + width_start + width) |= 1 << gpio;
     cbp->dst = phys_gpclr0;
     return EXIT_SUCCESS;
 }
@@ -556,10 +557,10 @@ init_hardware(void)
     }
 }
 
-// Setup a channel with a specific period time. After that pulse-widths can be
+// Setup a channel with a specific subcycle time. After that pulse-widths can be
 // added at any time.
 int
-init_channel(int channel, int period_time_us)
+init_channel(int channel, int subcycle_time_us)
 {
     log_debug("Initializing channel %d...\n", channel);
     if (is_setup == 0)
@@ -568,12 +569,12 @@ init_channel(int channel, int period_time_us)
         return fatal("Error: maximum channel is %d (requested channel %d)\n", DMA_CHANNELS-1, channel);
     if (channels[channel].virtbase)
         return fatal("Error: channel %d already initialized.\n", channel);
-    if (period_time_us < PERIOD_TIME_US_MIN)
-        return fatal("Error: period time %dus is too small (min=%dus)\n", period_time_us, PERIOD_TIME_US_MIN);
+    if (subcycle_time_us < SUBCYCLE_TIME_US_MIN)
+        return fatal("Error: subcycle time %dus is too small (min=%dus)\n", subcycle_time_us, SUBCYCLE_TIME_US_MIN);
 
     // Setup Data
-    channels[channel].period_time_us = period_time_us;
-    channels[channel].num_samples = channels[channel].period_time_us / pulse_width_incr_us;
+    channels[channel].subcycle_time_us = subcycle_time_us;
+    channels[channel].num_samples = channels[channel].subcycle_time_us / pulse_width_incr_us;
     channels[channel].width_max = channels[channel].num_samples - 1;
     channels[channel].num_cbs = channels[channel].num_samples * 2;
     channels[channel].num_pages = ((channels[channel].num_cbs * 32 + channels[channel].num_samples * 4 + \
@@ -595,11 +596,11 @@ print_channel(int channel)
 {
     if (channel > DMA_CHANNELS - 1)
         return fatal("Error: you tried to print channel %d, but max channel is %d\n", channel, DMA_CHANNELS-1);
-    log_debug("Period time:   %dus\n", channels[channel].period_time_us);
+    log_debug("Subcycle time: %dus\n", channels[channel].subcycle_time_us);
     log_debug("PW Increments: %dus\n", pulse_width_incr_us);
     log_debug("Num samples:   %d\n", channels[channel].num_samples);
-//    log_debug("Num CBS:       %d\n", channels[channel].num_cbs);
-//    log_debug("Num pages:     %d\n", channels[channel].num_pages);
+    log_debug("Num CBS:       %d\n", channels[channel].num_cbs);
+    log_debug("Num pages:     %d\n", channels[channel].num_pages);
     return EXIT_SUCCESS;
 }
 
@@ -615,7 +616,9 @@ get_error_message(void)
     return error_message;
 }
 
-// hw: 0=PWM, 1=PCM
+// setup(..) needs to be called once and starts the PWM timer. delay hardware
+// and pulse-width-increment-granularity is set for all DMA channels and cannot
+// be changed during runtime due to hardware mechanics (specific PWM timing).
 int
 setup(int pw_incr_us, int hw)
 {
@@ -638,6 +641,8 @@ setup(int pw_incr_us, int hw)
     gpio_reg = map_peripheral(GPIO_BASE, GPIO_LEN);
     if (pwm_reg == NULL || pcm_reg == NULL || clk_reg == NULL || gpio_reg == NULL)
         return EXIT_FAILURE;
+
+    // Start PWM/PCM timing activity
     init_hardware();
 
     is_setup = 1;
@@ -657,10 +662,10 @@ main(int argc, char **argv)
     int demo_timeout = 10 * 1000000;
     int gpio = 17;
     int channel = 0;
-    int period_time_us = PERIOD_TIME_US_DEFAULT; //10ms;
+    int subcycle_time_us = SUBCYCLE_TIME_US_DEFAULT; //10ms;
 
     // Setup channel
-    init_channel(channel, period_time_us);
+    init_channel(channel, subcycle_time_us);
     print_channel(channel);
 
     // Use the channel for various pulse widths
