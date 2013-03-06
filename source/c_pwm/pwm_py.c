@@ -68,14 +68,30 @@ py_init_channel(PyObject *self, PyObject *args)
 
 // python function clear_channel_pulses(int channel)
 static PyObject*
-py_clear_channel_pulses(PyObject *self, PyObject *args)
+py_clear_channel(PyObject *self, PyObject *args)
 {
     int channel;
 
     if (!PyArg_ParseTuple(args, "i", &channel))
         return NULL;
 
-    if (clear_channel_pulses(channel) == EXIT_FAILURE)
+    if (clear_channel(channel) == EXIT_FAILURE)
+        return raise_error();
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+// python function int clear_channel_gpio(int channel, int gpio)
+static PyObject*
+py_clear_channel_gpio(PyObject *self, PyObject *args)
+{
+    int channel, gpio;
+
+    if (!PyArg_ParseTuple(args, "ii", &channel, &gpio))
+        return NULL;
+
+    if (clear_channel_gpio(channel, gpio) == EXIT_FAILURE)
         return raise_error();
 
     Py_INCREF(Py_None);
@@ -133,7 +149,8 @@ static PyMethodDef pwm_methods[] = {
     {"setup", py_setup, METH_VARARGS, "Setup the DMA-PWM system"},
     {"cleanup", py_cleanup, METH_VARARGS, "Stop all pwms and clean up DMA engine"},
     {"init_channel", py_init_channel, METH_VARARGS, "Setup a channel with a specific period time and hardware"},
-    {"clear_channel_pulses", py_clear_channel_pulses, METH_VARARGS, "Clear all pulses on this channel"},
+    {"clear_channel", py_clear_channel, METH_VARARGS, "Clear all pulses on this channel"},
+    {"clear_channel_gpio", py_clear_channel_gpio, METH_VARARGS, "Clear one specific GPIO from this channel"},
     {"add_channel_pulse", py_add_channel_pulse, METH_VARARGS, "Add a specific pulse to a channel"},
     {"print_channel", py_print_channel, METH_VARARGS, "Print info about a specific channel"},
     {"set_loglevel", py_set_loglevel, METH_VARARGS, "Set the loglevel to either 0 (debug) or 1 (errors)"},

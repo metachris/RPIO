@@ -10,7 +10,8 @@ void shutdown(void);
 void set_loglevel(int level);
 
 int init_channel(int channel, int subcycle_time_us);
-int clear_channel_pulses(int channel);
+int clear_channel(int channel);
+int clear_channel_gpio(int channel, int gpio);
 int print_channel(int channel);
 
 int add_channel_pulse(int channel, int gpio, int width_start, int width);

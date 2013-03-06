@@ -56,9 +56,14 @@ def init_channel(channel, subcycle_time_us=SUBCYCLE_TIME_US_DEFAULT):
     _PWM.init_channel(channel, subcycle_time_us)
 
 
-def clear_channel_pulses(channel):
+def clear_channel(channel):
     """ Clears a channel of all pulses """
-    _PWM.clear_channel_pulses(channel)
+    _PWM.clear_channel(channel)
+
+
+def clear_channel_gpio(channel, gpio):
+    """ Clears one specific GPIO from this DMA channel """
+    _PWM.clear_channel_gpio(channel, gpio)
 
 
 def add_channel_pulse(channel, gpio, width_start, width):
@@ -91,12 +96,12 @@ class PulseGenerator(object):
     freq_max = None
     subcycle_time_us = None
     subcycle_time_s = None
-    incr_granularity_us = None
+    incr_granularity_us = PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT
     channels_initialized = 0  # bitfield of initialized DMA channels
     gpios_initialized = 0  # bitfield to keep track of already added GPIOs
 
-    def __init__(self, pulse_width_increment_granularity_us=\
-            PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT,
+    def __init__(self, \
+            pulse_width_increment_granularity_us=self.incr_granularity_us,
             subcycle_time_us=SUBCYCLE_TIME_US_DEFAULT,
             delay_hw=DELAY_VIA_PWM):
         _PWM.setup(pulse_width_increment_granularity_us, delay_hw)
@@ -118,6 +123,9 @@ class PulseGenerator(object):
         """
         This method sets a specific output frequency for a GPIO. Will
         initialize the DMA channel on first use.
+
+        The pulse_width parameter is '50%' by default. You can set it to either
+        specific percent with '<n>%', or specific microseconds with '<n>us'.
         """
         if int(frequency_hz) > self.freq_max:
             raise Exception("Cannot set frequency > subcycle time")
@@ -130,43 +138,50 @@ class PulseGenerator(object):
             _PWM.init_channel(dma_channel, self.subcycle_time_us)
             self.channels_initialized |= 1 << dma_channel
 
-        freq_in_subcycle = frequency_hz * self.subcycle_time_s
-        print "frequency in subcycle: %sHz" % freq_in_subcycle
+        num_periods_in_subcycle = int(frequency_hz * self.subcycle_time_s)
+        print "periods in subcycle: %s" % num_periods_in_subcycle
 
-        freq_time_us = self.subcycle_time_us / freq_in_subcycle
-        print "frequency time: %sus" % freq_time_us
+        period_time_us = self.subcycle_time_us / num_periods_in_subcycle
+        print "period time: %sus" % period_time_us
 
-        if freq_time_us < self.incr_granularity_us:
+        if period_time_us < self.incr_granularity_us:
             raise Exception(("Cannot set lower frequency time than increment-"
                     "granularity (%sus)") % self.incr_granularity_us)
 
         print "--"
-        freq_time_steps = int(freq_time_us / self.incr_granularity_us)
+        freq_time_steps = int(period_time_us / self.incr_granularity_us)
         print "frequency width per subcycle: %s" % freq_time_steps
 
         _pulse_width = None
         if "%" in pulse_width:
             pulse_width_percent = int(pulse_width.strip(" %"))
             if pulse_width_percent < 0 or pulse_width_percent > 99:
-                raise Exception("Invalid pulse width: %s%%" % \
+                raise AttributeError("Invalid pulse width: %s%%" % \
                         pulse_width_percent)
             _pulse_width = int(freq_time_steps * (pulse_width_percent * 0.01))
         elif "us" in pulse_width:
             _pulse_width = int(pulse_width.strip("us")) / \
                     self.incr_granularity_us
-            if _pulse_width < 1:
-                raise Exception("Invalid pulse width: %s%%" % \
+            if not _pulse_width or _pulse_width < 1:
+                raise AttributeError("Invalid pulse width: %s%%" % \
                         pulse_width_percent)
-
+        else:
+            raise AttributeError("Pulse width '%s' not recognized", \
+                    pulse_width)
         print "pulse width: %s steps" % _pulse_width
 
-        num_pulses_per_subcycle = (self.subcycle_time_us / \
-                self.incr_granularity_us) / freq_time_steps
-        print "pulses per subcycle: %s" % num_pulses_per_subcycle
-        print "actual output frequency: %sHz" % (num_pulses_per_subcycle / \
+        _pause_width = (period_time_us / self.incr_granularity_us) - \
+                _pulse_width
+        print "pause width: %s steps" % _pause_width
+        print "actual output frequency: %sHz" % (num_periods_in_subcycle / \
                 self.subcycle_time_s)
 
-        for i in range(num_pulses_per_subcycle):
-            pulse_start_step = _pulse_width * i * 2
+        # Reset GPIO in channel if it has already been used
+        if self.gpios_initialized & 1 << gpio:
+            clear_channel_gpio(dma_channel, gpio)
+        self.gpios_initialized |= 1 << gpio
+
+        for i in range(num_periods_in_subcycle):
+            pulse_start_step = (_pulse_width + _pause_width) * i
             add_channel_pulse(dma_channel, gpio, pulse_start_step, \
                     _pulse_width)

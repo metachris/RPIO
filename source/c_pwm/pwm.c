@@ -241,7 +241,7 @@ shutdown(void)
     for (i = 0; i < DMA_CHANNELS; i++) {
         if (channels[i].dma_reg && channels[i].virtbase) {
             log_debug("shutting down dma channel %d\n", i);
-            clear_channel_pulses(i);
+            clear_channel(i);
             udelay(channels[i].subcycle_time_us);
             channels[i].dma_reg[DMA_CS] = DMA_RESET;
             udelay(10);
@@ -329,14 +329,14 @@ get_cb(int channel)
 
 // Reset this channel to original state (all samples=0, all cbs=clr0)
 int
-clear_channel_pulses(int channel)
+clear_channel(int channel)
 {
     int i;
     uint32_t phys_gpclr0 = 0x7e200000 + 0x28;
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
     uint32_t *dp = (uint32_t *) channels[channel].virtbase;
 
-    log_debug("clear_channel_pulses: channel=%d\n", channel);
+    log_debug("clear_channel: channel=%d\n", channel);
     if (!channels[channel].virtbase)
         return fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
 
@@ -358,9 +358,40 @@ clear_channel_pulses(int channel)
 }
 
 
+// Clears all pulses for a specific gpio on this channel. Also sets the GPIO to Low.
+int
+clear_channel_gpio(int channel, int gpio)
+{
+    int i;
+    uint32_t *dp = (uint32_t *) channels[channel].virtbase;
+
+    log_debug("clear_channel_gpio: channel=%d, gpio=%d\n", channel, gpio);
+    if (!channels[channel].virtbase)
+        return fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
+    if ((gpio_setup & 1<<gpio) == 0)
+        return fatal("Error: cannot clear gpio %d; not yet been set up\n", gpio);
+
+    // Finally set all samples to 0 (instead of gpio_mask)
+    for (i = 0; i < channels[channel].num_samples; i++) {
+        *(dp + i) &= ~(1 << gpio);  // set just this gpio's bit to 0
+    }
+
+    // Let DMA do one cycle to actually clear them
+    udelay(channels[channel].subcycle_time_us);
+
+    gpio_set(gpio, 0);
+    return EXIT_SUCCESS;
+}
+
+
 // Update the channel with another pulse within one full cycle. Its possible to
 // add more gpios to the same timeslots (width_start). width_start and width are
 // multiplied with pulse_width_incr_us to get the pulse width in microseconds [us].
+//
+// Be careful: if you try to set one GPIO to high and another one to low at the same
+// point in time, only the last added action (eg. set-to-low) will be executed on all pins.
+// To create these kinds of inverted signals on two GPIOs, either offset them by 1 step, or
+// use multiple DMA channels.
 int
 add_channel_pulse(int channel, int gpio, int width_start, int width)
 {
@@ -385,7 +416,7 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
 
     // Do nothing for the specified width
     for (i = 1; i < width - 1; i++) {
-        *(dp + width_start + i) = 0;
+        *(dp + width_start + i) &= ~(1 << gpio);  // set just this gpio's bit to 0
         cbp += 2;
     }
 
@@ -673,6 +704,10 @@ main(int argc, char **argv)
     add_channel_pulse(channel, gpio, 100, 50);
     add_channel_pulse(channel, gpio, 200, 50);
     add_channel_pulse(channel, gpio, 300, 50);
+    usleep(demo_timeout);
+    clear_channel_gpio(0, 17);
+    usleep(demo_timeout);
+    add_channel_pulse(channel, gpio, 0, 50);
     usleep(demo_timeout);
 
     // All done
