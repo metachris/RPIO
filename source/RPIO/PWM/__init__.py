@@ -6,21 +6,34 @@ Docs: http://pythonhosted.org/RPIO
 URL: https://github.com/metachris/RPIO
 License: GPLv3+
 
-Flexible PWM via DMA for the Raspberry Pi. Multiple DMA channels are
-supported. You can also use PCM instead of PWM.
+Flexible PWM via DMA for the Raspberry Pi. Supports frequencies up to 500kHz
+(1us per pulse), multiple DMA channels, multiple GPIOs per channel, timing by
+PWM (default) or PCM and more. RPIO.PWM is BETA; feedback highly appreciated.
 
-Example:
+Example (three ways to add pulses):
 
     import RPIO.PWM as PWM
+
     GPIO = 17
-    FREQ_HZ = 440
+    FREQ_HZ = 400
+
     p = PWM.PulseGenerator()
     p.set_frequency(GPIO, FREQ_HZ)
 
+The default pulse-width is 50%. You can manually set it like this:
+
+    p.set_frequency(GPIO, FREQ_HZ, pulse_width="10%")
+    p.set_frequency(GPIO, FREQ_HZ, pulse_width="20us")
+
+To adjust the increment granularity you can use the setup(..) parameter
+`pulse_width_increment_granularity_us`. Note that this granularity is
+used for all DMA channels (because it's adjusting the PWM/PCM timer).
 """
 import _PWM
 
+#
 # Constants from pwm.c
+#
 DELAY_VIA_PWM = _PWM.DELAY_VIA_PWM
 DELAY_VIA_PCM = _PWM.DELAY_VIA_PCM
 LOG_LEVEL_DEBUG = _PWM.LOG_LEVEL_DEBUG
