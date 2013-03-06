@@ -6,7 +6,15 @@
  * URL: https://github.com/metachris/RPIO
  */
 #include "Python.h"
+#include <stdlib.h>
 #include "pwm.h"
+
+static void *
+raise_error(void)
+{
+    PyErr_SetString(PyExc_RuntimeError, get_error_message());
+    return NULL;
+}
 
 // python function int setup(int pw_incr_us, int hw)
 static PyObject*
@@ -22,7 +30,8 @@ py_setup(PyObject *self, PyObject *args)
     if (delay_hw == -1)
         delay_hw = DELAY_VIA_PWM;
 
-    setup(pw_incr_us, delay_hw);
+    if (setup(pw_incr_us, delay_hw) == EXIT_FAILURE)
+        return raise_error();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -50,7 +59,8 @@ py_init_channel(PyObject *self, PyObject *args)
     if (period_time_us == -1)
         period_time_us = PERIOD_TIME_US_DEFAULT;
 
-    init_channel(channel, period_time_us);
+    if (init_channel(channel, period_time_us) == EXIT_FAILURE)
+        return raise_error();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -65,7 +75,8 @@ py_clear_channel_pulses(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i", &channel))
         return NULL;
 
-    clear_channel_pulses(channel);
+    if (clear_channel_pulses(channel) == EXIT_FAILURE)
+        return raise_error();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -80,7 +91,8 @@ py_add_channel_pulse(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "iiii", &channel, &gpio, &width_start, &width))
         return NULL;
 
-    add_channel_pulse(channel, gpio, width_start, width);
+    if (add_channel_pulse(channel, gpio, width_start, width) == EXIT_FAILURE)
+        return raise_error();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -95,7 +107,8 @@ py_print_channel(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i", &channel))
         return NULL;
 
-    print_channel(channel);
+    if (print_channel(channel) == EXIT_FAILURE)
+        return raise_error();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -165,13 +178,12 @@ PyMODINIT_FUNC init_PWM(void)
     PyModule_AddObject(module, "PERIOD_TIME_US_DEFAULT", Py_BuildValue("i", PERIOD_TIME_US_DEFAULT));
     PyModule_AddObject(module, "PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT", Py_BuildValue("i", PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT));
 
+    // Enable PWM.C soft-fatal mode in order to convert them to python exceptions
+    set_softfatal(1);
+
+    // Add shutdown handler to be executed when python script stops
     if (Py_AtExit(shutdown) != 0) {
       shutdown();
-#if PY_MAJOR_VERSION > 2
-        return NULL;
-#else
-        return;
-#endif
     }
 
 #if PY_MAJOR_VERSION > 2

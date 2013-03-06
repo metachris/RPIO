@@ -5,15 +5,18 @@
  * Author: Chris Hager <chris@linuxuser.at>
  * URL: https://github.com/metachris/RPIO
  */
-void setup(int pw_incr_us, int hw);
+int setup(int pw_incr_us, int hw);
 void shutdown(void);
-void set_loglevel(uint8_t level);
+void set_loglevel(int level);
 
-void init_channel(int channel, int period_time_us);
-void clear_channel_pulses(int channel);
-void print_channel(int channel);
+int init_channel(int channel, int period_time_us);
+int clear_channel_pulses(int channel);
+int print_channel(int channel);
 
-void add_channel_pulse(int channel, int gpio, int width_start, int width);
+int add_channel_pulse(int channel, int gpio, int width_start, int width);
+char* get_error_message(void);
+void set_softfatal(int enabled);
+
 
 #define DELAY_VIA_PWM   0
 #define DELAY_VIA_PCM   1

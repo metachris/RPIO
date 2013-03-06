@@ -157,15 +157,21 @@ static volatile uint32_t *pcm_reg;
 static volatile uint32_t *clk_reg;
 static volatile uint32_t *gpio_reg;
 
-// Default timer hardware is PWM
+// Defaults
 static int delay_hw = DELAY_VIA_PWM;
-
-// log_level: 0=debug, 1=errors
 static int log_level = LOG_LEVEL_DEBUG;
+
+// if set to 1, calls to fatal will not exit the program but set the error_message and
+// return an error code. soft_fatal is enabled by default by the python wrapper, in order
+// to convert calls to fatal(..) to exceptions.
+static int soft_fatal = 0;
+
+// cache for a error message
+static char error_message[256];
 
 // Debug logging
 void
-set_loglevel(uint8_t level)
+set_loglevel(int level)
 {
     log_level = level;
 }
@@ -239,24 +245,32 @@ shutdown(void)
     }
 }
 
-// Terminate is triggered by signals or fatal
+// Terminate is triggered by signals
 static void
 terminate(void)
 {
     shutdown();
-    exit(1);
+    exit(EXIT_SUCCESS);
 }
 
-// Shutdown with an error
-static void
+// Shutdown with an error message. Returns EXIT_FAILURE for convenience.
+static int
 fatal(char *fmt, ...)
 {
     va_list ap;
 
+    // Shutdown all DMA and PWM activity
+    shutdown();
+
+    // Handle error
     va_start(ap, fmt);
+    if (soft_fatal) {
+        vsprintf (error_message, fmt, ap);
+        return EXIT_FAILURE;
+    }
     vfprintf(stderr, fmt, ap);
     va_end(ap);
-    terminate();
+    exit(EXIT_FAILURE);
 }
 
 // Catch all signals possible - it is vital we kill the DMA engine
@@ -288,11 +302,15 @@ map_peripheral(uint32_t base, uint32_t len)
     int fd = open("/dev/mem", O_RDWR);
     void * vaddr;
 
-    if (fd < 0)
+    if (fd < 0) {
         fatal("rpio-pwm: Failed to open /dev/mem: %m\n");
+        return NULL;
+    }
     vaddr = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, fd, base);
-    if (vaddr == MAP_FAILED)
+    if (vaddr == MAP_FAILED) {
         fatal("rpio-pwm: Failed to map peripheral at 0x%08x: %m\n", base);
+        return NULL;
+    }
     close(fd);
 
     return vaddr;
@@ -306,7 +324,7 @@ get_cb(int channel)
 }
 
 // Reset this channel to original state (all samples=0, all cbs=clr0)
-void
+int
 clear_channel_pulses(int channel)
 {
     int i;
@@ -316,7 +334,7 @@ clear_channel_pulses(int channel)
 
     log_debug("clear_channel_pulses: channel=%d\n", channel);
     if (!channels[channel].virtbase)
-        fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
+        return fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
 
     // First we have to stop all currently enabled pulses
     for (i = 0; i < channels[channel].num_samples; i++) {
@@ -331,13 +349,15 @@ clear_channel_pulses(int channel)
     for (i = 0; i < channels[channel].num_samples; i++) {
         *(dp + i) = 0;
     }
+
+    return EXIT_SUCCESS;
 }
 
 
 // Update the channel with another pulse within one full cycle. Its possible to
 // add more gpios to the same timeslots (width_start). width_start and width are
 // multiplied with pulse_width_incr_us to get the pulse width in microseconds [us].
-void
+int
 add_channel_pulse(int channel, int gpio, int width_start, int width)
 {
     int i;
@@ -348,9 +368,9 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
 
     log_debug("add_channel_pulse: channel=%d, gpio=%d, start=%d, width=%d\n", channel, gpio, width_start, width);
     if (!channels[channel].virtbase)
-        fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
+        return fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
     if (width_start + width > channels[channel].width_max || width_start < 0)
-        fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channels[channel].width_max);
+        return fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channels[channel].width_max);
 
     if (gpio_setup[gpio] == 0)
         init_gpio(gpio);
@@ -371,12 +391,13 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
     // Clear GPIO at end
     *(dp + width_start + width) |= mask;
     cbp->dst = phys_gpclr0;
+    return EXIT_SUCCESS;
 }
 
 
 
 // Get a channel's pagemap
-static void
+static int
 make_pagemap(int channel)
 {
     int i, fd, memfd, pid;
@@ -385,18 +406,18 @@ make_pagemap(int channel)
     channels[channel].page_map = malloc(channels[channel].num_pages * sizeof(*channels[channel].page_map));
 
     if (channels[channel].page_map == 0)
-        fatal("rpio-pwm: Failed to malloc page_map: %m\n");
+        return fatal("rpio-pwm: Failed to malloc page_map: %m\n");
     memfd = open("/dev/mem", O_RDWR);
     if (memfd < 0)
-        fatal("rpio-pwm: Failed to open /dev/mem: %m\n");
+        return fatal("rpio-pwm: Failed to open /dev/mem: %m\n");
     pid = getpid();
     sprintf(pagemap_fn, "/proc/%d/pagemap", pid);
     fd = open(pagemap_fn, O_RDONLY);
     if (fd < 0)
-        fatal("rpio-pwm: Failed to open %s: %m\n", pagemap_fn);
+        return fatal("rpio-pwm: Failed to open %s: %m\n", pagemap_fn);
     if (lseek(fd, (uint32_t)channels[channel].virtbase >> 9, SEEK_SET) !=
                         (uint32_t)channels[channel].virtbase >> 9) {
-        fatal("rpio-pwm: Failed to seek on %s: %m\n", pagemap_fn);
+        return fatal("rpio-pwm: Failed to seek on %s: %m\n", pagemap_fn);
     }
     for (i = 0; i < channels[channel].num_pages; i++) {
         uint64_t pfn;
@@ -404,28 +425,30 @@ make_pagemap(int channel)
         // Following line forces page to be allocated
         channels[channel].page_map[i].virtaddr[0] = 0;
         if (read(fd, &pfn, sizeof(pfn)) != sizeof(pfn))
-            fatal("rpio-pwm: Failed to read %s: %m\n", pagemap_fn);
+            return fatal("rpio-pwm: Failed to read %s: %m\n", pagemap_fn);
         if (((pfn >> 55) & 0x1bf) != 0x10c)
-            fatal("rpio-pwm: Page %d not present (pfn 0x%016llx)\n", i, pfn);
+            return fatal("rpio-pwm: Page %d not present (pfn 0x%016llx)\n", i, pfn);
         channels[channel].page_map[i].physaddr = (uint32_t)pfn << PAGE_SHIFT | 0x40000000;
     }
     close(fd);
     close(memfd);
+    return EXIT_SUCCESS;
 }
 
-static void
+static int
 init_virtbase(int channel)
 {
     channels[channel].virtbase = mmap(NULL, channels[channel].num_pages * PAGE_SIZE, PROT_READ|PROT_WRITE,
             MAP_SHARED|MAP_ANONYMOUS|MAP_NORESERVE|MAP_LOCKED, -1, 0);
     if (channels[channel].virtbase == MAP_FAILED)
-        fatal("rpio-pwm: Failed to mmap physical pages: %m\n");
+        return fatal("rpio-pwm: Failed to mmap physical pages: %m\n");
     if ((unsigned long)channels[channel].virtbase & (PAGE_SIZE-1))
-        fatal("rpio-pwm: Virtual address is not page aligned\n");
+        return fatal("rpio-pwm: Virtual address is not page aligned\n");
+    return EXIT_SUCCESS;
 }
 
 // Initialize control block for this channel
-static void
+static int
 init_ctrl_data(int channel)
 {
     dma_cb_t *cbp = (dma_cb_t *) get_cb(channel);
@@ -436,6 +459,8 @@ init_ctrl_data(int channel)
     int i;
 
     channels[channel].dma_reg = map_peripheral(DMA_BASE, DMA_LEN) + (DMA_CHANNEL_INC * channel);
+    if (channels[channel].dma_reg == NULL)
+        return EXIT_FAILURE;
 
     if (delay_hw == DELAY_VIA_PWM)
         phys_fifo_addr = (PWM_BASE | 0x7e000000) + 0x18;
@@ -481,6 +506,8 @@ init_ctrl_data(int channel)
     channels[channel].dma_reg[DMA_CONBLK_AD] = mem_virt_to_phys(channel, get_cb(channel));  // initial CB
     channels[channel].dma_reg[DMA_DEBUG] = 7; // clear debug error flags
     channels[channel].dma_reg[DMA_CS] = 0x10880001;    // go, mid priority, wait for outstanding writes
+
+    return EXIT_SUCCESS;
 }
 
 // Initialize PWM or PCM hardware once for all channels (10MHz)
@@ -531,16 +558,18 @@ init_hardware(void)
 
 // Setup a channel with a specific period time. After that pulse-widths can be
 // added at any time.
-void
+int
 init_channel(int channel, int period_time_us)
 {
     log_debug("Initializing channel %d...\n", channel);
+    if (is_setup == 0)
+        return fatal("Error: you need to call `setup(..)` before initializing channels\n");
     if (channel > DMA_CHANNELS-1)
-        fatal("Error: maximum channel is %d (requested channel %d)\n", DMA_CHANNELS-1, channel);
-    if (channels[channel].dma_reg || channels[channel].virtbase)
-        fatal("Error: channel %d already initialized.\n", channel);
+        return fatal("Error: maximum channel is %d (requested channel %d)\n", DMA_CHANNELS-1, channel);
+    if (channels[channel].virtbase)
+        return fatal("Error: channel %d already initialized.\n", channel);
     if (period_time_us < PERIOD_TIME_US_MIN)
-        fatal("Error: period time %dus is too small (min=%dus)\n", period_time_us, PERIOD_TIME_US_MIN);
+        return fatal("Error: period time %dus is too small (min=%dus)\n", period_time_us, PERIOD_TIME_US_MIN);
 
     // Setup Data
     channels[channel].period_time_us = period_time_us;
@@ -551,32 +580,50 @@ init_channel(int channel, int period_time_us)
                                        PAGE_SIZE - 1) >> PAGE_SHIFT);
 
     // Initialize channel
-    init_virtbase(channel);
-    make_pagemap(channel);
-    init_ctrl_data(channel);
+    if (init_virtbase(channel) == EXIT_FAILURE)
+        return EXIT_FAILURE;
+    if (make_pagemap(channel) == EXIT_FAILURE)
+        return EXIT_FAILURE;
+    if (init_ctrl_data(channel) == EXIT_FAILURE)
+        return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 
 // Print some info about a channel
-void
+int
 print_channel(int channel)
 {
+    if (channel > DMA_CHANNELS - 1)
+        return fatal("Error: you tried to print channel %d, but max channel is %d\n", channel, DMA_CHANNELS-1);
     log_debug("Period time:   %dus\n", channels[channel].period_time_us);
     log_debug("PW Increments: %dus\n", pulse_width_incr_us);
     log_debug("Num samples:   %d\n", channels[channel].num_samples);
 //    log_debug("Num CBS:       %d\n", channels[channel].num_cbs);
 //    log_debug("Num pages:     %d\n", channels[channel].num_pages);
+    return EXIT_SUCCESS;
+}
+
+void
+set_softfatal(int enabled)
+{
+    soft_fatal = enabled;
+}
+
+char *
+get_error_message(void)
+{
+    return error_message;
 }
 
 // hw: 0=PWM, 1=PCM
-void
+int
 setup(int pw_incr_us, int hw)
 {
     delay_hw = hw;
     pulse_width_incr_us = pw_incr_us;
 
     if (is_setup == 1)
-        fatal("Error: setup(..) has already been called before\n");
-    is_setup = 1;
+        return fatal("Error: setup(..) has already been called before\n");
 
     log_debug("Using hardware: %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
     log_debug("PW increments:  %dus\n", pulse_width_incr_us);
@@ -585,11 +632,16 @@ setup(int pw_incr_us, int hw)
     setup_sighandlers();
 
     // Initialize common stuff
+    pwm_reg = map_peripheral(PWM_BASE, PWM_LEN);
     pcm_reg = map_peripheral(PCM_BASE, PCM_LEN);
     clk_reg = map_peripheral(CLK_BASE, CLK_LEN);
     gpio_reg = map_peripheral(GPIO_BASE, GPIO_LEN);
-    pwm_reg = map_peripheral(PWM_BASE, PWM_LEN);
+    if (pwm_reg == NULL || pcm_reg == NULL || clk_reg == NULL || gpio_reg == NULL)
+        return EXIT_FAILURE;
     init_hardware();
+
+    is_setup = 1;
+    return EXIT_SUCCESS;
 }
 
 int
