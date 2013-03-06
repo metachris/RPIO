@@ -1,22 +1,50 @@
 /*
  * This file is part of RPIO.
  *
- * License: GPLv3+
  * Author: Chris Hager <chris@linuxuser.at>
  * URL: https://github.com/metachris/RPIO
+ * License: GPLv3+ (and an optional commercial license)
  *
- * Flexible PWM via DMA for the Raspberry Pi. Multiple DMA channels are
- * supported. You can use PCM instead of PWM with the "--pcm" argument.
  *
- * Based on the excellent servod.c by Richard Hirst.
+ * pwm.c provides flexible PWM via DMA for the Raspberry Pi, supporting frequencies
+ * up to 500kHz (1us per pulse), multiple DMA channels, multiple GPIOs per channel,
+ * timing by PWM (default) or PCM, a Python wrapper, and more.
  *
- * TODO:
- * - doc
- * - explain subcycle concept
+ * pwm.c is based on the excellent servod.c by Richard Hirst, which has been refactored
+ * and upgraded primarily with runtime PWM control (to use it as a library), support
+ * for all 15 DMA channels and GPIO multiplexing within a single channel.
  *
- * Build it with `gcc -Wall -g -O2 -o pwm pwm.c`
+ * Feedback is much appreciated.
+ *
+ *
+ * SUBCYCLES
+ * ---------
+ * One second is divided into subcycles of user-defined length (within 2ms and 1s,
+ * default is 10ms). The subcycle length is set per DMA channel; the shorter the
+ * length of a subcycle, the less DMA memory will be used (below 2ms we started
+ * seeing weird behavior of the Raspberry).
+ *
+ * You can add pulses to the subcycle, and they will be repeated accordingly (eg.
+ * a 10ms subcycle will be repeated 100 times per second; as are all the pulses
+ * within that subcycle). You can use any number of GPIOs, and set multiple pulses
+ * for each one.
+ *
+ *
+ * PULSE WIDTH INCREMENT GRANULARITY
+ * ---------------------------------
+ * Another very important setting is the pulse width increment granularity, which
+ * defaults to 10탎 and has to be set for all DMA channels since we pass it to the
+ * PWM timing hardware. Under the hood you need to set the pulse widths as multiples
+ * of the increment-granularity. Eg. in order to set 500탎 pulses with a granularity
+ * setting of 10탎, you'll need to set the pulse-width as 50 (50 * 10탎 = 500탎).
+ *
+ * To achieve shorter pulses than 10탎, you simply need set a lower granularity.
+ *
+ *
+ * TODO
+ * ----
+ * - add_pulse: check exact start/stop timeslot to avoid set0/clr0 collisions
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -135,7 +163,6 @@ struct channel {
     volatile uint32_t *dma_reg;
 
     // Set by user
-    uint32_t gpio_mask;
     uint32_t subcycle_time_us;
 
     // Set by system
@@ -705,8 +732,9 @@ main(int argc, char **argv)
     add_channel_pulse(channel, gpio, 200, 50);
     add_channel_pulse(channel, gpio, 300, 50);
     usleep(demo_timeout);
+
+    // Clear and start again
     clear_channel_gpio(0, 17);
-    usleep(demo_timeout);
     add_channel_pulse(channel, gpio, 0, 50);
     usleep(demo_timeout);
 

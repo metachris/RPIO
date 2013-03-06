@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 RPIO extends RPi.GPIO with GPIO interrupts, TCP socket interrupts and more.
 

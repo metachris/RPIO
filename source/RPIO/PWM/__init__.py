@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This file is part of RPIO.
 
@@ -7,7 +8,7 @@ URL: https://github.com/metachris/RPIO
 License: GPLv3+
 
 Flexible PWM via DMA for the Raspberry Pi. Supports frequencies up to 500kHz
-(1us per pulse), multiple DMA channels, multiple GPIOs per channel, timing by
+(1µs per pulse), multiple DMA channels, multiple GPIOs per channel, timing by
 PWM (default) or PCM and more. RPIO.PWM is BETA; feedback highly appreciated.
 
 Example (three ways to add pulses):
@@ -99,36 +100,54 @@ def set_loglevel(level):
 #
 class PulseGenerator(object):
     """
-    This class sets a specific output frequency for a GPIO. By default
-    DMA channel 0 is used, but you can use any one you like (0..14).
+    Singleton class which makes it easy to set specific output frequencies
+    and pulse widths for any number of GPIOs.
 
-    Pulse width granularity is 10us by default, but you can set this
-    manually for all DMA channels with the setup(..) argument
-    `pulse_width_increment_granularity_us`.
+    Defaults (change with respective parameters):
+    - DMA channel: 0
+    - Granularity: 10µs
+    - Subcycle time: 10ms (10,000µs)
     """
     freq_max = None
+    freq_min = None
     subcycle_time_us = None
     subcycle_time_s = None
     incr_granularity_us = PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT
     channels_initialized = 0  # bitfield of initialized DMA channels
     gpios_initialized = 0  # bitfield to keep track of already added GPIOs
+    _is_setup = False
 
-    def __init__(self, \
-            pulse_width_increment_granularity_us=self.incr_granularity_us,
+    # This class is a singleton; to not setup the DMA/PWM more than once
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(PulseGenerator, cls).__new__(
+                                cls, *args, **kwargs)
+        return cls._instance
+
+    def setup(self, pulse_width_increment_granularity_us=\
+            PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT,
             subcycle_time_us=SUBCYCLE_TIME_US_DEFAULT,
             delay_hw=DELAY_VIA_PWM):
+        if self._is_setup:
+            raise RuntimeError(("`setup(..)` has already been called before. "
+                    "You need to call `shutdown()` first."))
         _PWM.setup(pulse_width_increment_granularity_us, delay_hw)
-
-        self.incr_granularity_us = pulse_width_increment_granularity_us
-        self.freq_max = 1000000 / (self.incr_granularity_us * 2)
+        self._is_setup = True
 
         self.subcycle_time_us = subcycle_time_us
         self.subcycle_time_s = subcycle_time_us / 1000000.0
 
-        print "max freq: %sHz" % self.freq_max
+        self.incr_granularity_us = pulse_width_increment_granularity_us
+        self.freq_max = 1000000 / (self.incr_granularity_us * 2)
+        self.freq_min = 1000000 / (self.subcycle_time_us)
+
         print "subcycle time: %ss (%sus)" % (self.subcycle_time_s, \
                 self.subcycle_time_us)
         print "increment granularity: %sus" % self.incr_granularity_us
+        print "min freq: %sHz" % self.freq_min
+        print "max freq: %sHz" % self.freq_max
         print "--"
 
     def set_frequency(self, gpio, frequency_hz, pulse_width='50%', \
@@ -140,8 +159,17 @@ class PulseGenerator(object):
         The pulse_width parameter is '50%' by default. You can set it to either
         specific percent with '<n>%', or specific microseconds with '<n>us'.
         """
+        if not self._is_setup:
+            self.setup()
+
         if int(frequency_hz) > self.freq_max:
-            raise Exception("Cannot set frequency > subcycle time")
+            raise AttributeError(("Frequency %sHz too high (max freq=%dHz due "
+                    "to increment granularity of %sus") % (frequency_hz, \
+                    self.freq_max, self.incr_granularity_us))
+        if int(frequency_hz) > self.freq_max:
+            raise AttributeError(("Frequency %sHz too high (max freq=%dHz due "
+                    "to subcycle_time of %sus") % (frequency_hz, self.freq_max,
+                    self.subcycle_time_us))
 
         print "Setting freq to %sHz for GPIO %s on DMA channel %s" % \
                 (frequency_hz, gpio, dma_channel)
@@ -158,8 +186,8 @@ class PulseGenerator(object):
         print "period time: %sus" % period_time_us
 
         if period_time_us < self.incr_granularity_us:
-            raise Exception(("Cannot set lower frequency time than increment-"
-                    "granularity (%sus)") % self.incr_granularity_us)
+            raise AttributeError(("Cannot set lower frequency time than "
+                    "increment-granularity (%sus)") % self.incr_granularity_us)
 
         print "--"
         freq_time_steps = int(period_time_us / self.incr_granularity_us)
@@ -172,12 +200,13 @@ class PulseGenerator(object):
                 raise AttributeError("Invalid pulse width: %s%%" % \
                         pulse_width_percent)
             _pulse_width = int(freq_time_steps * (pulse_width_percent * 0.01))
-        elif "us" in pulse_width:
-            _pulse_width = int(pulse_width.strip("us")) / \
+
+        elif "us" in pulse_width or "µ" in pulse_width:
+            _pulse_width = int(pulse_width.strip("µus")) / \
                     self.incr_granularity_us
             if not _pulse_width or _pulse_width < 1:
-                raise AttributeError("Invalid pulse width: %s%%" % \
-                        pulse_width_percent)
+                raise AttributeError("Invalid pulse width: %s" % pulse_width)
+
         else:
             raise AttributeError("Pulse width '%s' not recognized", \
                     pulse_width)
