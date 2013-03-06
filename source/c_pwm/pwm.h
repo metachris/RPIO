@@ -26,12 +26,11 @@ void set_softfatal(int enabled);
 #define LOG_LEVEL_ERRORS 1
 #define LOG_LEVEL_DEFAULT LOG_LEVEL_DEBUG
 
-// Subcycle defaults to 10ms within which you can add any number of pulses
-#define SUBCYCLE_TIME_US_DEFAULT 10000
+// Default subcycle time
+#define SUBCYCLE_TIME_US_DEFAULT 100000
 
-// Subcycle cannot be lower than 2000. We kept seeing no signals and strange
-// behavior of the Raspberry Pi (eg. bash fail, reboot).
-#define SUBCYCLE_TIME_US_MIN 2000
+// Subcycle minimum. We kept seeing no signals and strange behavior of the RPi
+#define SUBCYCLE_TIME_US_MIN 3000
 
-// The pulse-width-increment-granularity is the same for all channels
+// Default pulse-width-increment-granularity
 #define PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT 10

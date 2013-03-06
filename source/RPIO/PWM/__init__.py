@@ -106,7 +106,7 @@ class PulseGenerator(object):
     Defaults (change with respective parameters):
     - DMA channel: 0
     - Granularity: 10µs
-    - Subcycle time: 10ms (10,000µs)
+    - Subcycle time: 100ms (100,000µs)
     """
     freq_max = None
     freq_min = None
@@ -191,7 +191,7 @@ class PulseGenerator(object):
 
         print "--"
         freq_time_steps = int(period_time_us / self.incr_granularity_us)
-        print "frequency width per subcycle: %s" % freq_time_steps
+        print "steps per subcycle: %s" % freq_time_steps
 
         _pulse_width = None
         if "%" in pulse_width:

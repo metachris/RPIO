@@ -20,23 +20,34 @@
  * SUBCYCLES
  * ---------
  * One second is divided into subcycles of user-defined length (within 2ms and 1s,
- * default is 10ms). The subcycle length is set per DMA channel; the shorter the
- * length of a subcycle, the less DMA memory will be used (below 2ms we started
- * seeing weird behavior of the Raspberry).
+ * default is 100ms) which will be repeated endlessly. The subcycle length is set
+ * per DMA channel; the shorter the length of a subcycle, the less DMA memory will
+ * be used. Do not set below 2ms - we started seeing weird behaviors of the RPi.
  *
  * You can add pulses to the subcycle, and they will be repeated accordingly (eg.
- * a 10ms subcycle will be repeated 100 times per second; as are all the pulses
+ * a 100ms subcycle will be repeated 10 times per second; as are all the pulses
  * within that subcycle). You can use any number of GPIOs, and set multiple pulses
- * for each one.
+ * for each one. Longer subcycles use more DMA memory.
+ *
+ * With longer subcycles you can set more finer-grained frequencies, because more
+ * periods fit within the subcycle (which is the lowest common denominator, so to
+ * speak). For instance if the subcycle is 10ms it will be repeated 100 times per
+ * second. That works if you set a round frequency like 400, because it simply adds
+ * 4 pulses per subcycle. To be able to set a freq. like 440, you'll need to increase
+ * a subcycle of at least 100,000 (10x/sec). Here are some reference subcycle timings:
+ *
+ * - 10,000us = 100x/second -> works with frequencies round to the hundred (eg. 400, 500)
+ * - 100,000us = 10x/second -> works with frequencies round to the ten (eg. 440, 550)
  *
  *
  * PULSE WIDTH INCREMENT GRANULARITY
  * ---------------------------------
  * Another very important setting is the pulse width increment granularity, which
- * defaults to 10탎 and has to be set for all DMA channels since we pass it to the
- * PWM timing hardware. Under the hood you need to set the pulse widths as multiples
+ * defaults to 10탎 and is used for _all_ DMA channels (since its passed to the PWM
+ * timing hardware). Under the hood you need to set the pulse widths as multiples
  * of the increment-granularity. Eg. in order to set 500탎 pulses with a granularity
  * setting of 10탎, you'll need to set the pulse-width as 50 (50 * 10탎 = 500탎).
+ * Less granularity needs more DMA memory.
  *
  * To achieve shorter pulses than 10탎, you simply need set a lower granularity.
  *
