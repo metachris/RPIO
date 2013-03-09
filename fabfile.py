@@ -39,13 +39,6 @@ def upload_dist():
     put("dist/*.tar.gz", "/tmp/")
 
 
-def test_pwm():
-    upload()
-    with cd("/tmp/source/c_pwm"):
-        run("make dirty")
-        run("sudo ./pwm")
-
-
 def build_gpio():
     """ Builds source with Python 2.7 and 3.2, and tests import """
     with cd("/tmp/source/c_gpio"):
@@ -77,22 +70,41 @@ def build():
     build_pwm()
 
 
-def test():
+def test_gpio():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
         run("cp _GPIO27.so _GPIO.so")
     with cd("/tmp/source"):
-        run("sudo python run_tests.py")
+        run("sudo python tests_gpio.py")
 
 
-def test3():
+def test3_gpio():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
         run("cp _GPIO32.so _GPIO.so")
     with cd("/tmp/source"):
-        run("sudo python3 run_tests.py")
+        run("sudo python3 tests_gpio.py")
     with cd("/tmp/source/RPIO"):
         run("cp _GPIO27.so _GPIO.so")
+
+
+def test_pwm():
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO27.so _GPIO.so")
+        run("cp PWM/_PWM27.so PWM/_PWM.so")
+    with cd("/tmp/source"):
+        run("sudo python tests_pwm.py")
+
+
+def test3_pwm():
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO32.so _GPIO.so")
+        run("cp PWM/_PWM32.so PWM/_PWM.so")
+    with cd("/tmp/source"):
+        run("sudo python3 tests_pwm.py")
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO27.so _GPIO.so")
+        run("cp PWM/_PWM27.so PWM/_PWM.so")
 
 
 def upload_to_pypi():
