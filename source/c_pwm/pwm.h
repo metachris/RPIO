@@ -18,6 +18,10 @@ int add_channel_pulse(int channel, int gpio, int width_start, int width);
 char* get_error_message(void);
 void set_softfatal(int enabled);
 
+int is_setup(void);
+int is_channel_initialized(int channel);
+int get_pulse_incr_us(void);
+int get_channel_subcycle_time_us(int channel);
 
 #define DELAY_VIA_PWM   0
 #define DELAY_VIA_PCM   1
@@ -27,7 +31,7 @@ void set_softfatal(int enabled);
 #define LOG_LEVEL_DEFAULT LOG_LEVEL_DEBUG
 
 // Default subcycle time
-#define SUBCYCLE_TIME_US_DEFAULT 100000
+#define SUBCYCLE_TIME_US_DEFAULT 20000
 
 // Subcycle minimum. We kept seeing no signals and strange behavior of the RPi
 #define SUBCYCLE_TIME_US_MIN 3000

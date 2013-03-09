@@ -3,12 +3,11 @@ Welcome to RPIO's documentation!
 
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
-* Hardware PWM with up to 500kHz (1µs pulses)
-* GPIO Input and Output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
-* GPIO Interrupts (callbacks when events occur on input gpios)
-* TCP Socket Interrupts (callbacks when tcp socket clients send data)
-* Well documented, tested, fast source code
-* Minimal CPU and memory profile
+* GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
+* GPIO interrupts (callbacks when events occur on input gpios)
+* TCP socket interrupts (callbacks when tcp socket clients send data)
+* PWM via DMA (down to 1µs resolution; which is 500kHz)
+* Well documented, fast source code with minimal CPU usage
 * Open source (GPLv3+)
 
 RPIO consists of two main components:
@@ -31,7 +30,7 @@ Documentation
 News
 ----
 
-* v0.9.0: :ref:`Hardware PWM (via DMA) <ref-rpio-pwm-py>`
+* v0.9.0: :ref:`PWM via DMA <ref-rpio-pwm-py>`
 * v0.8.4: ``rpio-curses``
 * v0.8.2: Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
 
@@ -59,6 +58,13 @@ Or from Github but without Git::
     $ sudo python setup.py install
 
 After the installation you can use ``import RPIO`` as well as the command-line tool ``rpio``.
+
+
+Examples
+--------
+
+Here are a few examples of how to use RPIO. You can find more examples inside the documentation as well as
+in the ``/examples/`` directory.
 
 
 Feedback

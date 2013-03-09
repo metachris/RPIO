@@ -19,10 +19,14 @@
  *
  * SUBCYCLES
  * ---------
- * One second is divided into subcycles of user-defined length (within 2ms and 1s,
- * default is 100ms) which will be repeated endlessly. The subcycle length is set
+ * One second is divided into subcycles of user-defined length (within 2ms and 1s)
+ * which will be repeated endlessly. The subcycle length is set
  * per DMA channel; the shorter the length of a subcycle, the less DMA memory will
  * be used. Do not set below 2ms - we started seeing weird behaviors of the RPi.
+ *
+ * To use servos for instance, a typical subcycle time is 20ms (which will be repeated
+ * 50 times a second). Each subcycle includes the specific pulse(s) to set the servo
+ * to the correct position.
  *
  * You can add pulses to the subcycle, and they will be repeated accordingly (eg.
  * a 100ms subcycle will be repeated 10 times per second; as are all the pulses
@@ -50,6 +54,13 @@
  * Less granularity needs more DMA memory.
  *
  * To achieve shorter pulses than 10µs, you simply need set a lower granularity.
+ *
+ *
+ * WARNING
+ * -------
+ * pwm.c is in beta and currently not fully tested and functional. Setting very long
+ * or very short subcycle times may cause unreliable signals. Please direct your
+ * feedback to chris@linuxuser.at.
  *
  *
  * TODO
@@ -190,7 +201,7 @@ static struct channel channels[DMA_CHANNELS];
 
 // Pulse width increment granularity
 static uint16_t pulse_width_incr_us = -1;
-static uint8_t is_setup = 0;
+static uint8_t _is_setup = 0;
 static int gpio_setup = 0; // bitfield for setup gpios (setup = out/low)
 
 // Common registers
@@ -414,7 +425,7 @@ clear_channel_gpio(int channel, int gpio)
         *(dp + i) &= ~(1 << gpio);  // set just this gpio's bit to 0
     }
 
-    // Let DMA do one cycle to actually clear them
+    // Let DMA do one cycle to actually clear them TODO: remove this?
     udelay(channels[channel].subcycle_time_us);
 
     gpio_set(gpio, 0);
@@ -632,7 +643,7 @@ int
 init_channel(int channel, int subcycle_time_us)
 {
     log_debug("Initializing channel %d...\n", channel);
-    if (is_setup == 0)
+    if (_is_setup == 0)
         return fatal("Error: you need to call `setup(..)` before initializing channels\n");
     if (channel > DMA_CHANNELS-1)
         return fatal("Error: maximum channel is %d (requested channel %d)\n", DMA_CHANNELS-1, channel);
@@ -694,7 +705,7 @@ setup(int pw_incr_us, int hw)
     delay_hw = hw;
     pulse_width_incr_us = pw_incr_us;
 
-    if (is_setup == 1)
+    if (_is_setup == 1)
         return fatal("Error: setup(..) has already been called before\n");
 
     log_debug("Using hardware: %s\n", delay_hw == DELAY_VIA_PWM ? "PWM" : "PCM");
@@ -714,8 +725,32 @@ setup(int pw_incr_us, int hw)
     // Start PWM/PCM timing activity
     init_hardware();
 
-    is_setup = 1;
+    _is_setup = 1;
     return EXIT_SUCCESS;
+}
+
+int
+is_setup(void)
+{
+    return _is_setup;
+}
+
+int
+is_channel_initialized(int channel)
+{
+    return channels[channel].virtbase ? 1 : 0;
+}
+
+int
+get_pulse_incr_us(void)
+{
+    return pulse_width_incr_us;
+}
+
+int
+get_channel_subcycle_time_us(int channel)
+{
+    return channels[channel].subcycle_time_us;
 }
 
 int

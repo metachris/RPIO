@@ -145,6 +145,43 @@ py_set_loglevel(PyObject *self, PyObject *args)
     return Py_None;
 }
 
+
+// python function int is_setup();
+static PyObject*
+py_is_setup(PyObject *self, PyObject *args)
+{
+    return Py_BuildValue("i", is_setup());
+}
+
+// python function int get_pulse_incr_us();
+static PyObject*
+py_get_pulse_incr_us(PyObject *self, PyObject *args)
+{
+    return Py_BuildValue("i", get_pulse_incr_us());
+}
+
+// python function int is_channel_initialized(int channel);
+static PyObject*
+py_is_channel_initialized(PyObject *self, PyObject *args)
+{
+    int channel;
+
+    if (!PyArg_ParseTuple(args, "i", &channel))
+        return NULL;
+    return Py_BuildValue("i", is_channel_initialized(channel));
+}
+
+// python function int get_channel_subcycle_time_us(int channel);
+static PyObject*
+py_get_channel_subcycle_time_us(PyObject *self, PyObject *args)
+{
+    int channel;
+
+    if (!PyArg_ParseTuple(args, "i", &channel))
+        return NULL;
+    return Py_BuildValue("i", get_channel_subcycle_time_us(channel));
+}
+
 static PyMethodDef pwm_methods[] = {
     {"setup", py_setup, METH_VARARGS, "Setup the DMA-PWM system"},
     {"cleanup", py_cleanup, METH_VARARGS, "Stop all pwms and clean up DMA engine"},
@@ -154,6 +191,10 @@ static PyMethodDef pwm_methods[] = {
     {"add_channel_pulse", py_add_channel_pulse, METH_VARARGS, "Add a specific pulse to a channel"},
     {"print_channel", py_print_channel, METH_VARARGS, "Print info about a specific channel"},
     {"set_loglevel", py_set_loglevel, METH_VARARGS, "Set the loglevel to either 0 (debug) or 1 (errors)"},
+    {"is_setup", py_is_setup, METH_VARARGS, "Returns 1 is setup(..) has been called, else 0"},
+    {"get_pulse_incr_us", py_get_pulse_incr_us, METH_VARARGS, "Gets the pulse width increment granularity in us"},
+    {"is_channel_initialized", py_is_channel_initialized, METH_VARARGS, "Returns 1 if channel has been initialized, else 0"},
+    {"get_channel_subcycle_time_us", py_get_channel_subcycle_time_us, METH_VARARGS, "Gets the subcycle time in us of the specified channel"},
     {NULL, NULL, 0, NULL}
 };
 
