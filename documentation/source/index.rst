@@ -131,7 +131,7 @@ License
 Changes
 -------
 
-* v0.9.0
+* v0.9.1
 
   * PWM
   * ``rpio-curses`` quits gracefully if terminal too small
