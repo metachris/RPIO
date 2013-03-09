@@ -80,7 +80,7 @@ def build():
 def test():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
-        run("cp GPIO27.so GPIO.so")
+        run("cp _GPIO27.so _GPIO.so")
     with cd("/tmp/source"):
         run("sudo python run_tests.py")
 
@@ -88,11 +88,11 @@ def test():
 def test3():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
-        run("cp GPIO32.so GPIO.so")
+        run("cp _GPIO32.so _GPIO.so")
     with cd("/tmp/source"):
         run("sudo python3 run_tests.py")
     with cd("/tmp/source/RPIO"):
-        run("cp GPIO27.so GPIO.so")
+        run("cp _GPIO27.so _GPIO.so")
 
 
 def upload_to_pypi():

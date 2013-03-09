@@ -40,7 +40,7 @@ Example of using the low-level methods:
     ...
     PWM.cleanup()
 """
-import _PWM
+from RPIO.PWM import _PWM
 
 #
 # Constants from pwm.c
@@ -201,7 +201,7 @@ class Servo:
 
         # Add pulse for this GPIO
         add_channel_pulse(self._dma_channel, gpio, 0, \
-                pulse_width_us / _pulse_incr_us)
+                int(pulse_width_us / _pulse_incr_us))
 
     def stop_servo(self, gpio):
         """ Stops servo activity for this gpio """
