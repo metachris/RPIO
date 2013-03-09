@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 RPIO extends RPi.GPIO with GPIO interrupts, TCP socket interrupts and more.
 
@@ -19,7 +20,6 @@ server on port 8080. The interrupts can have optional `edge` and
 
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
-    RPIO.add_interrupt_callback(8, gpio_callback, edge='rising')
     RPIO.add_interrupt_callback(9, gpio_callback, pull_up_down=RPIO.PUD_UP)
 
     # One TCP socket server callback on port 8080
@@ -98,11 +98,11 @@ from threading import Thread
 from functools import partial
 from time import sleep
 
-from GPIO import *
-from GPIO import cleanup as _cleanup_orig
-from GPIO import setmode as _setmode
+from RPIO._GPIO import *
+from RPIO._GPIO import cleanup as _cleanup_orig
+from RPIO._GPIO import setmode as _setmode
 
-VERSION = "0.8.4"
+VERSION = "0.9.1"
 
 # BCM numbering mode by default
 setmode(BCM)
@@ -347,6 +347,7 @@ def wait_for_interrupts(epoll_timeout=1):
     while _is_waiting_for_interrupts:
         events = _epoll.poll(epoll_timeout)
         for fileno, event in events:
+            debug("- epoll event on fd %s: %s" % (fileno, event))
             if fileno in _tcp_server_sockets:
                 # New client connection to socket server
                 serversocket, cb = _tcp_server_sockets[fileno]

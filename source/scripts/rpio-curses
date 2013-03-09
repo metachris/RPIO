@@ -9,8 +9,15 @@ License: GPLv3+
 """
 import os
 import sys
-# Automatically invoke sudo if non-root
-if os.geteuid() != 0:
+
+# Command line options include 'no_rpio' (use dummy data), 'no_thread'
+# and 'dev' (which just sets no_rpio and no_thread)
+CMD_OPTIONS = sys.argv[1:] if len(sys.argv) > 1 else []
+if "dev" in CMD_OPTIONS:
+    CMD_OPTIONS += ("no_rpio", "no_thread")
+
+# Automatically invoke sudo if non-root (if not on dev-machine)
+if os.geteuid() != 0 and "no_rpio" not in CMD_OPTIONS:
     print("Script not started as root. Running sudo...")
     args = ['sudo', sys.executable] + sys.argv + [os.environ]
     # the next line replaces the currently-running process with the sudo
@@ -22,23 +29,7 @@ import curses.textpad as textpad
 import time
 from threading import Thread
 
-GPIO_LIST = []
-for i in range(20):
-    func = i%3 if i%3 < 2 else 4
-    GPIO_LIST.append((i+2, func, i%2))
-
-GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
-STATES = ["Low", "High"]
-
-POS_GPIOLIST_X = 5
-POS_GPIOLIST_Y = 2
-
-POS_GPIOINFO_X = 40
-POS_GPIOINFO_Y = 2
-
-
-OPTIONS = ("Help [h]", "Quit [q]")
-
+# This help is displayed inside the program
 HELP = """rpio-curses is an interactive RPIO management tool.
 
 You can view and change gpios as well as simply observe them.
@@ -54,24 +45,52 @@ URL: http://pythonhosted.org/RPIO
 License: GPLv3+
 """
 
-import RPIO
-RPIO.setwarnings(False)
-def get_gpiolist():
-    pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
-            else RPIO.GPIO_LIST_R2
-    id_list = list(pins)
-    id_list.sort()
+# Timeout between refreshing the GPIO states. You can adjust
+# this to your needs (eg. `= 0.5`, ...)
+THREAD_TIMEOUT_SECONDS = 1
 
-    gpios = []
-    for gpio_id_str in id_list:
-        gpio_id = int(gpio_id_str)
-        function = RPIO.gpio_function(gpio_id)
-        state = RPIO.forceinput(gpio_id)
-        gpios.append((gpio_id, function, 1 if state else 0))
+# Dummy GPIO list to use on dev machines (gpio-id, function, state)
+GPIO_LIST = [(i+2, i%3 if i%3 < 2 else 4, i%2) for i in range(20)]
 
-    return gpios
-GPIO_LIST = get_gpiolist()
+# Main windows options
+OPTIONS = ("Help [h]", "Quit [q]")
 
+# Pretty print states and functions
+GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
+STATES = ["Low", "High"]
+
+# X/Y positioning of 'windows' in curses
+POS_GPIOLIST_X = 5
+POS_GPIOLIST_Y = 2
+POS_GPIOINFO_X = 40
+POS_GPIOINFO_Y = 2
+
+# The cursor width depends on the options of this pins function
+CURSOR_WIDTHS = {0: 23, 1: 30, 4: 17}
+
+# Only import RPIO if not on a dev machine
+if "no_rpio" not in CMD_OPTIONS:
+    import RPIO
+    RPIO.setwarnings(False)
+    def get_gpiolist():
+        pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
+                else RPIO.GPIO_LIST_R2
+        id_list = list(pins)
+        id_list.sort()
+
+        gpios = []
+        for gpio_id_str in id_list:
+            gpio_id = int(gpio_id_str)
+            function = RPIO.gpio_function(gpio_id)
+            state = RPIO.forceinput(gpio_id)
+            gpios.append((gpio_id, function, 1 if state else 0))
+
+        return gpios
+    GPIO_LIST = get_gpiolist()
+
+#
+# GPIO methods
+#
 def set_input(gpio_id):
     RPIO.setup(int(gpio_id), RPIO.IN)
 
@@ -95,6 +114,7 @@ def set_low(gpio_id):
 
 
 class TimedCallback(Thread):
+    """ Simple callback after timeout via thread. Used for auto-update """
     is_running = True
     def __init__(self, timeout, cb):
         Thread.__init__(self)
@@ -102,24 +122,32 @@ class TimedCallback(Thread):
         self.cb = cb
 
     def run(self):
-        time.sleep(self.timeout)
+        # parts is a 'trick' to quit faster
+        parts = 10
+        timeout_part = float(self.timeout) / parts
+        for i in range(parts):
+            if not self.is_running:
+                return
+            time.sleep(timeout_part)
         if self.is_running:
             self.cb()
 
 
-WIDTHS = {0: 23, 1: 30, 4: 17}
 class Drawer(object):
+    """ All in one. Does the curses drawing as well as everything else. """
     gpios = GPIO_LIST
 
     cursor_index = 0
     cursor_index_menu2 = 0
     cursor_menu2_width = 30
 
-    pos_cursor_y = POS_GPIOLIST_Y
+    pos_cursor_y = None  # gets set from __init__ to allow adjustments
     pos_cursor_x = POS_GPIOLIST_X - 3
 
     pos_cursor_menu2_y = POS_GPIOINFO_Y + 5
     pos_cursor_menu2_x = POS_GPIOINFO_X - 1
+
+    thread = None
 
     len_options_menu2 = 0
     is_menu2 = False
@@ -128,13 +156,14 @@ class Drawer(object):
 
     def __init__(self, screen):
         self.screen = screen
+        self.pos_cursor_y = POS_GPIOLIST_Y
 
     def draw(self):
         screen = self.screen
         #screen.clear()
         #screen.refresh()
 
-        screen.addstr(0, 0, "RPIO v%s\n\n" % "0.8.4")
+        screen.addstr(0, 0, "RPIO v%s" % "0.8.4")
 
         pos_y = POS_GPIOLIST_Y
         for gpio in self.gpios:
@@ -159,7 +188,7 @@ class Drawer(object):
         gpio, function, state = self.gpios[gpio_index]
         self.gpio_menu2 = gpio
         self.function_menu2 = function
-        self.cursor_menu2_width = WIDTHS[function]
+        self.cursor_menu2_width = CURSOR_WIDTHS[function]
 
         screen = self.screen
         screen.addstr(POS_GPIOINFO_Y, POS_GPIOINFO_X, "GPIO %-20s" % gpio)
@@ -172,25 +201,25 @@ class Drawer(object):
 
         if function == 1:
             # INPUT
-            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to OUTPUT               ")
-            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set resistor to pull-up     ")
-            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set resistor to pull-down   ")
-            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "Set resistor to off         ")
-            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "back                        ")
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to OUTPUT             ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set resistor to pull-up   ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set resistor to pull-down ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "Set resistor to off       ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "back                      ")
             self.len_options_menu2 = 5
         elif function == 0:
-            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT                ")
-            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set output to High          ")
-            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set output to Low           ")
-            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "back                        ")
-            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                            ")
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT              ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set output to High        ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "Set output to Low         ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "back                      ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                          ")
             self.len_options_menu2 = 4
         elif function == 4:
-            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT                ")
-            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set to OUTPUT               ")
-            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "back                        ")
-            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "                            ")
-            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                            ")
+            screen.addstr(POS_GPIOINFO_Y+5, POS_GPIOINFO_X+2, "Set to INPUT              ")
+            screen.addstr(POS_GPIOINFO_Y+6, POS_GPIOINFO_X+2, "Set to OUTPUT             ")
+            screen.addstr(POS_GPIOINFO_Y+7, POS_GPIOINFO_X+2, "back                      ")
+            screen.addstr(POS_GPIOINFO_Y+8, POS_GPIOINFO_X+2, "                          ")
+            screen.addstr(POS_GPIOINFO_Y+9, POS_GPIOINFO_X+2, "                          ")
             self.len_options_menu2 = 3
 
         self.pos_cursor_menu2_y = self.cursor_index_menu2 + POS_GPIOINFO_Y + 5
@@ -201,8 +230,8 @@ class Drawer(object):
     def menu2_clear(self):
         self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x, " ")
         self.screen.addstr(self.pos_cursor_menu2_y, self.pos_cursor_menu2_x +self.cursor_menu2_width, " ")
-        for i in xrange(12):
-            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%50s" % "")
+        for i in range(12):
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%30s" % "")
 
     def menu2_move_cursor(self, up=True):
         offset = -1 if up else 1
@@ -264,7 +293,7 @@ class Drawer(object):
             return
         i = 0
         for i in range(len(HELP.split("\n"))):
-            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%80s" % "")
+            self.screen.addstr(POS_GPIOINFO_Y+i, POS_GPIOINFO_X, "%63s" % "")
         self.is_help = False
 
     def enter(self):
@@ -356,7 +385,7 @@ class Drawer(object):
             self.go_to_menu2()
 
     def log(self, msg):
-        self.screen.addstr(1, 100, "%-20s" % msg)
+        self.screen.addstr(1, 20, "%-20s" % msg)
 
     def _refresh(self, start_thread=True):
         """ Started by Thread, to refresh everything """
@@ -382,11 +411,13 @@ class Drawer(object):
 
     def start(self):
         self.draw()
-        self.start_thread()
+        if "no_thread" not in CMD_OPTIONS:
+            self.start_thread()
 
     def quit(self, retval=0):
         self.is_running = False
-        self.thread.is_running = False
+        if self.thread:
+            self.thread.is_running = False
         #time.sleep(2)
         curses.nocbreak(); self.screen.keypad(0); curses.echo()
         curses.endwin()
@@ -394,8 +425,24 @@ class Drawer(object):
 
 
 def main():
+    exit_msg = ""
     try:
         screen = curses.initscr()
+
+        # Check that the screen size is within minimum limits
+        min_h, min_w = (25, 70)
+        win_h, win_w = screen.getmaxyx()
+        if win_w > min_w and win_h == min_h - 1:
+            # We can cut one line
+            global POS_GPIOLIST_Y
+            POS_GPIOLIST_Y -= 1
+        elif win_h < min_h or win_w < min_w:
+            exit_msg = ("Your terminal window is too small. `rpio-curses` "
+                    "needs 24 lines and 70 columns (you have %s lines, %s "
+                    "columns).") % (win_h, win_w)
+            exit(-1)
+
+        # Start the fun
         curses.cbreak();
         curses.noecho()
         screen.keypad(1);
@@ -405,9 +452,11 @@ def main():
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
+        # Our dear all-in-one magic class
         d = Drawer(screen)
         d.start()
 
+        # And the event loop
         while True:
             event = screen.getch()
             if event == ord("q"):
@@ -425,10 +474,18 @@ def main():
             elif event == 104:
                 d.show_help()
             else:
-                screen.addstr(0, 100, "Pressed: %-10s" % event)
+                #screen.addstr(0, 100, "Pressed: %-10s" % event)
+                pass
+
     finally:
-        curses.nocbreak(); screen.keypad(0); curses.echo()
+        # Any way, this is gonna happen at the end of the program
+        curses.nocbreak()
+        screen.keypad(0)
+        curses.echo()
         curses.endwin()
+        if exit_msg:
+            print(exit_msg)
+
 
 if __name__ == "__main__":
     main()

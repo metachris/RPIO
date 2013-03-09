@@ -294,6 +294,27 @@ py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
 
     // printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
     set_pullupdn(gpio, pud);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+// python function output(channel, value) without direction check
+static PyObject*
+py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    int gpio, channel;
+    int pud = PUD_OFF;
+
+    static char *kwlist[] = {"channel", "pull_up_down", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|ii", kwlist, &channel, &pud))
+        return NULL;
+
+    if ((gpio = channel_to_gpio(channel)) < 0)
+        return NULL;
+
+    // printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
+    set_pullupdn(gpio, pud);
     return Py_None;
 }
 
@@ -422,7 +443,7 @@ PyMethodDef rpi_gpio_methods[] = {
 #if PY_MAJOR_VERSION > 2
 static struct PyModuleDef rpigpiomodule = {
     PyModuleDef_HEAD_INIT,
-    "GPIO", /* name of module */
+    "_GPIO", /* name of module */
     NULL,         /* module documentation, may be NULL */
     -1,            /* size of per-interpreter state of the module,
                         or -1 if the module keeps state in global variables. */
@@ -431,9 +452,9 @@ static struct PyModuleDef rpigpiomodule = {
 #endif
 
 #if PY_MAJOR_VERSION > 2
-PyMODINIT_FUNC PyInit_GPIO(void)
+PyMODINIT_FUNC PyInit__GPIO(void)
 #else
-PyMODINIT_FUNC initGPIO(void)
+PyMODINIT_FUNC init_GPIO(void)
 #endif
 {
     PyObject *module = NULL;
@@ -442,7 +463,7 @@ PyMODINIT_FUNC initGPIO(void)
     if ((module = PyModule_Create(&rpigpiomodule)) == NULL)
         goto exit;
 #else
-    if ((module = Py_InitModule("GPIO", rpi_gpio_methods)) == NULL)
+    if ((module = Py_InitModule("_GPIO", rpi_gpio_methods)) == NULL)
         goto exit;
 #endif
 
@@ -519,7 +540,7 @@ PyMODINIT_FUNC initGPIO(void)
     rpi_revision_hex = Py_BuildValue("s", revision_hex);
     PyModule_AddObject(module, "RPI_REVISION_HEX", rpi_revision_hex);
 
-    version = Py_BuildValue("s", "0.8.4/0.4.2a");
+    version = Py_BuildValue("s", "0.9.1/0.4.2a");
     PyModule_AddObject(module, "VERSION_GPIO", version);
 
     // set up mmaped areas

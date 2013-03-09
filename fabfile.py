@@ -2,7 +2,8 @@
 Fabric makes it super easy to build and test the code on a Raspberry.
 You can see all commands with `$ fab -l`. Typical usages:
 
-    $ fab upload build test
+    $ fab upload build_gpio test_gpio
+    $ fab upload build_pwm
     $ fab upload test
 
 You'll need to have Fabric installed ('$ sudo pip install fabric'),
@@ -21,6 +22,9 @@ if not env.hosts:
 def clean():
     run("rm -rf /tmp/source/")
 
+# Set default hosts
+if not env.hosts:
+    env.hosts = ["raspberry_dev_local"]
 
 def upload():
     """ Uploads source/ to raspberrypi:/tmp/source/ """
@@ -38,40 +42,72 @@ def upload_dist():
     put("dist/*.tar.gz", "/tmp/")
 
 
-def test_pwm():
-    upload()
+def build_gpio():
+    """ Builds source with Python 2.7 and 3.2, and tests import """
+    with cd("/tmp/source/c_gpio"):
+        test = "import _GPIO; print(_GPIO.VERSION_GPIO)"
+        run("make gpio2.7 && cp build/_GPIO.so .")
+        run('sudo python2.7 -c "%s"' % test)
+        run("cp _GPIO.so ../RPIO/")
+        run("cp _GPIO.so ../RPIO/_GPIO27.so")
+        run("make gpio3.2 && cp build/_GPIO.so .")
+        run('sudo python3.2 -c "%s"' % test)
+        run("mv _GPIO.so ../RPIO/_GPIO32.so")
+
+
+def build_pwm():
+    """ Builds source with Python 2.7 and 3.2, and tests import """
     with cd("/tmp/source/c_pwm"):
-        run("make dirty")
-        run("sudo ./pwm")
+        test = "import _PWM; print(_PWM.VERSION)"
+        run("make py2.7")
+        run('sudo python2.7 -c "%s"' % test)
+        run("cp _PWM.so ../RPIO/PWM/")
+        run("mv _PWM.so ../RPIO/PWM/_PWM27.so")
+        run("make py3.2")
+        run('python3.2 -c "%s"' % test)
+        run("mv _PWM.so ../RPIO/PWM/_PWM32.so")
 
 
 def build():
-    """ Builds source with Python 2.7 and 3.2, and tests import """
-    with cd("/tmp/source/c_gpio"):
-        run("""echo "import GPIO\nprint(GPIO.VERSION_GPIO)" > test.py""")
-        run("make gpio2.7 && cp build/GPIO.so .")
-        run("sudo python2.7 test.py")
-        run("cp GPIO.so ../RPIO/")
-        run("cp GPIO.so ../RPIO/GPIO27.so")
-        run("make gpio3.2 && cp build/GPIO.so .")
-        run("sudo python3.2 test.py")
-        run("mv GPIO.so ../RPIO/GPIO32.so")
+    build_gpio()
+    build_pwm()
 
 
-def test():
+def test_gpio():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
-        run("cp GPIO27.so GPIO.so")
+        run("cp _GPIO27.so _GPIO.so")
     with cd("/tmp/source"):
-        run("sudo python run_tests.py")
+        run("sudo python tests_gpio.py")
 
 
-def test3():
+def test3_gpio():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
-        run("cp GPIO32.so GPIO.so")
+        run("cp _GPIO32.so _GPIO.so")
     with cd("/tmp/source"):
-        run("sudo python3 run_tests.py")
+        run("sudo python3 tests_gpio.py")
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO27.so _GPIO.so")
+
+
+def test_pwm():
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO27.so _GPIO.so")
+        run("cp PWM/_PWM27.so PWM/_PWM.so")
+    with cd("/tmp/source"):
+        run("sudo python tests_pwm.py")
+
+
+def test3_pwm():
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO32.so _GPIO.so")
+        run("cp PWM/_PWM32.so PWM/_PWM.so")
+    with cd("/tmp/source"):
+        run("sudo python3 tests_pwm.py")
+    with cd("/tmp/source/RPIO"):
+        run("cp _GPIO27.so _GPIO.so")
+        run("cp PWM/_PWM27.so PWM/_PWM.so")
 
 
 def upload_to_pypi():

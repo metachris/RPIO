@@ -300,7 +300,7 @@ def main():
         except:
             import urllib
         show_help = False
-        url = "https://raw.github.com/metachris/RPIO/v%s/documentation/rpio.1" \
+        url = "https://raw.github.com/metachris/RPIO/v%s/source/scripts/man/rpio.1" \
                 % RPIO.VERSION
         mandir = "/usr/local/man/man1"
         manfile = "%s/rpio.1" % mandir

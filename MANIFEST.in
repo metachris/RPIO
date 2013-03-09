@@ -1,2 +1,4 @@
 graft source/c_gpio
+graft source/c_pwm
 include source/rpio
+include source/rpio-curses

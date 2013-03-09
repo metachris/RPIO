@@ -7,28 +7,43 @@ Version Strings
 ---------------
   [ ] RPIO/__init__.py
   [ ] py_gpio.c
+  [ ] pwm_py.c
   [ ] setup.py
   [ ] doc/source/conf.py
   [ ] doc/source/index.rst (section 'Changes')
 
 
-Documentation
--------------
+Commit dev branch
+-----------------
   [ ] $ make doc
+  [ ] $ git status
+  [ ] $ git commit
+
+
+Double-Check Tests and sdist
+----------------------------
+  [ ] $ fab upload build test test3
+
+  - upload sdist to Raspberry
+    [ ] test update with python2
+    [ ] test update with python3
+
+
+Switch to master or staging branch
+----------------------------------
+  [ ] $ git checkout master
 
 
 GIT Master Merge & Push
 -----------------------
-  [ ] $ git checkout master && git merge dev
+  [ ] $ git merge -Xtheirs dev --squash
+  [ ] $ make doc
   [ ] $ git status
+  [ ] $ git commit
 
-  [ ] everything commited?
-  [ ] $ git push 
+  ...
 
-
-Double-Check Test Suite
------------------------
-  [ ] $ fab upload build test test3
+  [ ] $ git push
 
 
 Add Git Tag and Push
