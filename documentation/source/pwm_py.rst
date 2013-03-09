@@ -170,3 +170,35 @@ setting of 10µs, you'll need to set the pulse-width as 50 (50 * 10µs = 500µs)
 Less granularity needs more DMA memory.
 
 To achieve shorter pulses than 10µs, you simply need set a lower granularity.
+
+
+Example with Oscilloscope
+-------------------------
+
+Setup PWM.Servo with the default 20ms subcycle. On the oscilloscope GPIO 15 the 
+blue channel, GPIO 17 the yellow one.
+
+::
+
+    from RPIO import PWM
+    servo = PWM.Servo()
+
+.. image:: images/pwm_0.png
+
+Now we set a 4000us (4ms) pulse every 20ms for GPIO 15::
+
+    servo.set_servo(15, 4000)
+
+.. image:: images/pwm_1.png
+
+Now a 1000us (1ms) pulse for GPIO 17::
+
+    servo.set_servo(17, 1000)
+
+.. image:: images/pwm_2.png
+
+We can use the low-level PWM methods to add further pulses to a subcycle::
+
+    PWM.add_channel_pulse(0, 17, 200, width=100)
+
+.. image:: images/pwm_3.png
