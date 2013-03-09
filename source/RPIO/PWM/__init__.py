@@ -14,7 +14,7 @@ PWM (default) or PCM and more. RPIO.PWM is BETA; feedback highly appreciated.
 You can directly access the low-level methods via PWM.init_channel(), etc. as
 well as several helpers such as the PWM.Servo class. For more information take
 a look at pythonhosted.org/RPIO as well as the source code at
-https://github.com/metachris/RPIO/blob/dev/source/c_pwm/pwm.c
+https://github.com/metachris/RPIO/blob/master/source/c_pwm
 
 Example of using `PWM.Servo`:
 
@@ -90,9 +90,12 @@ def clear_channel_gpio(channel, gpio):
     return _PWM.clear_channel_gpio(channel, gpio)
 
 
-def add_channel_pulse(channel, gpio, width_start, width):
-    """ Add a pulse within the subcycle for a specific GPIO to a channel """
-    return _PWM.add_channel_pulse(channel, gpio, width_start, width)
+def add_channel_pulse(dma_channel, gpio, start, width):
+    """
+    Add a pulse for a specific GPIO to a dma channel subcycle. `start` and
+    `width` are multiples of the pulse-width increment granularity.
+    """
+    return _PWM.add_channel_pulse(dma_channel, gpio, start, width)
 
 
 def print_channel(channel):
@@ -101,7 +104,10 @@ def print_channel(channel):
 
 
 def set_loglevel(level):
-    """ Sets the loglevel for the PWM module """
+    """
+    Sets the loglevel for the PWM module to either PWM.LOG_LEVEL_DEBUG for all
+    messages, or to PWM.LOG_LEVEL_ERRORS for only fatal error messages.
+    """
     return _PWM.set_loglevel(level)
 
 
@@ -198,5 +204,5 @@ class Servo:
                 pulse_width_us / _pulse_incr_us)
 
     def stop_servo(self, gpio):
-        """ Stops servo activity on this gpio """
+        """ Stops servo activity for this gpio """
         clear_channel_gpio(self._dma_channel, gpio)

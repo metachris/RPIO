@@ -63,8 +63,7 @@ After the installation you can use ``import RPIO`` as well as the command-line t
 Examples
 --------
 
-Here are a few examples of how to use RPIO. You can find more examples inside the documentation as well as
-in the ``/examples/`` directory.
+You can find lots of examples inside the documentation, as well as in the `/examples/ source directory <https://github.com/metachris/RPIO/tree/master/examples>`_.
 
 
 Feedback

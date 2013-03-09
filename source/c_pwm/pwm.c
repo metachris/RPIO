@@ -5,7 +5,6 @@
  * URL: https://github.com/metachris/RPIO
  * License: GPLv3+ (and an optional commercial license)
  *
- *
  * pwm.c provides flexible PWM via DMA for the Raspberry Pi, supporting frequencies
  * up to 500kHz (1us per pulse), multiple DMA channels, multiple GPIOs per channel,
  * timing by PWM (default) or PCM, a Python wrapper, and more.
@@ -33,16 +32,6 @@
  * within that subcycle). You can use any number of GPIOs, and set multiple pulses
  * for each one. Longer subcycles use more DMA memory.
  *
- * With longer subcycles you can set more finer-grained frequencies, because more
- * periods fit within the subcycle (which is the lowest common denominator, so to
- * speak). For instance if the subcycle is 10ms it will be repeated 100 times per
- * second. That works if you set a round frequency like 400, because it simply adds
- * 4 pulses per subcycle. To be able to set a freq. like 440, you'll need to increase
- * a subcycle of at least 100,000 (10x/sec). Here are some reference subcycle timings:
- *
- * - 10,000us = 100x/second -> works with frequencies round to the hundred (eg. 400, 500)
- * - 100,000us = 10x/second -> works with frequencies round to the ten (eg. 440, 550)
- *
  *
  * PULSE WIDTH INCREMENT GRANULARITY
  * ---------------------------------
@@ -58,9 +47,8 @@
  *
  * WARNING
  * -------
- * pwm.c is in beta and currently not fully tested and functional. Setting very long
- * or very short subcycle times may cause unreliable signals. Please direct your
- * feedback to chris@linuxuser.at.
+ * pwm.c is in beta and currently not yet fully tested. Setting very long or very short
+ * subcycle times may cause unreliable signals. Please send feedback to chris@linuxuser.at.
  *
  *
  * TODO
