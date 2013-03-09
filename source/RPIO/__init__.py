@@ -102,7 +102,7 @@ from RPIO._GPIO import *
 from RPIO._GPIO import cleanup as _cleanup_orig
 from RPIO._GPIO import setmode as _setmode
 
-VERSION = "0.9.1"
+VERSION = "0.9.2"
 
 # BCM numbering mode by default
 setmode(BCM)

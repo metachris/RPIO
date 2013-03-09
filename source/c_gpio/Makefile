@@ -21,12 +21,5 @@ gpio3.2:
 	gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -I/usr/include/python3.2mu -c cpuinfo.c -o build/cpuinfo.o
 	gcc -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-z,relro build/py_gpio.o build/c_gpio.o build/cpuinfo.o -o build/_GPIO.so
 
-gpio3.2:
-	mkdir -p build
-	gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -I/usr/include/python3.2mu -c py_gpio.c -o build/py_gpio.o
-	gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -I/usr/include/python3.2mu -c c_gpio.c -o build/c_gpio.o
-	gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -I/usr/include/python3.2mu -c cpuinfo.c -o build/cpuinfo.o
-	gcc -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-z,relro build/py_gpio.o build/c_gpio.o build/cpuinfo.o -o build/GPIO.so
-
 clean:
 	rm -rf build
