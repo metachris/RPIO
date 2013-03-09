@@ -202,9 +202,9 @@ static volatile uint32_t *gpio_reg;
 static int delay_hw = DELAY_VIA_PWM;
 static int log_level = LOG_LEVEL_DEFAULT;
 
-// if set to 1, calls to fatal will not exit the program but set the error_message and
-// return an error code. soft_fatal is enabled by default by the python wrapper, in order
-// to convert calls to fatal(..) to exceptions.
+// if set to 1, calls to fatal will not exit the program or shutdown DMA/PWM, but just sets
+// the error_message and returns an error code. soft_fatal is enabled by default by the 
+// python wrapper, in order to convert calls to fatal(..) to exceptions.
 static int soft_fatal = 0;
 
 // cache for a error message
@@ -295,13 +295,12 @@ terminate(void)
 }
 
 // Shutdown with an error message. Returns EXIT_FAILURE for convenience.
+// if soft_fatal is set to 1, a call to `fatal(..)` will not shut down
+// PWM/DMA activity (used in the Python wrapper).
 static int
 fatal(char *fmt, ...)
 {
     va_list ap;
-
-    // Shutdown all DMA and PWM activity
-    shutdown();
 
     // Handle error
     va_start(ap, fmt);
@@ -311,6 +310,9 @@ fatal(char *fmt, ...)
     }
     vfprintf(stderr, fmt, ap);
     va_end(ap);
+
+    // Shutdown all DMA and PWM activity
+    shutdown();
     exit(EXIT_FAILURE);
 }
 
