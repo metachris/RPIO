@@ -31,7 +31,7 @@ Documentation
 News
 ----
 
-* v0.9.0: :ref:`PWM via DMA <ref-rpio-pwm-py>`
+* v0.9.2: :ref:`PWM via DMA <ref-rpio-pwm-py>`
 * v0.8.4: ``rpio-curses``
 * v0.8.2: Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
 
@@ -102,7 +102,9 @@ FAQ
 
   You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see :ref:`Installation <ref-installation>`).
 
-Other Changes
+  * ``rpio-curses``
+  * Bugfix in RPIO: tcp callbacks (first parameter ``socket`` works now)
+  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo``
 
 Links
 -----
@@ -113,6 +115,11 @@ Links
 * http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
 * http://www.kernel.org/doc/Documentation/gpio.txt
 
+  * Added TCP socket callbacks
+  * ``RPIO`` does not auto-clean interfaces on exceptions anymore, but will auto-clean them 
+    as needed. This means you should now call ``RPIO.cleanup_interrupts()`` to properly close
+    the sockets and unexport the interfaces. 
+  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo()``
 
 License
 -------
@@ -129,6 +136,14 @@ License
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
+  * Improved auto-cleaning of interrupt interfaces
+  * BOARD numbering scheme support for interrupts
+  * Support for software pullup and -down resistor with interrupts
+  * New method ``RPIO.set_pullupdn(..)``
+  * ``rpio`` now supports P5 header gpios (28, 29, 30, 31) (only in BCM mode)
+  * Tests added in ``source/run_tests.py`` and ``fabfile.py``
+  * Major refactoring of C GPIO code
+  * Various minor updates and fixes
 
 Changes
 -------
@@ -141,35 +156,6 @@ Changes
 * v0.8.5
 
   * Debug-options for ``rpio-curses``: You can now run it on any Linux/OSX machine with ``rpio-curses dev``
-
-* v0.8.4
-
-  * ``rpio-curses``
-  * Bugfix in RPIO: tcp callbacks (first parameter ``socket`` works now)
-  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo``
-
-* v0.8.3: pypi release update with updated documentation and bits of refactoring
-
-* v0.8.2
-
-  * Added TCP socket callbacks
-  * ``RPIO`` does not auto-clean interfaces on exceptions anymore, but will auto-clean them 
-    as needed. This means you should now call ``RPIO.cleanup_interrupts()`` to properly close
-    the sockets and unexport the interfaces. 
-  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo()``
-
-
-* v0.8.0
-
-  * Improved auto-cleaning of interrupt interfaces
-  * BOARD numbering scheme support for interrupts
-  * Support for software pullup and -down resistor with interrupts
-  * New method ``RPIO.set_pullupdn(..)``
-  * ``rpio`` now supports P5 header gpios (28, 29, 30, 31) (only in BCM mode)
-  * Tests added in ``source/run_tests.py`` and ``fabfile.py``
-  * Major refactoring of C GPIO code
-  * Various minor updates and fixes
-
 
 * v0.8.4
 
