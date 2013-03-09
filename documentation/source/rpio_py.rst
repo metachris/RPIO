@@ -60,8 +60,7 @@ tells the server to close the client connection (for instance if you just press 
 Example
 ^^^^^^^
 
-The following example shows how to react to events on three gpios, and one socket 
-server on port 8080::
+The following example shows how to listen for GPIO and TCP interrupts (on port 8080)::
 
     import RPIO
 
@@ -72,17 +71,17 @@ server on port 8080::
         print("socket %s: '%s'" % (socket.fileno(), val))
         socket.send("echo: %s\n" % val)
 
-    # Three GPIO interrupt callbacks
+    # GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
     RPIO.add_interrupt_callback(9, gpio_callback, pull_up_down=RPIO.PUD_UP)
 
-    # One TCP socket server callback on port 8080
+    # TCP socket server callback on port 8080
     RPIO.add_tcp_callback(8080, socket_callback)
 
-    # Start the blocking epoll loop, and catch Ctrl+C KeyboardInterrupt
+    # Start the blocking epoll loop, and cleanup interfaces on exit
     try:
         RPIO.wait_for_interrupts()
-    except KeyboardInterrupt:
+    finally:
         RPIO.cleanup_interrupts()
 
 

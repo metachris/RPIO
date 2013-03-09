@@ -410,13 +410,13 @@ clear_channel_gpio(int channel, int gpio)
     if ((gpio_setup & 1<<gpio) == 0)
         return fatal("Error: cannot clear gpio %d; not yet been set up\n", gpio);
 
-    // Finally set all samples to 0 (instead of gpio_mask)
+    // Remove this gpio from all samples:
     for (i = 0; i < channels[channel].num_samples; i++) {
         *(dp + i) &= ~(1 << gpio);  // set just this gpio's bit to 0
     }
 
-    // Let DMA do one cycle to actually clear them TODO: remove this?
-    udelay(channels[channel].subcycle_time_us);
+    // Let DMA do one cycle before setting GPIO to low.
+    //udelay(channels[channel].subcycle_time_us);
 
     gpio_set(gpio, 0);
     return EXIT_SUCCESS;

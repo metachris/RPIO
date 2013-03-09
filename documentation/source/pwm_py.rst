@@ -15,7 +15,7 @@ you can use it in Python via the provided wrapper, as well as directly from your
 
 ``RPIO.PWM`` provides low-level methods to control everything manually, as well as helper
 classes that simplify PWM for specific usages (such as ``RPIO.PWM.Servo``). This module is currently
-in beta; feedback is much appreciated (please send it to chris@linuxuser.at).
+in beta, please send feedback to chris@linuxuser.at. As of yet only BCM GPIO numbering is supported.
 
 
 Examples
@@ -41,14 +41,18 @@ Example of using the low-level PWM methods::
 
     from RPIO import PWM
 
+    # Setup PWM and DMA channel 0
     PWM.setup()
     PWM.init_channel(0)
 
+    # Add some pulses to the subcycle
     PWM.add_channel_pulse(0, 17, 0, 50)
     PWM.add_channel_pulse(0, 17, 100, 50)
-    ...
+
+    # Stop PWM for specific GPIO on channel 0
     PWM.clear_channel_gpio(0, 17)
-    ...
+
+    # Shutdown all PWM and DMA activity
     PWM.cleanup()
 
 
@@ -129,7 +133,7 @@ Low-level PWM method documentation (from ``$ pydoc RPIO.PWM``)::
         LOG_LEVEL_ERRORS = 1
         PULSE_WIDTH_INCREMENT_GRANULARITY_US_DEFAULT = 10
         SUBCYCLE_TIME_US_DEFAULT = 20000
-        VERSION = '0.2.1'
+        VERSION = '0.9.1'
 
 
 Under the hood
