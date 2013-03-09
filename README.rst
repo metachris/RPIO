@@ -1,12 +1,11 @@
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
-* Hardware PWM with up to 500kHz (1µs pulses)
 * GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO interrupts (callbacks when events occur on input gpios)
 * TCP socket interrupts (callbacks when tcp socket clients send data)
+* PWM via DMA (up to 1µs resolution; 500kHz)
 * Command-line tools ``rpio`` and ``rpio-curses``
-* Well documented, fast source code
-* Minimal CPU and memory usage
+* Well documented, fast source code with minimal CPU usage
 * Open source (GPLv3+)
 
 
@@ -27,7 +26,7 @@ After the installation you can use ``import RPIO`` as well as the command-line t
 Examples
 --------
 
-You can find lots of examples inside the documentation, as well as in the `/examples/ source directory <https://github.com/metachris/RPIO/tree/master/examples>`_.
+You can find lots of examples inside the `documentation <http://pythonhosted.org/RPIO>`_, as well as in the `/examples/ source directory <https://github.com/metachris/RPIO/tree/master/examples>`_.
 
 
 Feedback
