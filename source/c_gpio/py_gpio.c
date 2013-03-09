@@ -521,7 +521,7 @@ PyMODINIT_FUNC init_GPIO(void)
     rpi_revision_hex = Py_BuildValue("s", revision_hex);
     PyModule_AddObject(module, "RPI_REVISION_HEX", rpi_revision_hex);
 
-    version = Py_BuildValue("s", "0.9.1/0.4.2a");
+    version = Py_BuildValue("s", "0.9.2/0.4.2a");
     PyModule_AddObject(module, "VERSION_GPIO", version);
 
     // set up mmaped areas

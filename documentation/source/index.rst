@@ -31,7 +31,7 @@ Documentation
 News
 ----
 
-* v0.9.0: :ref:`PWM via DMA <ref-rpio-pwm-py>`
+* v0.9.2: :ref:`PWM via DMA <ref-rpio-pwm-py>`
 * v0.8.4: ``rpio-curses``
 * v0.8.2: Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
 
