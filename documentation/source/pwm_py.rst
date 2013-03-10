@@ -145,31 +145,27 @@ for more details.
 Subcycles
 ^^^^^^^^^
 
-One second is divided into subcycles of user-defined length (within 2ms and 1s)
-which will be repeated endlessly. The subcycle length is set
-per DMA channel; the shorter the length of a subcycle, the less DMA memory will
-be used. Do not set below 2ms - we started seeing weird behaviors of the RPi.
- 
-To use servos for instance, a typical subcycle time is 20ms (which will be repeated
-50 times a second). Each subcycle includes the specific pulse(s) to set the servo
-to the correct position.
+Each DMA channel is setup with a specific subcycle, within which pulses 
+are added, and which will be repeated endlessly. Servos, for instance, 
+typically use a subcycle of 20ms, which will be repeated 50 times a second.
+You can add pulses for multiple GPIOs, as well as multiple pulses for
+one GPIO. Subcycles cannot be lower than 2ms.
 
-You can add pulses to the subcycle, and they will be repeated accordingly (eg.
-a 100ms subcycle will be repeated 10 times per second; as are all the pulses
-within that subcycle). You can use any number of GPIOs, and set multiple pulses
-for each one. Longer subcycles use more DMA memory.
+For more information about subcycles, see the examples below. The left oscilloscope
+images zoom in on one subcycle, the right-handed images are zoomed out to show their repetition.
 
 
 Pulse-width increment granularity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Another very important setting is the pulse width increment granularity, which
-defaults to 10µs and is used for _all_ DMA channels (since its passed to the PWM
-timing hardware). Under the hood you need to set the pulse widths as multiples
-of the increment-granularity. Eg. in order to set 500µs pulses with a granularity
-setting of 10µs, you'll need to set the pulse-width as 50 (50 * 10µs = 500µs).
-Less granularity needs more DMA memory.
 
-To achieve shorter pulses than 10µs, you simply need set a lower granularity.
+The pulse-width increment granularity (10µs by default) is used for all DMA channels 
+(since its passed to the PWM timing hardware). Pulses are added to a subcycle by
+specifying a ``start`` and a ``width`` parameter, both in multiples of the granularity.
+For instance to set 500µs pulses with a granularity setting of 10µs, 
+you'll need to set the pulse-width as 50 (50 * 10µs = 500µs). 
+
+The pulse-width granularity is a **system-wide setting** used by the PWM hardware, 
+therefore you cannot use different granularities at the same time, even in different processes.
 
 
 Example with Oscilloscope
