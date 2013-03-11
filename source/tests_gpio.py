@@ -186,7 +186,7 @@ class TestSequenceFunctions(unittest.TestCase):
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_OFF)
         RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
-                pull_up_down=RPIO.PUD_UP)
+                pull_up_down=RPIO.PUD_UP, debounce_timeout_ms=100)
         logging.info("- waiting 3s for interrupts on gpio %s and %s...", \
                 GPIO_IN, GPIO_OUT)
         Thread(target=stop_interrupts, args=(3,)).start()

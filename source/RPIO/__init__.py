@@ -92,11 +92,11 @@ License: GPLv3
 import socket
 import select
 import os.path
+import time
 
 from logging import debug, info, warn, error
 from threading import Thread
 from functools import partial
-from time import sleep
 
 import RPIO._GPIO as _GPIO
 
@@ -228,7 +228,7 @@ class _RPIO:
 
     def add_interrupt_callback(self, gpio_id, callback, edge='both',
             pull_up_down=PUD_OFF, threaded_callback=False,
-            debounce_timeout_us=None):
+            debounce_timeout_ms=None):
         """
         Add a callback to be executed when the value on 'gpio_id' changes to
         the edge specified via the 'edge' parameter (default='both').
@@ -287,7 +287,7 @@ class _RPIO:
                 debug("- unexporting kernel interface for GPIO %s" % gpio_id)
                 with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
                     f.write("%s" % gpio_id)
-                sleep(0.1)
+                time.sleep(0.1)
 
             # Export kernel interface /sys/class/gpio/gpioN
             with open(_SYS_GPIO_ROOT + "export", "w") as f:
@@ -317,7 +317,9 @@ class _RPIO:
             self._map_fileno_to_file[f.fileno()] = f
             self._map_fileno_to_gpioid[f.fileno()] = gpio_id
             self._map_fileno_to_options[f.fileno()] = {
-                    "debounce_timeout_us": debounce_timeout_us,
+                    "debounce_timeout_s": debounce_timeout_ms / 1000.0 if \
+                            debounce_timeout_ms else 0,
+                    "interrupt_last": 0,
                     "edge": edge
                     }
             self._map_gpioid_to_fileno[gpio_id] = f.fileno()
@@ -357,10 +359,20 @@ class _RPIO:
         if (edge == 'rising' and val == 0) or (edge == 'falling' and val == 1):
             return
 
+        # If user activated debounce for this callback, check timing now
+        debounce = self._map_fileno_to_options[fileno]["debounce_timeout_s"]
+        if debounce:
+            t = time.time()
+            t_last = self._map_fileno_to_options[fileno]["interrupt_last"]
+            if t - t_last < debounce:
+                debug("- don't start interrupt callback due to debouncing")
+                return
+            self._map_fileno_to_options[fileno]["interrupt_last"] = t
+
+        # Start the callback(s) now
         gpio_id = self._map_fileno_to_gpioid[fileno]
         if gpio_id in self._map_gpioid_to_callbacks:
             for cb in self._map_gpioid_to_callbacks[gpio_id]:
-                # Start the callback!
                 cb(gpio_id, val)
 
     def close_tcp_client(self, fileno):
@@ -491,7 +503,7 @@ def add_tcp_callback(port, callback, threaded_callback=False):
 
 def add_interrupt_callback(gpio_id, callback, edge='both', \
         pull_up_down=PUD_OFF, threaded_callback=False, \
-        debounce_timeout_us=None):
+        debounce_timeout_ms=None):
     """
     Add a callback to be executed when the value on 'gpio_id' changes to
     the edge specified via the 'edge' parameter (default='both').
@@ -502,11 +514,11 @@ def add_interrupt_callback(gpio_id, callback, edge='both', \
     If `threaded_callback` is True, the callback will be started
     inside a Thread.
 
-    If debounce_timeout_us is set, new interrupts will not be forwarded
-    until after the specified amount of microseconds.
+    If debounce_timeout_ms is set, new interrupts will not be forwarded
+    until after the specified amount of milliseconds.
     """
     _rpio.add_interrupt_callback(gpio_id, callback, edge, pull_up_down, \
-            threaded_callback, debounce_timeout_us)
+            threaded_callback, debounce_timeout_ms)
 
 
 def del_interrupt_callback(gpio_id):

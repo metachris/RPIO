@@ -134,9 +134,9 @@ Changes
 
 * v0.9.4
 
-  * Added ``debounce_timeout_us`` argument to ``RPIO.add_interrupt_callback(..)`` TODO: document
+  * Interrupt callbacks now get integer values ``0`` or ``1`` instead of strings TODO: document
+  * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)`` TODO: document
   * Added ``threaded`` argument to ``RPIO.wait_for_interrupts(..)`` TODO: document
-  * Interrupt callbacks now return integer values ``0`` and ``1`` instead of strings TODO: document
 
 * v0.9.1
 
