@@ -122,7 +122,6 @@ setup = _GPIO.setup
 output = _GPIO.output
 input = _GPIO.input
 setmode = _GPIO.setmode
-setwarnings = _GPIO.setwarnings
 forceoutput = _GPIO.forceoutput
 forceinput = _GPIO.forceinput
 set_pullupdn = _GPIO.set_pullupdn
@@ -184,6 +183,7 @@ def version():
 
 class _RPIO:
     _epoll = select.epoll()
+    _show_warnings = True
 
     # Interrupt callback maps
     _map_fileno_to_file = {}
@@ -284,6 +284,9 @@ class _RPIO:
         else:
             # If kernel interface already exists unexport first for clean setup
             if os.path.exists(path_gpio):
+                if self._show_warnings:
+                    warn("Kernel interface for GPIO %s already exists." % \
+                            gpio_id)
                 debug("- unexporting kernel interface for GPIO %s" % gpio_id)
                 with open(_SYS_GPIO_ROOT + "unexport", "w") as f:
                     f.write("%s" % gpio_id)
@@ -578,3 +581,9 @@ def cleanup():
     """
     cleanup_interrupts()
     _GPIO.cleanup()
+
+
+def setwarnings(enabled=True):
+    """ Show warnings (either `True` or `False`) """
+    _GPIO.setwarnings(enabled)
+    _rpio._show_warnings = enabled
