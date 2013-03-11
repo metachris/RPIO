@@ -6,7 +6,7 @@
 RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ in
 various ways, and uses the BCM GPIO numbering scheme by default.
 
-* :ref:`GPIO Interrupts <ref-rpio-py-interrupts>`
+* :ref:`GPIO Interrupts <ref-rpio-py-interrupts>` with debouncing
 * :ref:`TCP Socket Interrupts <ref-rpio-py-tcpserver>`
 * :ref:`GPIO Input & Output <ref-rpio-py-rpigpio>`
 * :ref:`Hardware PWM <ref-rpio-pwm-py>`
@@ -31,12 +31,13 @@ notification times, and the ability to trigger on specific edge transitions
 (``rising``, ``falling`` or ``both``). You can also set a software pull-up 
 or pull-down resistor.
 
-.. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
+.. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False, debounce_timeout_ms=None)
 
    Adds a callback to receive notifications when a GPIO changes it's value. Possible ``pull_up_down`` values are 
    ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and ``RPIO.PUD_OFF`` (default). Possible edges are ``rising``,
-   ``falling`` and ``both`` (default). Note that ``rising`` and ``falling`` edges may receive values
-   not corresponding to the edge, so be sure to double check.
+   ``falling`` and ``both`` (default). The values passed to the callback are of type integer, and either ``0`` or ``1``.
+
+   If ``debounce_timeout_ms`` is set, interrupt callbacks will not be started until the specified milliseconds have passed since the last interrupt. Adjust this to your needs (typically between 10ms and 100ms).
 
 
 .. _ref-rpio-py-tcpserver:
@@ -88,16 +89,25 @@ The following example shows how to listen for GPIO and TCP interrupts (on port 8
 If you want to receive a callback inside a Thread (to not block RPIO from returning to wait
 for interrupts), set ``threaded_callback`` to ``True`` when adding it::
 
-
     # for GPIO interrupts
     RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
     # for socket interrupts
     RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True)
 
-To stop the ``wait_for_interrupts()`` loop you can call ``RPIO.stop_waiting_for_interrupts()``.
-After using ``RPIO.wait_for_interrupts()`` you should call ``RPIO.cleanup_interrupts()`` before your 
-program quits, to shut everything down nicely.
+
+To debounce GPIO interrupts, you can add the argument ``debounce_timeout_ms``
+to the ``add_interrupt_callback(..)`` call:
+
+    RPIO.add_interrupt_callback(7, do_something, debounce_timeout_ms=100)
+
+
+You can add the argument ``threaded=True`` to the ``RPIO.wait_for_interrupts(..)`` call to
+put this blocking method into a thread that runs in the background.
+
+To stop ``wait_for_interrupts(..)``, call ``RPIO.stop_waiting_for_interrupts()``. After using 
+``RPIO.wait_for_interrupts()`` you should call ``RPIO.cleanup_interrupts()`` before your 
+program quits, to shut everything down cleanly.
 
 
 .. _ref-rpio-py-rpigpio:
@@ -190,9 +200,10 @@ Additional Methods
 
 Interrupt Handling
 
-* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)``
+* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False, debounce_timeout_ms=None)``
 * ``RPIO.add_tcp_callback(port, callback, threaded_callback=False)``
 * ``RPIO.del_interrupt_callback(gpio_id)``
-* ``RPIO.wait_for_interrupts(epoll_timeout=1)``
+* ``RPIO.close_tcp_client(fileno)``
+* ``RPIO.wait_for_interrupts(epoll_timeout=1, threaded=False)``
 * ``RPIO.stop_waiting_for_interrupts()``
 *  implemented with ``epoll``
