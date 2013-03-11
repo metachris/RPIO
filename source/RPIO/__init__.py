@@ -41,12 +41,14 @@ callback. Here is an example:
     RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
     RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True))
 
+To debounce GPIO interrupts, you can add the argument ``debounce_timeout_ms``
+to the ``add_interrupt_callback(..)`` call:
 
-Make sure to double-check the value returned from the interrupt, since it
-is not necessarily corresponding to the edge (eg. 0 may come in as value,
-even if edge="rising"). To remove all callbacks from a certain gpio pin, use
-`RPIO.del_interrupt_callback(gpio_id)`. To stop the `wait_for_interrupts()`
-loop you can call `RPIO.stop_waiting_for_interrupts()`.
+    RPIO.add_interrupt_callback(7, do_something, debounce_timeout_ms=100)
+
+To stop the `wait_for_interrupts()` loop, call
+`RPIO.stop_waiting_for_interrupts()`. To remove all callbacks from a certain
+gpio pin, use `RPIO.del_interrupt_callback(gpio_id)`.
 
 Besides the interrupt handling, you can use RPIO just as RPi.GPIO:
 
