@@ -15,8 +15,8 @@ logging.basicConfig(format=log_format, level=logging.DEBUG)
 import RPIO
 RPIO.setwarnings(False)
 
-GPIO_IN = 17
-GPIO_OUT = 14
+GPIO_IN = 14
+GPIO_OUT = 17
 
 
 def run(cmd):
@@ -43,11 +43,11 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         logging.info(" ")
         logging.info("=== INPUT TESTS ===")
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             RPIO.setup(5, RPIO.IN)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             RPIO.setup(0, RPIO.IN)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             RPIO.setup(32, RPIO.IN)
 
         RPIO.setup(GPIO_IN, RPIO.IN)
@@ -69,13 +69,13 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         logging.info(" ")
         logging.info("=== OUTPUT TESTS ===")
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(5, RPIO.OUT)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(0, RPIO.OUT)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(32, RPIO.OUT)
 
@@ -100,9 +100,9 @@ class TestSequenceFunctions(unittest.TestCase):
         for pin in pins:
             gpio_id = RPIO.channel_to_gpio(pin)
             logging.info("- BCM channel %s = gpio %s", pin, gpio_id)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             gpio_id = RPIO.channel_to_gpio(32)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             gpio_id = RPIO.channel_to_gpio(5)
 
         logging.info(" ")
@@ -116,7 +116,7 @@ class TestSequenceFunctions(unittest.TestCase):
                 continue
             gpio_id = RPIO.channel_to_gpio(pin)
             logging.info("- BOARD channel %s = gpio %s", pin, gpio_id)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             gpio_id = RPIO.channel_to_gpio(0)
 
         RPIO.setmode(RPIO.BCM)
@@ -182,7 +182,7 @@ class TestSequenceFunctions(unittest.TestCase):
         #
         # Auto interrupt shutdown with thread and stop_waiting_for_interrupts
         #
-        logging.info(" ")
+        logging.info("start second ")
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_OFF)
         RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
