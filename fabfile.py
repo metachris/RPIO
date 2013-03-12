@@ -1,16 +1,14 @@
 """
-Fabric makes it super easy to build and test the code on a Raspberry.
 You can see all commands with `$ fab -l`. Typical usages:
 
     $ fab upload build_gpio test_gpio
     $ fab upload build_pwm
     $ fab upload test
+    $ fab build_deb
 
-You'll need to have Fabric installed ('$ sudo pip install fabric'),
-SSH access to the Raspberry Pi, abd the right host in env.hosts.
 """
 from fabric.api import run, local, cd, put, env
-from fabric.operations import prompt
+from fabric.operations import prompt, get
 
 env.use_ssh_config = True
 
@@ -80,6 +78,26 @@ def build_deb():
     with cd("/tmp/build/rpio-%s" % v):
         run("tar -xvf /tmp/rpio_debian.tar.gz")
         run("dpkg-buildpackage -i -I -rfakeroot")
+
+
+def upload_deb():
+    # Custom github upload
+    v = _get_cur_version()
+    t = ("/Users/chris/Projects/private/web/metachris.github.com/"
+            "rpio/download/%s/") % v
+    local("mkdir -p %s" % t)
+    get("/tmp/build/python-rpio_%s_armhf.deb" % v, t)
+    get("/tmp/build/python3-rpio_%s_armhf.deb" % v, t)
+    get("/tmp/build/rpio_*", t)
+    print
+    print "Debian release files copied. Do this now:"
+    print ""
+    print "    $ cd %s/.." % t
+    print "    $ ./gen_version_index.sh %s" % v
+    print "    $ ./gen_index.sh"
+    print "    $ git status"
+    print "    $ git commit -am 'Debian packages for RPIO %s" % v
+    print "    $ git push"
 
 
 #

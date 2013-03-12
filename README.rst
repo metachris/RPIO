@@ -22,6 +22,8 @@ The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_i
 
 After the installation you can use ``import RPIO`` as well as the command-line tools ``rpio`` and ``rpio-curses``.
 
+Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
+
 
 Examples
 --------
