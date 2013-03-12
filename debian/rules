@@ -23,19 +23,3 @@ override_dh_auto_clean:
 	dh_auto_clean
 	rm -rf build
 	rm -rf *.egg-info
-
-
-
-#override_dh_auto_build:
-#    # Build for each Python 3 version
-#    set -ex; for python in $(PYTHON3); do \
-#        $$python setup.py build; \
-#    done
-#    dh_auto_build
-
-#override_dh_auto_install:
-#    # The same for install; note the --install-layout=deb option
-#    set -ex; for python in $(PYTHON3); do \
-#        $$python setup.py install --install-layout=deb --root=debian/tmp; \
-#    done
-#    dh_auto_install

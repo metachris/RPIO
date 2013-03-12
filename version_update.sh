@@ -7,6 +7,11 @@ DATE_STR=`date +"%a, %d %b %Y %H:%M:%S +0100"`
 VERSION_FILES=('setup.py' 'source/RPIO/__init__.py' 'source/c_gpio/py_gpio.c' 'source/c_pwm/pwm_py.c' 'documentation/source/conf.py');
 VERSION_LAST=`head -n1 debian/changelog | awk '{print $2}' | sed "s/[()]//g"`
 
+if [ "$1" == "--show" ]; then
+    echo $VERSION_LAST
+    exit 0
+fi
+
 echo "The last version is $VERSION_LAST."
 echo -n "New version number: "
 read version
@@ -32,9 +37,9 @@ done
 # Update Changelog
 echo "rpio ($version) unstable; urgency=low" > CHANGELOG.new
 echo "" >> CHANGELOG.new
-echo " * " >> CHANGELOG.new
-echo " * " >> CHANGELOG.new
-echo " * " >> CHANGELOG.new
+echo "  * " >> CHANGELOG.new
+echo "  * " >> CHANGELOG.new
+echo "  * " >> CHANGELOG.new
 echo "" >> CHANGELOG.new
 echo " -- Chris Hager <chris@linuxuser.at>  $DATE_STR" >> CHANGELOG.new
 echo "" >> CHANGELOG.new

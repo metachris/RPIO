@@ -1,8 +1,8 @@
 rpio (0.9.4) unstable; urgency=low
 
- * Debounce timeout for interrupts
- * Threaded argument for wait_for_interrupts()
- * Refactoring
+  * Debounce timeout for interrupts (Closes: #XXXXXX)
+  * Threaded argument for wait_for_interrupts()
+  * Refactoring
 
  -- Chris Hager <chris@linuxuser.at>  Tue, 12 Mar 2013 22:34:04 +0100
 

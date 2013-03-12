@@ -19,6 +19,10 @@ if not env.hosts:
     env.hosts = ["raspberry_dev_local"]
 
 
+def _get_cur_version():
+    return local("bash version_update.sh --show", capture=True)
+
+
 def clean():
     run("rm -rf /tmp/source/")
 
@@ -33,26 +37,49 @@ def upload():
         run("cp source/scripts/rpio-curses source/")
 
 
-def build_rpm():
-    python setup.py bdist_rpm --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall
-
-
-def build_deb():
-    # build the source package in the parent directory
-    # then rename it to project_version.orig.tar.gz
-    $(PYTHON) setup.py sdist $(COMPILE) --dist-dir=../ --prune
-    rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
-    # build the package
-    dpkg-buildpackage -i -I -rfakeroot
-
 def make_sdist():
     """ Makes an sdist package """
     local("python setup.py sdist")
 
-def upload_dist():
+
+def upload_sdist():
     """ Makes an sdist and uploads it to /tmp """
     make_sdist()
     put("dist/*.tar.gz", "/tmp/")
+
+
+#
+# Packaging
+#
+def build_rpm():
+    pass
+    # "python setup.py bdist_rpm
+    # --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall"
+
+
+def build_deb():
+    v = _get_cur_version()
+
+    run("rm -rf /tmp/RPIO*")
+    run("rm -rf /tmp/build")
+    run("mkdir /tmp/build")
+
+    # Upload the sdist
+    upload_sdist()
+    with cd("/tmp/build"):
+        run("tar -xvf /tmp/RPIO-%s.tar.gz" % v)
+        run("mv RPIO-%s rpio-%s" % (v, v))
+
+        run("mkdir rpio-%s/dist" % v)
+        run("mv /tmp/RPIO-%s.tar.gz rpio-%s/dist/rpio_%s.orig.tar.gz" % \
+                (v, v, v))
+
+    # Upload debian/
+    local("tar -czf /tmp/rpio_debian.tar.gz debian")
+    put("/tmp/rpio_debian.tar.gz", "/tmp/")
+    with cd("/tmp/build/rpio-%s" % v):
+        run("tar -xvf /tmp/rpio_debian.tar.gz")
+        run("dpkg-buildpackage -i -I -rfakeroot")
 
 
 #
