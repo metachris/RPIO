@@ -33,12 +33,31 @@ def upload():
         run("cp source/scripts/rpio-curses source/")
 
 
+def build_rpm():
+    python setup.py bdist_rpm --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall
+
+
+def build_deb():
+    # build the source package in the parent directory
+    # then rename it to project_version.orig.tar.gz
+    $(PYTHON) setup.py sdist $(COMPILE) --dist-dir=../ --prune
+    rename -f 's/$(PROJECT)-(.*)\.tar\.gz/$(PROJECT)_$$1\.orig\.tar\.gz/' ../*
+    # build the package
+    dpkg-buildpackage -i -I -rfakeroot
+
+def make_sdist():
+    """ Makes an sdist package """
+    local("python setup.py sdist")
+
 def upload_dist():
     """ Makes an sdist and uploads it to /tmp """
-    local("python setup.py sdist")
+    make_sdist()
     put("dist/*.tar.gz", "/tmp/")
 
 
+#
+# Building of GPIO and PWM C sources
+#
 def build_gpio():
     """ Builds source with Python 2.7 and 3.2, and tests import """
     with cd("/tmp/source/c_gpio"):
@@ -70,6 +89,9 @@ def build():
     build_pwm()
 
 
+#
+# Tests
+#
 def test_gpio():
     """ Invokes test suite in `run_tests.py` """
     with cd("/tmp/source/RPIO"):
@@ -107,6 +129,9 @@ def test3_pwm():
         run("cp PWM/_PWM27.so PWM/_PWM.so")
 
 
+#
+# Other
+#
 def upload_to_pypi():
     """ Upload sdist and bdist_eggs to pypi """
     # DO_UPLOAD provides a safety mechanism to avoid accidental pushes to pypi.

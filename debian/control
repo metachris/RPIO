@@ -1,0 +1,19 @@
+Source: rpio
+Section: python
+Priority: optional
+Maintainer: Chris Hager <chris@linuxuser.at>
+Build-Depends: debhelper (>= 8.0.0), python (>= 2.6.6-3~), python3 (>= 3.1.3-12~), python-setuptools, python3-setuptools, python-dev, python3-dev
+Standards-Version: 3.8.4
+X-Python-Version: >= 2.6
+X-Python3-Version: >= 3.2
+Homepage: https://github.com/metachris/RPIO
+
+Package: python-rpio
+Architecture: armhf
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Description: RPIO super GPIO
+
+Package: python3-rpio
+Architecture: armhf
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
+Description: Python 3 RPIO

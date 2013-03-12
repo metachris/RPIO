@@ -139,6 +139,7 @@ Changes
   * Interrupt callbacks now receive integer values ``0`` or ``1`` instead of strings TODO: document
   * Interrupt callbacks with edge=``rising`` or ``falling`` only receive the correct values
   * Added ``RPIO.close_tcp_client(fileno)`` TODO: doc
+  * Debian .deb package builds
 
 * v0.9.1
 
