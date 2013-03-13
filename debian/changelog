@@ -1,3 +1,9 @@
+rpio (0.9.5) unstable; urgency=low
+
+  * Cleanup
+
+ -- Chris Hager <chris@linuxuser.at>  Wed, 13 Mar 2013 02:24:08 +0100
+
 rpio (0.9.4) unstable; urgency=low
 
   * Debounce timeout for interrupts (Closes: #XXXXXX)

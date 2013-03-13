@@ -74,35 +74,6 @@ Please send feedback and ideas to chris@linuxuser.at, and `open an issue at Gith
 you've encountered a bug.
 
 
-FAQ
----
-
-**How does RPIO work?**
-
-  RPIO extends RPi.GPIO, a GPIO controller written in C which uses a low-level memory interface. Interrupts are
-  implemented  with ``epoll`` via ``/sys/class/gpio/``. For more detailled information take a look at the `source <https://github.com/metachris/RPIO/tree/master/source>`_, it's well documented and easy to build.
-
-
-**Should I update RPIO often?**
-
-  Yes, because RPIO is getting better by the day. You can use ``$ rpio --update-rpio`` or see :ref:`Installation <ref-installation>` for more information about methods to update.
-
-
-**I've encountered a bug, what next?**
-
-  * Make sure you are using the latest version of RPIO (see :ref:`Installation <ref-installation>`)
-  * Open an issue at Github
-
-    * Go to https://github.com/metachris/RPIO/issues/new
-    * Describe the problem and steps to replicate
-    * Add the output of ``$ rpio --version`` and ``$ rpio --sysinfo``
-
-
-**pip is throwing an error during the build:** ``source/c_gpio/py_gpio.c:9:20: fatal error: Python.h: No such file or directory``
-
-  You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see :ref:`Installation <ref-installation>`).
-
-
 Links
 -----
 

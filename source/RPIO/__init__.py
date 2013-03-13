@@ -126,7 +126,7 @@ from functools import partial
 
 import RPIO._GPIO as _GPIO
 
-VERSION = "0.9.4"
+VERSION = "0.9.5"
 
 # Exposing constants from RPi.GPIO
 VERSION_GPIO = _GPIO.VERSION_GPIO
