@@ -112,11 +112,11 @@ Changes
 
 * v0.9.4
 
-  * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)`` TODO: document
-  * Added ``threaded`` argument to ``RPIO.wait_for_interrupts(..)`` TODO: document
-  * Interrupt callbacks now receive integer values ``0`` or ``1`` instead of strings TODO: document
+  * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)``
+  * Added ``threaded`` argument to ``RPIO.wait_for_interrupts(..)``
+  * Interrupt callbacks now receive integer values ``0`` or ``1`` instead of strings
   * Interrupt callbacks with edge=``rising`` or ``falling`` only receive the correct values
-  * Added ``RPIO.close_tcp_client(fileno)`` TODO: doc
+  * Added ``RPIO.close_tcp_client(fileno)``
   * Debian .deb package builds
   * License changed to GNU Lesser General Public License v3 or later (LGPLv3+)
 

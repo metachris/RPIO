@@ -20,7 +20,8 @@ in beta, please send feedback to chris@linuxuser.at. As of yet only BCM GPIO num
 Examples
 --------
 
-Example of using ``PWM.Servo``::
+Example of using ``PWM.Servo`` (with the default subcycle time of 20ms and default pulse-width
+increment granularity of 10µs)::
 
     from RPIO import PWM
 
@@ -83,7 +84,7 @@ Low-level PWM method documentation (from ``$ pydoc RPIO.PWM``)::
 
     FUNCTIONS
 
-        add_channel_pulse(dma_channel, gpio, width_start, width)
+        add_channel_pulse(dma_channel, gpio, start, width)
             Add a pulse for a specific GPIO to a dma channel (within the subcycle)
 
         cleanup()
@@ -170,17 +171,17 @@ therefore you cannot use different granularities at the same time, even in diffe
 Example with Oscilloscope
 -------------------------
 
-Setup PWM.Servo with the default 20ms subcycle. On the oscilloscope GPIO 15 the 
-blue channel, GPIO 17 the yellow one.
-
-::
+In the oscilloscope images, GPIO 15 the blue channel and GPIO 17 the yellow one. The left 
+oscilloscope images show one subcycle, the right images are 'zoomed out' to show their repitition.
+First we setup PWM.Servo with the default 20ms subcycle and 10µs pulse-width
+increment granularity::
 
     from RPIO import PWM
     servo = PWM.Servo()
 
 .. image:: images/pwm_0.png
 
-Now we set a 4000us (4ms) pulse every 20ms for GPIO 15::
+Now set a 4000us (4ms) pulse every 20ms for GPIO 15::
 
     servo.set_servo(15, 4000)
 
@@ -192,8 +193,9 @@ Now a 1000us (1ms) pulse for GPIO 17::
 
 .. image:: images/pwm_2.png
 
-We can use the low-level PWM methods to add further pulses to a subcycle::
+We can use the low-level PWM methods to add further pulses to a subcycle. This is done in multiples
+of the pulse-width increment granularity (``start=200*10µs=2000µs``, ``width=100*10µs=1000µs``)::
 
-    PWM.add_channel_pulse(0, 17, 200, width=100)
+    PWM.add_channel_pulse(0, 17, start=200, width=100)
 
 .. image:: images/pwm_3.png
