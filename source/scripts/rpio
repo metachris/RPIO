@@ -333,8 +333,8 @@ def main():
 
     if options.sysinfo:
         show_help = False
-        s = ("%s: Model %s, Revision %s, RAM: %s MB, Maker: %s, " \
-                "Overclocked: %s") % RPIO.sysinfo()
+        s = "%s: Model %s, Revision %s, RAM: %s MB, Maker: %s" % \
+                RPIO.sysinfo()
         info(s)
 
     if show_help:

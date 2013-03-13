@@ -188,12 +188,8 @@ def _threaded_callback(callback, *args):
 
 
 def sysinfo():
-    """
-    Returns (model, revision, mb-ram, maker, is_overclocked) for this raspberry
-    """
-    is_overclocked = "+" in RPI_REVISION_HEX
-    rev = RPI_REVISION_HEX.lstrip("0").rstrip("+")
-    return (RPI_REVISION_HEX,) + MODEL_DATA[rev] + (is_overclocked,)
+    """ Returns (model, revision, mb-ram, maker) for this raspberry """
+    return (RPI_REVISION_HEX,) + MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]
 
 
 def version():

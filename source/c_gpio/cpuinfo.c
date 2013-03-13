@@ -33,8 +33,8 @@
 //   -1 (could not open /proc/cpuinfo)
 //
 // revision_hex will be four characters revision id (eg. '0004'),
-// and a plus sign '+' will be appended if the over-voltage header
-// has been part of the cpuinfo.
+// the over-voltage header, if present, is removed (since it is
+// not consistently present on all overclocked boards).
 int 
 get_cpuinfo_revision(char *revision_hex)
 {
@@ -60,12 +60,10 @@ get_cpuinfo_revision(char *revision_hex)
         return 0;
     }
 
-    // Detect over-voltage
+    // If over-voltage is present, remove it
     char* pos = strstr(revision_hex, "1000");
     if (pos && pos - revision_hex == 0 && strlen(revision_hex) > 5) {
-        // Over-voltage header found. Remove and add +
         strcpy(revision_hex, revision_hex+4);
-        sprintf(revision_hex, "%s+", revision_hex);
     }
 
     // Returns revision
