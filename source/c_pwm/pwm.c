@@ -1,17 +1,32 @@
 /*
  * This file is part of RPIO.
  *
- * Author: Chris Hager <chris@linuxuser.at>
- * URL: https://github.com/metachris/RPIO
- * License: GPLv3+ (and an optional commercial license)
+ * Copyright
  *
- * pwm.c provides flexible PWM via DMA for the Raspberry Pi, supporting frequencies
- * up to 500kHz (1us per pulse), multiple DMA channels, multiple GPIOs per channel,
- * timing by PWM (default) or PCM, a Python wrapper, and more.
+ *     Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
  *
- * pwm.c is based on the excellent servod.c by Richard Hirst, which has been refactored
- * and upgraded primarily with runtime PWM control (to use it as a library), support
- * for all 15 DMA channels and GPIO multiplexing within a single channel.
+ * License
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Lesser General Public License as published
+ *     by the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Lesser General Public License for more details at
+ *     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+ *
+ * Documentation
+ *
+ *     http://pythonhosted.org/RPIO
+ *
+ *
+ * pwm.c, based on the excellent servod.c by Richard Hirst, provides flexible
+ * PWM via DMA for the Raspberry Pi, supporting a resolution of up to 1us,
+ * all 15 DMA channels, multiple GPIOs per channel, timing by PWM (default)
+ * or PCM, a Python wrapper, and more.
  *
  * Feedback is much appreciated.
  *

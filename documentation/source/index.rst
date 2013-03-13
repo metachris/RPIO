@@ -3,13 +3,13 @@ Welcome to RPIO's documentation!
 
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
+* PWM via DMA (up to 1µs resolution)
 * GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO interrupts (callbacks when events occur on input gpios)
 * TCP socket interrupts (callbacks when tcp socket clients send data)
-* PWM via DMA (up to 1µs resolution; 500kHz)
 * Command-line tools ``rpio`` and ``rpio-curses``
 * Well documented, fast source code with minimal CPU usage
-* Open source (GPLv3+)
+* Open source (LGPLv3+)
 
 RPIO consists of two main components:
 
@@ -74,38 +74,6 @@ Please send feedback and ideas to chris@linuxuser.at, and `open an issue at Gith
 you've encountered a bug.
 
 
-FAQ
----
-
-**How does RPIO work?**
-
-  RPIO extends RPi.GPIO, a GPIO controller written in C which uses a low-level memory interface. Interrupts are
-  implemented  with ``epoll`` via ``/sys/class/gpio/``. For more detailled information take a look at the `source <https://github.com/metachris/RPIO/tree/master/source>`_, it's well documented and easy to build.
-
-
-**Should I update RPIO often?**
-
-  Yes, because RPIO is getting better by the day. You can use ``$ rpio --update-rpio`` or see :ref:`Installation <ref-installation>` for more information about methods to update.
-
-
-**I've encountered a bug, what next?**
-
-  * Make sure you are using the latest version of RPIO (see :ref:`Installation <ref-installation>`)
-  * Open an issue at Github
-
-    * Go to https://github.com/metachris/RPIO/issues/new
-    * Describe the problem and steps to replicate
-    * Add the output of ``$ rpio --version`` and ``$ rpio --sysinfo``
-
-
-**pip is throwing an error during the build:** ``source/c_gpio/py_gpio.c:9:20: fatal error: Python.h: No such file or directory``
-
-  You need to install the ``python-dev`` package (eg. ``$ sudo apt-get install python-dev``), or use ``easy_install`` (see :ref:`Installation <ref-installation>`).
-
-  * ``rpio-curses``
-  * Bugfix in RPIO: tcp callbacks (first parameter ``socket`` works now)
-  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo``
-
 Links
 -----
 
@@ -115,38 +83,43 @@ Links
 * http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
 * http://www.kernel.org/doc/Documentation/gpio.txt
 
-  * Added TCP socket callbacks
-  * ``RPIO`` does not auto-clean interfaces on exceptions anymore, but will auto-clean them 
-    as needed. This means you should now call ``RPIO.cleanup_interrupts()`` to properly close
-    the sockets and unexport the interfaces. 
-  * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo()``
 
-License
--------
+License & Copyright
+-------------------
 
 ::
 
-    RPIO is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    Copyright
 
-    RPIO is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+        Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
 
-  * Improved auto-cleaning of interrupt interfaces
-  * BOARD numbering scheme support for interrupts
-  * Support for software pullup and -down resistor with interrupts
-  * New method ``RPIO.set_pullupdn(..)``
-  * ``rpio`` now supports P5 header gpios (28, 29, 30, 31) (only in BCM mode)
-  * Tests added in ``source/run_tests.py`` and ``fabfile.py``
-  * Major refactoring of C GPIO code
-  * Various minor updates and fixes
+    License
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Lesser General Public License as published
+        by the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Lesser General Public License for more details at
+        <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+
 
 Changes
 -------
+
+* v0.9.5
+
+  * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)``
+  * Added ``threaded`` argument to ``RPIO.wait_for_interrupts(..)``
+  * Interrupt callbacks now receive integer values ``0`` or ``1`` instead of strings
+  * Interrupt callbacks with edge=``rising`` or ``falling`` only receive the correct values
+  * Added ``RPIO.close_tcp_client(fileno)``
+  * Debian .deb package builds
+  * License changed to GNU Lesser General Public License v3 or later (LGPLv3+)
+  * ``RPIO.sysinfo()`` returns is_overclocked (improved detection in cpuinfo.c)
 
 * v0.9.1
 

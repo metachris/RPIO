@@ -1,4 +1,28 @@
 #!/usr/bin/env python
+#
+# This file is part of RPIO.
+#
+# Copyright
+#
+#     Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
+#
+# License
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU Lesser General Public License as published
+#     by the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU Lesser General Public License for more details at
+#     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+#
+# Documentation
+#
+#     http://pythonhosted.org/RPIO
+#
 """
 This test suite runs on the Raspberry Pi and tests RPIO inside out.
 """
@@ -15,8 +39,8 @@ logging.basicConfig(format=log_format, level=logging.DEBUG)
 import RPIO
 RPIO.setwarnings(False)
 
-GPIO_IN = 17
-GPIO_OUT = 14
+GPIO_IN = 14
+GPIO_OUT = 17
 
 
 def run(cmd):
@@ -43,11 +67,11 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         logging.info(" ")
         logging.info("=== INPUT TESTS ===")
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             RPIO.setup(5, RPIO.IN)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             RPIO.setup(0, RPIO.IN)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             RPIO.setup(32, RPIO.IN)
 
         RPIO.setup(GPIO_IN, RPIO.IN)
@@ -69,13 +93,13 @@ class TestSequenceFunctions(unittest.TestCase):
         logging.info(" ")
         logging.info(" ")
         logging.info("=== OUTPUT TESTS ===")
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(5, RPIO.OUT)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(0, RPIO.OUT)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             # 5 is not a valid gpio
             RPIO.setup(32, RPIO.OUT)
 
@@ -100,9 +124,9 @@ class TestSequenceFunctions(unittest.TestCase):
         for pin in pins:
             gpio_id = RPIO.channel_to_gpio(pin)
             logging.info("- BCM channel %s = gpio %s", pin, gpio_id)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             gpio_id = RPIO.channel_to_gpio(32)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             gpio_id = RPIO.channel_to_gpio(5)
 
         logging.info(" ")
@@ -116,7 +140,7 @@ class TestSequenceFunctions(unittest.TestCase):
                 continue
             gpio_id = RPIO.channel_to_gpio(pin)
             logging.info("- BOARD channel %s = gpio %s", pin, gpio_id)
-        with self.assertRaises(RPIO.InvalidChannelException):
+        with self.assertRaises(RPIO._GPIO.InvalidChannelException):
             gpio_id = RPIO.channel_to_gpio(0)
 
         RPIO.setmode(RPIO.BCM)
@@ -182,11 +206,11 @@ class TestSequenceFunctions(unittest.TestCase):
         #
         # Auto interrupt shutdown with thread and stop_waiting_for_interrupts
         #
-        logging.info(" ")
+        logging.info("start second ")
         RPIO.add_interrupt_callback(GPIO_IN, test_callback, edge='both', \
                 pull_up_down=RPIO.PUD_OFF)
         RPIO.add_interrupt_callback(GPIO_OUT, test_callback, edge='falling', \
-                pull_up_down=RPIO.PUD_UP)
+                pull_up_down=RPIO.PUD_UP, debounce_timeout_ms=100)
         logging.info("- waiting 3s for interrupts on gpio %s and %s...", \
                 GPIO_IN, GPIO_OUT)
         Thread(target=stop_interrupts, args=(3,)).start()

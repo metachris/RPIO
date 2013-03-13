@@ -5,7 +5,7 @@ Curses-based rpio interface
 
 Author: Chris Hager <chris@linuxuser.at>
 URL: http://pythonhosted.org//RPIO
-License: GPLv3+
+License: LGPLv3+
 """
 import os
 import sys
@@ -42,7 +42,7 @@ of a menu you can press [arrow-left] or [ESC].
 
 Author: Chris Hager <chris@linuxuser.at>
 URL: http://pythonhosted.org/RPIO
-License: GPLv3+
+License: LGPLv3+
 """
 
 # Timeout between refreshing the GPIO states. You can adjust
@@ -69,9 +69,11 @@ POS_GPIOINFO_Y = 2
 CURSOR_WIDTHS = {0: 23, 1: 30, 4: 17}
 
 # Only import RPIO if not on a dev machine
+RPIO_VERSION = "dev"
 if "no_rpio" not in CMD_OPTIONS:
     import RPIO
     RPIO.setwarnings(False)
+    RPIO_VERSION = RPIO.VERSION
     def get_gpiolist():
         pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
                 else RPIO.GPIO_LIST_R2
@@ -163,7 +165,7 @@ class Drawer(object):
         #screen.clear()
         #screen.refresh()
 
-        screen.addstr(0, 0, "RPIO v%s" % "0.8.4")
+        screen.addstr(0, 0, "RPIO v%s" % RPIO_VERSION)
 
         pos_y = POS_GPIOLIST_Y
         for gpio in self.gpios:

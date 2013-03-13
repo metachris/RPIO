@@ -6,7 +6,7 @@
 RPIO.py extends `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_ in
 various ways, and uses the BCM GPIO numbering scheme by default.
 
-* :ref:`GPIO Interrupts <ref-rpio-py-interrupts>`
+* :ref:`GPIO Interrupts <ref-rpio-py-interrupts>` with debouncing
 * :ref:`TCP Socket Interrupts <ref-rpio-py-tcpserver>`
 * :ref:`GPIO Input & Output <ref-rpio-py-rpigpio>`
 * :ref:`Hardware PWM <ref-rpio-pwm-py>`
@@ -31,12 +31,20 @@ notification times, and the ability to trigger on specific edge transitions
 (``rising``, ``falling`` or ``both``). You can also set a software pull-up 
 or pull-down resistor.
 
-.. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)
+.. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False, debounce_timeout_ms=None)
 
    Adds a callback to receive notifications when a GPIO changes it's value. Possible ``pull_up_down`` values are 
    ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and ``RPIO.PUD_OFF`` (default). Possible edges are ``rising``,
-   ``falling`` and ``both`` (default). Note that ``rising`` and ``falling`` edges may receive values
-   not corresponding to the edge, so be sure to double check.
+   ``falling`` and ``both`` (default). The values passed to the callback are of type integer, and either ``0`` or ``1``.
+   A callback might look like this: ``def gpio_callback(gpio_id, value):``.
+
+   If ``debounce_timeout_ms`` is set, interrupt callbacks will not be started until the specified milliseconds have passed since the last interrupt. Adjust this to your needs (typically between 10ms and 100ms).
+
+
+.. method:: RPIO.del_interrupt_callback(gpio_id)
+
+   Removes all callbacks for this particular GPIO.
+
 
 
 .. _ref-rpio-py-tcpserver:
@@ -51,16 +59,23 @@ Its easy to open ports for incoming TCP connections with just this one method:
    by RPIO creating a TCP server socket at the specified port. Incoming connections will be accepted when ``RPIO.wait_for_interrupts()`` runs.
    The callback must accept exactly two parameters: socket and message (eg. ``def callback(socket, msg)``).
 
-   The callback can use the socket parameter to send values back to the client (eg. ``socket.send("hi there\n")``). To close the connection to a client, you can use ``socket.close()``. A client can close the connection the same way or by sending an empty message to the server.
+   The callback can use the socket parameter to send values back to the client (eg. ``socket.send("hi there\n")``). To close the connection to a client, use ``RPIO.close_tcp_client(..)``. A client can close the connection the same way or by sending an empty message to the server.
+
+   You can use ``socket.getpeername()`` to get the IP address of the client. `Socket object documentation <http://docs.python.org/2/library/socket.html>`_.
 
 You can test the TCP socket interrupts with ``$ telnet <your-ip> <your-port>`` (eg. ``$ telnet localhost 8080``). An empty string
 tells the server to close the client connection (for instance if you just press enter in telnet, you'll get disconnected).
 
 
+.. method:: RPIO.close_tcp_client(self, fileno)
+
+   Closes the client socket connection and removes it from epoll. You can use this from the callback with ``RPIO.close_tcp_client(socket.fileno())``.
+
+
 Example
 ^^^^^^^
 
-The following example shows how to listen for GPIO and TCP interrupts (on port 8080)::
+The following example shows how to listen for some GPIO and TCP interrupts::
 
     import RPIO
 
@@ -88,16 +103,28 @@ The following example shows how to listen for GPIO and TCP interrupts (on port 8
 If you want to receive a callback inside a Thread (to not block RPIO from returning to wait
 for interrupts), set ``threaded_callback`` to ``True`` when adding it::
 
-
     # for GPIO interrupts
     RPIO.add_interrupt_callback(7, do_something, threaded_callback=True)
 
     # for socket interrupts
     RPIO.add_tcp_callback(8080, socket_callback, threaded_callback=True)
 
-To stop the ``wait_for_interrupts()`` loop you can call ``RPIO.stop_waiting_for_interrupts()``.
-After using ``RPIO.wait_for_interrupts()`` you should call ``RPIO.cleanup_interrupts()`` before your 
-program quits, to shut everything down nicely.
+
+To debounce GPIO interrupts, you can add the argument ``debounce_timeout_ms``
+to ``add_interrupt_callback(..)`` like this::
+
+    RPIO.add_interrupt_callback(7, do_something, debounce_timeout_ms=100)
+
+
+``wait_for_interrupts()`` is a blocking method which, while running, will listen for
+interrupts and start the callbacks. You can add the argument ``threaded=True`` to put 
+``wait_for_interrupts()`` in a thread to run in the background::
+
+    RPIO.wait_for_interrupts(threaded=True)
+
+To stop ``wait_for_interrupts(..)``, call ``RPIO.stop_waiting_for_interrupts()``. After using 
+``RPIO.wait_for_interrupts()`` you should call ``RPIO.cleanup_interrupts()`` before your 
+program quits, to shut everything down cleanly.
 
 
 .. _ref-rpio-py-rpigpio:
@@ -190,9 +217,10 @@ Additional Methods
 
 Interrupt Handling
 
-* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False)``
+* ``RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False, debounce_timeout_ms=None)``
 * ``RPIO.add_tcp_callback(port, callback, threaded_callback=False)``
 * ``RPIO.del_interrupt_callback(gpio_id)``
-* ``RPIO.wait_for_interrupts(epoll_timeout=1)``
+* ``RPIO.close_tcp_client(fileno)``
+* ``RPIO.wait_for_interrupts(epoll_timeout=1, threaded=False)``
 * ``RPIO.stop_waiting_for_interrupts()``
 *  implemented with ``epoll``

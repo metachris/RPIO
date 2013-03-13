@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name="RPIO",
-    version="0.9.2",
+    version="0.9.5",
     package_dir={"": "source"},
     packages=['RPIO', 'RPIO.PWM'],
     ext_modules=[
@@ -19,8 +19,8 @@ setup(
     scripts=["source/scripts/rpio", "source/scripts/rpio-curses"],
 
     description=(("Advanced GPIO for the Raspberry Pi. Extends RPi.GPIO with "
-            "GPIO interrups, TCP socket interrupts, a command line tool and "
-            "more")),
+            "PWM, GPIO interrups, TCP socket interrupts, command line tools "
+            "and more")),
     long_description=read('README.rst'),
     url="https://github.com/metachris/RPIO",
 
@@ -40,7 +40,7 @@ setup(
         "Topic :: System :: Hardware",
         "Intended Audience :: Developers",
         ("License :: OSI Approved :: "
-                "GNU General Public License v3 or later (GPLv3+)"),
+                "GNU Lesser General Public License v3 or later (LGPLv3+)"),
         "License :: Other/Proprietary License",
     ],
 )

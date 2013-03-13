@@ -1,11 +1,30 @@
 /*
-py_gpio.c is based on RPi.GPIO by Ben Croston, and provides a Python interface to
-interact with the gpio-related C methods. This file is under active development
-as part of the RPIO package by Chris Hager <chris@linuxuser.at>.
-
-URL: https://github.com/metachris/RPIO
-License: py_gpio.c is released under the MIT License
-*/
+ * This file is part of RPIO.
+ *
+ * Copyright
+ *
+ *     Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
+ *
+ * License
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Lesser General Public License as published
+ *     by the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Lesser General Public License for more details at
+ *     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+ *
+ * Documentation
+ *
+ *     http://pythonhosted.org/RPIO
+ *
+ * py_gpio.c is based on RPi.GPIO by Ben Croston, and provides a Python interface to
+ * interact with the gpio-related C methods. 
+ */
 #include "Python.h"
 #include "c_gpio.h"
 #include "cpuinfo.h"
@@ -299,25 +318,6 @@ py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
     return Py_None;
 }
 
-// python function output(channel, value) without direction check
-static PyObject*
-py_set_pullupdn(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    int gpio, channel;
-    int pud = PUD_OFF;
-
-    static char *kwlist[] = {"channel", "pull_up_down", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|ii", kwlist, &channel, &pud))
-        return NULL;
-
-    if ((gpio = channel_to_gpio(channel)) < 0)
-        return NULL;
-
-    // printf("Setting gpio %d PULLUPDN to %d", gpio, pud);
-    set_pullupdn(gpio, pud);
-    return Py_None;
-}
-
 // python function value = input(channel)
 static PyObject*
 py_input_gpio(PyObject *self, PyObject *args)
@@ -540,7 +540,7 @@ PyMODINIT_FUNC init_GPIO(void)
     rpi_revision_hex = Py_BuildValue("s", revision_hex);
     PyModule_AddObject(module, "RPI_REVISION_HEX", rpi_revision_hex);
 
-    version = Py_BuildValue("s", "0.9.2/0.4.2a");
+    version = Py_BuildValue("s", "0.9.5/0.4.2a");
     PyModule_AddObject(module, "VERSION_GPIO", version);
 
     // set up mmaped areas

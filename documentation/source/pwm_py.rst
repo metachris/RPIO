@@ -4,8 +4,7 @@
 ==============================================
 
 ``RPIO.PWM`` provides PWM via DMA for the Raspberry Pi, using the onboard PWM module for 
-semi-hardware pulse width modulation. Pulses can be set as short as 1µs, which
-equates to a frequency of 500kHz. 
+semi-hardware pulse width modulation with a precision of up to 1µs.
 
 With ``RPIO.PWM`` you can use any of the 15 DMA channels and 
 any number of GPIOs per channel. Since the PWM is done via DMA, ``RPIO.PWM`` uses almost zero CPU 
@@ -21,7 +20,8 @@ in beta, please send feedback to chris@linuxuser.at. As of yet only BCM GPIO num
 Examples
 --------
 
-Example of using ``PWM.Servo``::
+Example of using ``PWM.Servo`` (with the default subcycle time of 20ms and default pulse-width
+increment granularity of 10µs)::
 
     from RPIO import PWM
 
@@ -84,7 +84,7 @@ Low-level PWM method documentation (from ``$ pydoc RPIO.PWM``)::
 
     FUNCTIONS
 
-        add_channel_pulse(dma_channel, gpio, width_start, width)
+        add_channel_pulse(dma_channel, gpio, start, width)
             Add a pulse for a specific GPIO to a dma channel (within the subcycle)
 
         cleanup()
@@ -145,47 +145,43 @@ for more details.
 Subcycles
 ^^^^^^^^^
 
-One second is divided into subcycles of user-defined length (within 2ms and 1s)
-which will be repeated endlessly. The subcycle length is set
-per DMA channel; the shorter the length of a subcycle, the less DMA memory will
-be used. Do not set below 2ms - we started seeing weird behaviors of the RPi.
- 
-To use servos for instance, a typical subcycle time is 20ms (which will be repeated
-50 times a second). Each subcycle includes the specific pulse(s) to set the servo
-to the correct position.
+Each DMA channel is setup with a specific subcycle, within which pulses 
+are added, and which will be repeated endlessly. Servos, for instance, 
+typically use a subcycle of 20ms, which will be repeated 50 times a second.
+You can add pulses for multiple GPIOs, as well as multiple pulses for
+one GPIO. Subcycles cannot be lower than 2ms.
 
-You can add pulses to the subcycle, and they will be repeated accordingly (eg.
-a 100ms subcycle will be repeated 10 times per second; as are all the pulses
-within that subcycle). You can use any number of GPIOs, and set multiple pulses
-for each one. Longer subcycles use more DMA memory.
+For more information about subcycles, see the examples below. The left oscilloscope
+images zoom in on one subcycle, the right-handed images are zoomed out to show their repetition.
 
 
 Pulse-width increment granularity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Another very important setting is the pulse width increment granularity, which
-defaults to 10µs and is used for _all_ DMA channels (since its passed to the PWM
-timing hardware). Under the hood you need to set the pulse widths as multiples
-of the increment-granularity. Eg. in order to set 500µs pulses with a granularity
-setting of 10µs, you'll need to set the pulse-width as 50 (50 * 10µs = 500µs).
-Less granularity needs more DMA memory.
 
-To achieve shorter pulses than 10µs, you simply need set a lower granularity.
+The pulse-width increment granularity (10µs by default) is used for all DMA channels 
+(since its passed to the PWM timing hardware). Pulses are added to a subcycle by
+specifying a ``start`` and a ``width`` parameter, both in multiples of the granularity.
+For instance to set 500µs pulses with a granularity setting of 10µs, 
+you'll need to set the pulse-width as 50 (50 * 10µs = 500µs). 
+
+The pulse-width granularity is a **system-wide setting** used by the PWM hardware, 
+therefore you cannot use different granularities at the same time, even in different processes.
 
 
 Example with Oscilloscope
 -------------------------
 
-Setup PWM.Servo with the default 20ms subcycle. On the oscilloscope GPIO 15 the 
-blue channel, GPIO 17 the yellow one.
-
-::
+In the oscilloscope images, GPIO 15 the blue channel and GPIO 17 the yellow one. The left 
+oscilloscope images show one subcycle, the right images are 'zoomed out' to show their repitition.
+First we setup PWM.Servo with the default 20ms subcycle and 10µs pulse-width
+increment granularity::
 
     from RPIO import PWM
     servo = PWM.Servo()
 
 .. image:: images/pwm_0.png
 
-Now we set a 4000us (4ms) pulse every 20ms for GPIO 15::
+Now set a 4000us (4ms) pulse every 20ms for GPIO 15::
 
     servo.set_servo(15, 4000)
 
@@ -197,8 +193,9 @@ Now a 1000us (1ms) pulse for GPIO 17::
 
 .. image:: images/pwm_2.png
 
-We can use the low-level PWM methods to add further pulses to a subcycle::
+We can use the low-level PWM methods to add further pulses to a subcycle. This is done in multiples
+of the pulse-width increment granularity (``start=200*10µs=2000µs``, ``width=100*10µs=1000µs``)::
 
-    PWM.add_channel_pulse(0, 17, 200, width=100)
+    PWM.add_channel_pulse(0, 17, start=200, width=100)
 
 .. image:: images/pwm_3.png

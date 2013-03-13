@@ -1,12 +1,12 @@
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
+* PWM via DMA (up to 1µs resolution)
 * GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO interrupts (callbacks when events occur on input gpios)
 * TCP socket interrupts (callbacks when tcp socket clients send data)
-* PWM via DMA (up to 1µs resolution; 500kHz)
 * Command-line tools ``rpio`` and ``rpio-curses``
 * Well documented, fast source code with minimal CPU usage
-* Open source (GPLv3+)
+* Open source (LGPLv3+)
 
 
 `Visit pythonhosted.org/RPIO for the documentation. <http://pythonhosted.org/RPIO>`_
@@ -21,6 +21,8 @@ The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_i
     $ sudo easy_install -U RPIO
 
 After the installation you can use ``import RPIO`` as well as the command-line tools ``rpio`` and ``rpio-curses``.
+
+Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
 
 
 Examples
@@ -39,15 +41,22 @@ if you've encountered a bug.
 License
 -------
 
-    RPIO is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    RPIO is distributed in the hope that it will be useful,
+    This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU Lesser General Public License for more details at
+    <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+
+
+Copyright
+---------
+
+    Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
 
 
 Links

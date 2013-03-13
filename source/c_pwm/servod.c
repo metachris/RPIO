@@ -1,6 +1,28 @@
 /*
- * rpio_pwm.c: PWM via DMA for the RaspberryPi, based on the excellent
- * ServoBlaster by Richard Hirst.
+ * This file is part of RPIO.
+ *
+ * Copyright
+ *
+ *     Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
+ *
+ * License
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Lesser General Public License as published
+ *     by the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Lesser General Public License for more details at
+ *     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+ *
+ * Documentation
+ *
+ *     http://pythonhosted.org/RPIO
+ *
+ * Based on the excellent ServoBlaster by Richard Hirst.
  *
  * Documentation
  * =============
@@ -20,12 +42,7 @@
  * This documentation is work in progress. Look here for more information:
  * - https://github.com/metachris/raspberrypi-pwm
  * - https://github.com/richardghirst/PiBits/blob/master/ServoBlaster
- *
- *
- * Author: Chris Hager <chris@linuxuser.at>
- * URL: https://github.com/metachris/raspberrypi-pwm
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

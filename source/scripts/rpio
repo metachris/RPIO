@@ -61,7 +61,7 @@ Here are some examples of how to use `rpio`:
         Model B, Revision 2.0, RAM: 256 MB, Maker: Sony
 
 Author: Chris Hager <chris@linuxuser.at>
-License: GPLv3
+License: LGPLv3+
 URL: https://github.com/metachris/RPIO
 """
 import os
