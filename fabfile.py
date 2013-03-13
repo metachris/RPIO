@@ -92,7 +92,7 @@ def upload_deb():
     print
     print "Debian release files copied. Do this now:"
     print ""
-    print "    $ cd %s/.." % t
+    print "    $ cd %s.." % t
     print "    $ ./gen_version_index.sh %s" % v
     print "    $ ./gen_index.sh"
     print "    $ git status"
