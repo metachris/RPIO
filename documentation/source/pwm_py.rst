@@ -4,8 +4,7 @@
 ==============================================
 
 ``RPIO.PWM`` provides PWM via DMA for the Raspberry Pi, using the onboard PWM module for 
-semi-hardware pulse width modulation. Pulses can be set as short as 1µs, which
-equates to a frequency of 500kHz. 
+semi-hardware pulse width modulation with a precision of up to 1µs.
 
 With ``RPIO.PWM`` you can use any of the 15 DMA channels and 
 any number of GPIOs per channel. Since the PWM is done via DMA, ``RPIO.PWM`` uses almost zero CPU 

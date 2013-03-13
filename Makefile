@@ -15,7 +15,7 @@ clean:
 	python setup.py clean
 	rm -rf build/ MANIFEST
 	find . -name '*.pyc' -delete
-	rm -rf build dist RPIO.egg-info
+	rm -rf build dist RPIO.egg-info source/RPIO.egg-info
 	cd documentation && make clean
 	cd source/scripts/man && make clean
 
