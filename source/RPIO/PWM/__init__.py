@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
+#
+# This file is part of RPIO.
+#
+# Copyright
+#
+#     Copyright (C) 2013 Chris Hager <chris@linuxuser.at>
+#
+# License
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU Lesser General Public License as published
+#     by the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU Lesser General Public License for more details at
+#     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+#
+# Documentation
+#
+#     http://pythonhosted.org/RPIO
+#
 """
-This file is part of RPIO.
-
-Author: Chris Hager <chris@linuxuser.at>
-Docs: http://pythonhosted.org/RPIO
-URL: https://github.com/metachris/RPIO
-License: LGPLv3+
-
-Flexible PWM via DMA for the Raspberry Pi. Supports frequencies up to 500kHz
-(1µs per pulse), multiple DMA channels, multiple GPIOs per channel, timing by
+Flexible PWM via DMA for the Raspberry Pi. Supports pulse width granularities
+of down to 1µs, multiple DMA channels, multiple GPIOs per channel, timing by
 PWM (default) or PCM and more. RPIO.PWM is BETA; feedback highly appreciated.
 
 You can directly access the low-level methods via PWM.init_channel(), etc. as

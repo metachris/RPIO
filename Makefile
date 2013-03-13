@@ -12,8 +12,7 @@ source:
 
 
 clean:
-	$(PYTHON) setup.py clean
-	$(MAKE) -f $(CURDIR)/debian/rules clean
+	python setup.py clean
 	rm -rf build/ MANIFEST
 	find . -name '*.pyc' -delete
 	rm -rf build dist RPIO.egg-info
