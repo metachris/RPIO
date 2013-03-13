@@ -31,6 +31,10 @@
 //   1  (raspberry with revision 1 pin setup)
 //   0  (not a raspberry pi)
 //   -1 (could not open /proc/cpuinfo)
+//
+// revision_hex will be four characters revision id (eg. '0004'),
+// and a plus sign '+' will be appended if the over-voltage header
+// has been part of the cpuinfo.
 int 
 get_cpuinfo_revision(char *revision_hex)
 {
@@ -54,15 +58,24 @@ get_cpuinfo_revision(char *revision_hex)
     if (!rpi_found) {
         revision_hex = NULL;
         return 0;
-    } else if ((strcmp(revision_hex, "0002") == 0) ||
-        (strcmp(revision_hex, "1000002") == 0 ) ||
-        (strcmp(revision_hex, "0003") == 0) ||
-        (strcmp(revision_hex, "1000003") == 0 )) {
+    }
+
+    // Detect over-voltage
+    char* pos = strstr(revision_hex, "1000");
+    if (pos && pos - revision_hex == 0 && strlen(revision_hex) > 5) {
+        // Over-voltage header found. Remove and add +
+        strcpy(revision_hex, revision_hex+4);
+        sprintf(revision_hex, "%s+", revision_hex);
+    }
+
+    // Returns revision
+    if ((strcmp(revision_hex, "0002") == 0) ||
+        (strcmp(revision_hex, "0003") == 0)) {
         return 1;
     } else {
-        // assume rev 2 (0004 0005 0006 1000004 1000005 1000006 ...)
+        // assume rev 2 (0004 0005 0006 ...)
         return 2;
     }
 
-   return -1;
+    return -1;
 }
