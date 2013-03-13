@@ -1,7 +1,7 @@
 """
 You can see all commands with `$ fab -l`. Typical usages:
 
-    $ fab upload build_gpio test_gpio
+    $ fab upload build
     $ fab upload build_pwm
     $ fab upload test
     $ fab build_deb
@@ -96,6 +96,7 @@ def upload_deb():
     print "    $ ./gen_version_index.sh %s" % v
     print "    $ ./gen_index.sh"
     print "    $ git status"
+    print "    $ git add ."
     print "    $ git commit -am 'Debian packages for RPIO %s" % v
     print "    $ git push"
 
@@ -181,7 +182,7 @@ def upload_to_pypi():
     """ Upload sdist and bdist_eggs to pypi """
     # DO_UPLOAD provides a safety mechanism to avoid accidental pushes to pypi.
     # Set it to "upload" to actually push to pypi; else it only does a dry-run.
-    DO_UPLOAD = ""  # "upload"
+    DO_UPLOAD = "upload"
 
     # One more safety input and then we are ready to go :)
     x = prompt("Are you sure to upload the current version to pypi?")
@@ -190,9 +191,9 @@ def upload_to_pypi():
         return
 
     local("rm -rf dist")
-    local("python setup.py sdist %s" % DO_UPLOAD)
-    fn = local("ls dist/", capture=True)
-    version = fn[5:-7]
+    local("python setup.py sdist")
+    version = _get_cur_version()
+    fn = "RPIO-%s.tar.gz" % version
     put("dist/%s" % fn, "/tmp/")
     with cd("/tmp"):
         run("tar -xf /tmp/%s" % fn)
@@ -200,3 +201,4 @@ def upload_to_pypi():
         run("python2.6 setup.py bdist_egg %s" % DO_UPLOAD)
         run("python2.7 setup.py bdist_egg %s" % DO_UPLOAD)
         run("python3.2 setup.py bdist_egg %s" % DO_UPLOAD)
+    local("python setup.py sdist %s" % DO_UPLOAD)
