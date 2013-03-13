@@ -245,7 +245,7 @@ PyMODINIT_FUNC init_PWM(void)
         return;
 #endif
 
-    PyModule_AddObject(module, "VERSION", Py_BuildValue("s", "0.9.5"));
+    PyModule_AddObject(module, "VERSION", Py_BuildValue("s", "0.9.6"));
     PyModule_AddObject(module, "DELAY_VIA_PWM", Py_BuildValue("i", DELAY_VIA_PWM));
     PyModule_AddObject(module, "DELAY_VIA_PCM", Py_BuildValue("i", DELAY_VIA_PCM));
     PyModule_AddObject(module, "LOG_LEVEL_DEBUG", Py_BuildValue("i", LOG_LEVEL_DEBUG));
