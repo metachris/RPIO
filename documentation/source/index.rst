@@ -119,6 +119,7 @@ Changes
   * Added ``RPIO.close_tcp_client(fileno)``
   * Debian .deb package builds
   * License changed to GNU Lesser General Public License v3 or later (LGPLv3+)
+  * ``RPIO.sysinfo()`` returns is_overclocked (improved detection in cpuinfo.c)
 
 * v0.9.1
 
