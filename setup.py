@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name="RPIO",
-    version="0.9.5",
+    version="0.9.6",
     package_dir={"": "source"},
     packages=['RPIO', 'RPIO.PWM'],
     ext_modules=[

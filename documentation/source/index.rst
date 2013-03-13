@@ -58,6 +58,8 @@ Or from Github but without Git::
     $ cd RPIO-master
     $ sudo python setup.py install
 
+Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
+
 After the installation you can use ``import RPIO`` as well as the command-line tool ``rpio``.
 
 
@@ -110,7 +112,7 @@ License & Copyright
 Changes
 -------
 
-* v0.9.5
+* v0.9.6
 
   * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)``
   * Added ``threaded`` argument to ``RPIO.wait_for_interrupts(..)``

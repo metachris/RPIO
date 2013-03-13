@@ -221,7 +221,8 @@ def main():
             gpio_id = int(gpio_id_str)
             if is_valid_gpio_id(gpio_id):
                 f = RPIO.gpio_function(gpio_id)
-                info("GPIO %s: %-6s (%s)" % (gpio_id, RPIO.GPIO_FUNCTIONS[f], \
+                info("GPIO %s: %-6s (%s)" % (gpio_id, \
+                        RPIO._RPIO.GPIO_FUNCTIONS[f], \
                         1 if RPIO.forceinput(gpio_id) else 0))
             else:
                 if show_nonexists:
@@ -241,7 +242,8 @@ def main():
         else:
             error(("Cannot output to GPIO %s, because it is setup as %s. Use "
                     "--setoutput %s first.") % (gpio_id_str, \
-                    RPIO.GPIO_FUNCTIONS[f], gpio_id))
+                    RPIO._RPIO.GPIO_FUNCTIONS[f], gpio_id))
+
 
 
     if options.interrupt:

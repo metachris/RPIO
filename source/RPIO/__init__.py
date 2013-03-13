@@ -120,7 +120,7 @@ import RPIO._GPIO as _GPIO
 from RPIO._RPIO import Interruptor
 
 
-VERSION = "0.9.5"
+VERSION = "0.9.6"
 
 # Exposing constants from RPi.GPIO
 VERSION_GPIO = _GPIO.VERSION_GPIO
@@ -180,11 +180,6 @@ PIN_LIST = (3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, \
 
 # _rpio is the interrupt handling wrapper object
 _rpio = Interruptor()
-
-
-def _threaded_callback(callback, *args):
-    """ Internal wrapper to start a callback in threaded mode """
-    Thread(target=callback, args=args).start()
 
 
 def sysinfo():
