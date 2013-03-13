@@ -89,7 +89,7 @@ You can use RPIO as a drop-in replacement for RPi.GPIO in your existing code:
 
 Author: Chris Hager <chris@linuxuser.at>
 URL: https://github.com/metachris/RPIO
-License: GPLv3
+License: LGPLv3+
 """
 import socket
 import select

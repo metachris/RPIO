@@ -1,7 +1,7 @@
 /*
  * This file is part of RPIO.
  *
- * License: GPLv3+
+ * License: LGPLv3+
  * Author: Chris Hager <chris@linuxuser.at>
  * URL: https://github.com/metachris/RPIO
  */

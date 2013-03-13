@@ -5,7 +5,7 @@ This file is part of RPIO.
 Author: Chris Hager <chris@linuxuser.at>
 Docs: http://pythonhosted.org/RPIO
 URL: https://github.com/metachris/RPIO
-License: GPLv3+
+License: LGPLv3+
 
 Flexible PWM via DMA for the Raspberry Pi. Supports frequencies up to 500kHz
 (1µs per pulse), multiple DMA channels, multiple GPIOs per channel, timing by

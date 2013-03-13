@@ -3,13 +3,13 @@ Welcome to RPIO's documentation!
 
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
+* PWM via DMA (up to 1µs resolution)
 * GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO interrupts (callbacks when events occur on input gpios)
 * TCP socket interrupts (callbacks when tcp socket clients send data)
-* PWM via DMA (up to 1µs resolution; 500kHz)
 * Command-line tools ``rpio`` and ``rpio-curses``
 * Well documented, fast source code with minimal CPU usage
-* Open source (GPLv3+)
+* Open source (LGPLv3+)
 
 RPIO consists of two main components:
 
@@ -140,6 +140,7 @@ Changes
   * Interrupt callbacks with edge=``rising`` or ``falling`` only receive the correct values
   * Added ``RPIO.close_tcp_client(fileno)`` TODO: doc
   * Debian .deb package builds
+  * License changed to GNU Lesser General Public License v3 or later (LGPLv3+)
 
 * v0.9.1
 

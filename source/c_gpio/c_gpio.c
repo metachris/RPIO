@@ -4,7 +4,7 @@ interact with the gpio-related C methods. This file is under active development
 as part of the RPIO package by Chris Hager <chris@linuxuser.at>.
 
 URL: https://github.com/metachris/RPIO
-License: c_gpio.c is released under the MIT License
+License: LGPLv3+
 
 Internally everything works with BCM gpio numbering mode!
 

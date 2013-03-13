@@ -40,7 +40,7 @@ setup(
         "Topic :: System :: Hardware",
         "Intended Audience :: Developers",
         ("License :: OSI Approved :: "
-                "GNU General Public License v3 or later (GPLv3+)"),
+                "GNU Lesser General Public License v3 or later (LGPLv3+)"),
         "License :: Other/Proprietary License",
     ],
 )
