@@ -182,11 +182,6 @@ PIN_LIST = (3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, \
 _rpio = Interruptor()
 
 
-def _threaded_callback(callback, *args):
-    """ Internal wrapper to start a callback in threaded mode """
-    Thread(target=callback, args=args).start()
-
-
 def sysinfo():
     """ Returns (model, revision, mb-ram, maker) for this raspberry """
     return (RPI_REVISION_HEX,) + MODEL_DATA[RPI_REVISION_HEX.lstrip("0")]

@@ -32,6 +32,7 @@ from logging import debug, info, warn, error
 from threading import Thread
 from functools import partial
 
+import RPIO
 import RPIO._GPIO as _GPIO
 
 # Internals
@@ -39,6 +40,11 @@ _SYS_GPIO_ROOT = '/sys/class/gpio/'
 _TCP_SOCKET_HOST = "0.0.0.0"
 GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
 _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
+
+
+def _threaded_callback(callback, *args):
+    """ Internal wrapper to start a callback in threaded mode """
+    Thread(target=callback, args=args).start()
 
 
 class Interruptor:
@@ -102,26 +108,26 @@ class Interruptor:
         If `threaded_callback` is True, the callback will be started
         inside a Thread.
         """
-        gpio_id = channel_to_gpio(gpio_id)
+        gpio_id = _GPIO.channel_to_gpio(gpio_id)
         debug("Adding callback for GPIO %s" % gpio_id)
         if not edge in ["falling", "rising", "both", "none"]:
             raise AttributeError("'%s' is not a valid edge." % edge)
 
-        if not pull_up_down in [PUD_UP, PUD_DOWN, PUD_OFF]:
+        if not pull_up_down in [_GPIO.PUD_UP, _GPIO.PUD_DOWN, _GPIO.PUD_OFF]:
             raise AttributeError("'%s' is not a valid pull_up_down." % edge)
 
         # Make sure the gpio_id is valid
-        if not gpio_id in (GPIO_LIST_R1 if RPI_REVISION == 1 else \
-                GPIO_LIST_R2):
+        if not gpio_id in (RPIO.GPIO_LIST_R1 if _GPIO.RPI_REVISION == 1 else \
+                RPIO.GPIO_LIST_R2):
             raise AttributeError("GPIO %s is not a valid gpio-id." % gpio_id)
 
         # Require INPUT pin setup; and set the correct PULL_UPDN
-        if gpio_function(int(gpio_id)) == IN:
-            _GPIO.set_pullupdn(gpio_id, pull_up_down)
+        if RPIO.gpio_function(int(gpio_id)) == RPIO.IN:
+            RPIO.set_pullupdn(gpio_id, pull_up_down)
         else:
             debug("- changing gpio function from %s to INPUT" % \
-                    (GPIO_FUNCTIONS[gpio_function(int(gpio_id))]))
-            _GPIO.setup(gpio_id, IN, pull_up_down)
+                    (GPIO_FUNCTIONS[RPIO.gpio_function(int(gpio_id))]))
+            RPIO.setup(gpio_id, RPIO.IN, pull_up_down)
 
         # Prepare the callback (wrap in Thread if needed)
         cb = callback if not threaded_callback else \
@@ -197,7 +203,7 @@ class Interruptor:
     def del_interrupt_callback(self, gpio_id):
         """ Delete all interrupt callbacks from a certain gpio """
         debug("- removing interrupts on gpio %s" % gpio_id)
-        gpio_id = channel_to_gpio(gpio_id)
+        gpio_id = _GPIO.channel_to_gpio(gpio_id)
         fileno = self._map_gpioid_to_fileno[gpio_id]
 
         # 1. Remove from epoll
