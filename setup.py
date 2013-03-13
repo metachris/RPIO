@@ -19,7 +19,7 @@ setup(
     scripts=["source/scripts/rpio", "source/scripts/rpio-curses"],
 
     description=(("Advanced GPIO for the Raspberry Pi. Extends RPi.GPIO with "
-            "PWM, GPIO interrups, TCP socket interrupts, a command line tool "
+            "PWM, GPIO interrups, TCP socket interrupts, command line tools "
             "and more")),
     long_description=read('README.rst'),
     url="https://github.com/metachris/RPIO",

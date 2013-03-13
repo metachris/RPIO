@@ -110,7 +110,7 @@ License & Copyright
 Changes
 -------
 
-* v0.9.4
+* v0.9.5
 
   * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)``
   * Added ``threaded`` argument to ``RPIO.wait_for_interrupts(..)``

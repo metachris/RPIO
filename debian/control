@@ -11,9 +11,14 @@ Homepage: https://github.com/metachris/RPIO
 Package: python-rpio
 Architecture: armhf
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
-Description: RPIO super GPIO
+Description: Advanced GPIO module for Python 2.x. Extends RPi.GPIO with
+ PWM, GPIO interrups, TCP socket interrupts, command line tools
+ and more.
+
 
 Package: python3-rpio
 Architecture: armhf
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
-Description: Python 3 RPIO
+Description: Advanced GPIO module for Python 3.x. Extends RPi.GPIO with
+ PWM, GPIO interrups, TCP socket interrupts, command line tools
+ and more.
