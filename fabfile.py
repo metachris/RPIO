@@ -22,7 +22,7 @@ def _get_cur_version():
 
 
 def clean():
-    run("rm -rf /tmp/source/")
+    run("sudo rm -rf /tmp/source/")
 
 
 def upload():
