@@ -84,6 +84,7 @@ Links
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
 * http://www.kernel.org/doc/Documentation/gpio.txt
+* `semver versioning standard <http://semver.org/>`_
 
 
 License & Copyright
