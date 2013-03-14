@@ -162,7 +162,7 @@ channel_to_gpio(int channel)
     int gpio;
 
      if (gpio_mode != BOARD && gpio_mode != BCM) {
-        PyErr_SetString(ModeNotSetException, "Please set pin numbering mode using GPIO.setmode(GPIO.BOARD) or GPIO.setmode(GPIO.BCM)");
+        PyErr_SetString(ModeNotSetException, "Please set pin numbering mode using RPIO.setmode(RPIO.BOARD) or RPIO.setmode(RPIO.BCM)");
         return -1;
     }
 
@@ -238,7 +238,7 @@ py_setup_channel(PyObject *self, PyObject *args, PyObject *kwargs)
          ((func != 0 && func != 1) ||                      // (already one of the alt functions or
          (gpio_direction[gpio] == -1 && func == 1)))  // already an output not set from this program)
     {
-        PyErr_WarnEx(NULL, "This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.", 1);
+        PyErr_WarnEx(NULL, "This channel is already in use, continuing anyway.  Use RPIO.setwarnings(False) to disable warnings.", 1);
     }
 
 //    printf("Setup GPIO %d direction %d pud %d\n", gpio, direction, pud);
@@ -467,22 +467,22 @@ PyMODINIT_FUNC init_GPIO(void)
         goto exit;
 #endif
 
-    WrongDirectionException = PyErr_NewException("GPIO.WrongDirectionException", NULL, NULL);
+    WrongDirectionException = PyErr_NewException("RPIO.Exceptions.WrongDirectionException", NULL, NULL);
     PyModule_AddObject(module, "WrongDirectionException", WrongDirectionException);
 
-    InvalidModeException = PyErr_NewException("GPIO.InvalidModeException", NULL, NULL);
+    InvalidModeException = PyErr_NewException("RPIO.Exceptions.InvalidModeException", NULL, NULL);
     PyModule_AddObject(module, "InvalidModeException", InvalidModeException);
 
-    InvalidDirectionException = PyErr_NewException("GPIO.InvalidDirectionException", NULL, NULL);
+    InvalidDirectionException = PyErr_NewException("RPIO.Exceptions.InvalidDirectionException", NULL, NULL);
     PyModule_AddObject(module, "InvalidDirectionException", InvalidDirectionException);
 
-    InvalidChannelException = PyErr_NewException("GPIO.InvalidChannelException", NULL, NULL);
+    InvalidChannelException = PyErr_NewException("RPIO.Exceptions.InvalidChannelException", NULL, NULL);
     PyModule_AddObject(module, "InvalidChannelException", InvalidChannelException);
 
-    InvalidPullException = PyErr_NewException("GPIO.InvalidPullException", NULL, NULL);
+    InvalidPullException = PyErr_NewException("RPIO.Exceptions.InvalidPullException", NULL, NULL);
     PyModule_AddObject(module, "InvalidPullException", InvalidPullException);
 
-    ModeNotSetException = PyErr_NewException("GPIO.ModeNotSetException", NULL, NULL);
+    ModeNotSetException = PyErr_NewException("RPIO.Exceptions.ModeNotSetException", NULL, NULL);
     PyModule_AddObject(module, "ModeNotSetException", ModeNotSetException);
 
     high = Py_BuildValue("i", HIGH);
@@ -540,7 +540,7 @@ PyMODINIT_FUNC init_GPIO(void)
     rpi_revision_hex = Py_BuildValue("s", revision_hex);
     PyModule_AddObject(module, "RPI_REVISION_HEX", rpi_revision_hex);
 
-    version = Py_BuildValue("s", "0.9.6/0.4.2a");
+    version = Py_BuildValue("s", "0.10.0/0.4.2a");
     PyModule_AddObject(module, "VERSION_GPIO", version);
 
     // set up mmaped areas

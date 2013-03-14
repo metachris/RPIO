@@ -27,6 +27,7 @@ import socket
 import select
 import os.path
 import time
+import atexit
 
 from logging import debug, info, warn, error
 from threading import Thread
@@ -43,8 +44,21 @@ _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
 
 def _threaded_callback(callback, *args):
-    """ Internal wrapper to start a callback in threaded mode """
-    Thread(target=callback, args=args).start()
+    """
+    Internal wrapper to start a callback in threaded mode. Using the
+    daemon mode to not block the main thread from exiting.
+    """
+    t = Thread(target=callback, args=args)
+    t.daemon = True
+    t.start()
+
+
+def exit_handler():
+    """ Auto-cleanup on exit """
+    RPIO.stop_waiting_for_interrupts()
+    RPIO.cleanup_interrupts()
+
+atexit.register(exit_handler)
 
 
 class Interruptor:
@@ -267,7 +281,6 @@ class Interruptor:
         callbacks again before using `wait_for_interrupts(..)` again.
         """
         self._is_waiting_for_interrupts = True
-        #try:
         while self._is_waiting_for_interrupts:
             events = self._epoll.poll(epoll_timeout)
             for fileno, event in events:
@@ -305,12 +318,6 @@ class Interruptor:
                     val = f.read().strip()
                     f.seek(0)
                     self._handle_interrupt(fileno, val)
-
-        #except:
-        #    debug("RPIO: auto-cleaning interfaces after an exception")
-        #    cleanup_interfaces()
-        #    cleanup_tcpsockets()
-        #    raise
 
     def stop_waiting_for_interrupts(self):
         """

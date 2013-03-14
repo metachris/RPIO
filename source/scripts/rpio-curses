@@ -89,6 +89,8 @@ if "no_rpio" not in CMD_OPTIONS:
 
         return gpios
     GPIO_LIST = get_gpiolist()
+    HELP += ("\nRaspberry System Info:\n[%s] Model %s, Revision %s, RAM: %s MB, "
+            "Maker: %s") % RPIO.sysinfo()
 
 #
 # GPIO methods

@@ -26,12 +26,7 @@
 """
 RPIO extends RPi.GPIO with GPIO interrupts, TCP socket interrupts and more.
 
-You can use RPIO the same way as RPi.GPIO (eg. RPIO.setmode(...),
-RPIO.input(...)), as well as access the new interrupt handling methods. The
-following example shows how to react on events on 3 pins, and one socket
-server on port 8080. The interrupts can have optional `edge` and
-`pull_up_down` parameters (default edge is `both` and default pull_up_down is
-`RPIO.PUD_OFF`.):
+Example of how to listen for interrupts with RPIO:
 
     import RPIO
 
@@ -40,7 +35,7 @@ server on port 8080. The interrupts can have optional `edge` and
 
     def socket_callback(socket, val):
         print("socket %s: '%s'" % (socket.fileno(), val))
-        socket.send("echo: %s\n" % val)
+        socket.send("echo: %s" % val)
 
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
@@ -49,14 +44,15 @@ server on port 8080. The interrupts can have optional `edge` and
     # One TCP socket server callback on port 8080
     RPIO.add_tcp_callback(8080, socket_callback)
 
-    # Start the blocking epoll loop, and catch Ctrl+C KeyboardInterrupt
-    try:
-        RPIO.wait_for_interrupts()
-    except KeyboardInterrupt:
-        RPIO.cleanup_interrupts()
+    # Start the blocking epoll loop (exit with Ctrl+C)
+    RPIO.wait_for_interrupts()
 
-Now you can connect to the socket server with `$ telnet localhost 8080` and
-send input to your callback.
+You can add the argument `threaded=True` to `wait_for_interrupts(..)` in order
+to run it in a thread. RPIO will automatically shutdown everything nicely when
+your script exits.
+
+GPIO interrupts can have optional `edge` and `pull_up_down` parameters (default
+edge is `both` and default pull_up_down is `RPIO.PUD_OFF`).
 
 If you want to receive a callback inside a Thread (which won't block anything
 else on the system), set `threaded_callback` to True when adding an interrupt-
@@ -120,7 +116,7 @@ import RPIO._GPIO as _GPIO
 from RPIO._RPIO import Interruptor
 
 
-VERSION = "0.9.6"
+VERSION = "0.10.0"
 
 # Exposing constants from RPi.GPIO
 VERSION_GPIO = _GPIO.VERSION_GPIO
@@ -231,7 +227,7 @@ def close_tcp_client(fileno):
     _rpio.close_tcp_client(fileno)
 
 
-def wait_for_interrupts(epoll_timeout=1, threaded=False):
+def wait_for_interrupts(threaded=False, epoll_timeout=1):
     """
     Blocking loop to listen for GPIO interrupts and distribute them to
     associated callbacks. epoll_timeout is an easy way to shutdown the
@@ -244,10 +240,13 @@ def wait_for_interrupts(epoll_timeout=1, threaded=False):
     callbacks again before using `wait_for_interrupts(..)` again.
 
     If the argument `threaded` is True, wait_for_interrupts will be
-    started in a Thread. To quit it, call `RPIO.stop_waiting_for_interrupts()`.
+    started in a daemon Thread. To quit it, call
+    `RPIO.stop_waiting_for_interrupts()`.
     """
     if threaded:
-        Thread(target=_rpio.wait_for_interrupts, args=(epoll_timeout,)).start()
+        t = Thread(target=_rpio.wait_for_interrupts, args=(epoll_timeout,))
+        t.daemon = True
+        t.start()
     else:
         _rpio.wait_for_interrupts(epoll_timeout)
 
@@ -262,9 +261,9 @@ def stop_waiting_for_interrupts():
 
 def cleanup_interrupts():
     """
-    Clean up all interrupt-related sockets and interfaces. Recommended to
-    use before exiting your program! After this you'll need to re-add the
-    interrupt callbacks before waiting for interrupts again.
+    Removes all callbacks and closes used GPIO interfaces and sockets. After
+    this you'll need to re-add the interrupt callbacks before waiting for
+    interrupts again. Since RPIO v0.10.0 this is done automatically on exit.
     """
     _rpio.cleanup_interrupts()
 

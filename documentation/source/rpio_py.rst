@@ -17,8 +17,21 @@ GPIO & TCP Interrupts
 ---------------------
 
 ``RPIO`` can listen for two kinds of interrupts: ``GPIO`` and ``TCP``. GPIO interrupts happen
-when the state on a specific GPIO input changes. TCP interrupts happen when a TCP client
-connects to the built-in TCP server and sends a message.
+when the state on a specific GPIO input changes. TCP interrupts happen when a TCP socket client
+sends a message.
+
+
+.. method:: RPIO.wait_for_interrupts(threaded=False, epoll_timeout=1)
+
+   This is the main blocking loop which, while active, will listen for interrupts and start
+   your custom callbacks. At some point in your script you need to start this to receive interrupt
+   callbacks. This blocking method is perfectly suited as "the endless loop that keeps your script
+   running". 
+
+   With the argument ``threaded=True``, this method starts in the background while your script
+   continues in the main thread (RPIO will automatically shut down the thread when your script exits)::
+
+       RPIO.wait_for_interrupts(threaded=True)
 
 
 .. _ref-rpio-py-interrupts:
@@ -33,12 +46,16 @@ or pull-down resistor.
 
 .. method:: RPIO.add_interrupt_callback(gpio_id, callback, edge='both', pull_up_down=RPIO.PUD_OFF, threaded_callback=False, debounce_timeout_ms=None)
 
-   Adds a callback to receive notifications when a GPIO changes it's value. Possible ``pull_up_down`` values are 
-   ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and ``RPIO.PUD_OFF`` (default). Possible edges are ``rising``,
-   ``falling`` and ``both`` (default). The values passed to the callback are of type integer, and either ``0`` or ``1``.
-   A callback might look like this: ``def gpio_callback(gpio_id, value):``.
+   Adds a callback to receive notifications when a GPIO changes it's state from 0 to 1 or vice versa.
 
-   If ``debounce_timeout_ms`` is set, interrupt callbacks will not be started until the specified milliseconds have passed since the last interrupt. Adjust this to your needs (typically between 10ms and 100ms).
+   * Possible edges are ``rising``, ``falling`` and ``both`` (default).
+   * Possible ``pull_up_down`` values are ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and ``RPIO.PUD_OFF`` (default).  
+   * If ``threaded_callback`` is ``True``, the callback will be started inside a thread. Else the callback will block RPIO from waiting for interrupts until it has finished (in the meantime no further callbacks are dispatched).
+   * If ``debounce_timeout_ms`` is set, interrupt callbacks will not be started until the specified milliseconds have passed since the last interrupt. Adjust this to your needs (typically between 10ms and 100ms).
+
+   The callback receives two arguments: the gpio number and the value (an integer, either ``0`` (Low) or ``1`` (High)). A callback typically looks like this::
+
+    def gpio_callback(gpio_id, value):
 
 
 .. method:: RPIO.del_interrupt_callback(gpio_id)
@@ -93,14 +110,11 @@ The following example shows how to listen for some GPIO and TCP interrupts::
     # TCP socket server callback on port 8080
     RPIO.add_tcp_callback(8080, socket_callback)
 
-    # Start the blocking epoll loop, and cleanup interfaces on exit
-    try:
-        RPIO.wait_for_interrupts()
-    finally:
-        RPIO.cleanup_interrupts()
+    # Blocking main epoll loop
+    RPIO.wait_for_interrupts()
 
 
-If you want to receive a callback inside a Thread (to not block RPIO from returning to wait
+To receive a callback inside a Thread (and not block RPIO from returning to wait
 for interrupts), set ``threaded_callback`` to ``True`` when adding it::
 
     # for GPIO interrupts
@@ -116,15 +130,17 @@ to ``add_interrupt_callback(..)`` like this::
     RPIO.add_interrupt_callback(7, do_something, debounce_timeout_ms=100)
 
 
-``wait_for_interrupts()`` is a blocking method which, while running, will listen for
-interrupts and start the callbacks. You can add the argument ``threaded=True`` to put 
-``wait_for_interrupts()`` in a thread to run in the background::
+``wait_for_interrupts()`` listens for interrupts and dispatches the callbacks. 
+You can add the argument ``threaded=True`` to have it run in a thread and your
+script continue. Since v0.10.0, RPIO automatically shuts down everything nicely 
+when your script quits.
+
+::
 
     RPIO.wait_for_interrupts(threaded=True)
 
-To stop ``wait_for_interrupts(..)``, call ``RPIO.stop_waiting_for_interrupts()``. After using 
-``RPIO.wait_for_interrupts()`` you should call ``RPIO.cleanup_interrupts()`` before your 
-program quits, to shut everything down cleanly.
+
+To stop ``wait_for_interrupts(..)``, call ``RPIO.stop_waiting_for_interrupts()``.
 
 
 .. _ref-rpio-py-rpigpio:
@@ -221,6 +237,6 @@ Interrupt Handling
 * ``RPIO.add_tcp_callback(port, callback, threaded_callback=False)``
 * ``RPIO.del_interrupt_callback(gpio_id)``
 * ``RPIO.close_tcp_client(fileno)``
-* ``RPIO.wait_for_interrupts(epoll_timeout=1, threaded=False)``
+* ``RPIO.wait_for_interrupts(threaded=False, epoll_timeout=1)``
 * ``RPIO.stop_waiting_for_interrupts()``
 *  implemented with ``epoll``

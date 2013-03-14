@@ -58,7 +58,7 @@ Or from Github but without Git::
     $ cd RPIO-master
     $ sudo python setup.py install
 
-Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
+Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/>`_.
 
 After the installation you can use ``import RPIO`` as well as the command-line tool ``rpio``.
 
@@ -84,6 +84,7 @@ Links
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
 * http://www.kernel.org/doc/Documentation/gpio.txt
+* `semver versioning standard <http://semver.org/>`_
 
 
 License & Copyright
@@ -112,6 +113,13 @@ License & Copyright
 Changes
 -------
 
+* v0.10.0
+
+  * Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)
+  * Bugfix in cpuinfo.c: correctly trim over-voltage header
+  * rpio-curses: help shows raspberry sysinfo
+  * switched argument ordering of wait_for_interrupts to (``wait_for_interrupts(threaded=False, epoll_timeout=1)``)
+
 * v0.9.6
 
   * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)``
@@ -121,7 +129,7 @@ Changes
   * Added ``RPIO.close_tcp_client(fileno)``
   * Debian .deb package builds
   * License changed to GNU Lesser General Public License v3 or later (LGPLv3+)
-  * ``RPIO.sysinfo()`` returns is_overclocked (improved detection in cpuinfo.c)
+  * Improved detection in cpuinfo.c
 
 * v0.9.1
 

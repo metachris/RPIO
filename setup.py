@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name="RPIO",
-    version="0.9.6",
+    version="0.10.0",
     package_dir={"": "source"},
     packages=['RPIO', 'RPIO.PWM'],
     ext_modules=[
@@ -27,7 +27,7 @@ setup(
     author="Chris Hager",
     author_email="chris@linuxuser.at",
 
-    license="MIT",
+    license="LGPLv3+",
     keywords=["raspberry", "raspberry pi", "interrupts", "gpio", "rpio"],
     classifiers=[
         "Development Status :: 4 - Beta",

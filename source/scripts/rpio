@@ -245,7 +245,6 @@ def main():
                     RPIO._RPIO.GPIO_FUNCTIONS[f], gpio_id))
 
 
-
     if options.interrupt:
         show_help = False
         # gpio-ids can either be a single value, comma separated or a range
