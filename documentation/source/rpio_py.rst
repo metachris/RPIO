@@ -133,7 +133,7 @@ to ``add_interrupt_callback(..)`` like this::
 
 ``wait_for_interrupts()`` listens for interrupts and dispatches the callbacks. 
 You can add the argument ``threaded=True`` to have it run in a thread and your
-script continue. Since v0.9.7, RPIO automatically shuts down everything nicely 
+script continue. Since v0.10.0, RPIO automatically shuts down everything nicely 
 when your script quits.
 
 ::

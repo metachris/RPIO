@@ -114,7 +114,7 @@ import RPIO._GPIO as _GPIO
 from RPIO._RPIO import Interruptor
 
 
-VERSION = "0.9.7"
+VERSION = "0.10.0-rc.2"
 
 # Exposing constants from RPi.GPIO
 VERSION_GPIO = _GPIO.VERSION_GPIO
@@ -258,7 +258,7 @@ def cleanup_interrupts():
     """
     Removes all callbacks and closes used GPIO interfaces and sockets. After
     this you'll need to re-add the interrupt callbacks before waiting for
-    interrupts again. Since RPIO 0.9.7 this is done automatically on exit.
+    interrupts again. Since RPIO 0.10.0-rc.2 this is done automatically on exit.
     """
     _rpio.cleanup_interrupts()
 

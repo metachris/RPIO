@@ -1,12 +1,6 @@
-rpio (0.9.7) unstable; urgency=low
-
-  * auto-cleaning interfaces and sockets atexit
-
- -- Chris Hager <chris@linuxuser.at>  Thu, 14 Mar 2013 00:55:42 +0100
-
 rpio (0.9.6) unstable; urgency=low
 
-  * RC 0.9.5 had critical bugs. Fixed now.
+  * Fixed bugs in 0.9.5
 
  -- Chris Hager <chris@linuxuser.at>  Wed, 13 Mar 2013 21:30:14 +0100
 
