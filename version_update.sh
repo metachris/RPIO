@@ -1,7 +1,7 @@
 #! /bin/bash
 #
-# This script updates the version number in all necessary places
-# throughout the project, and adds a new entry to debian/changelog.
+# This script updates the version number in all necessary places throughout
+# the project, and can add a new entry to debian/changelog.
 #
 DATE_STR=`date +"%a, %d %b %Y %H:%M:%S +0100"`
 VERSION_FILES=('setup.py' 'source/RPIO/__init__.py' 'source/c_gpio/py_gpio.c' 'source/c_pwm/pwm_py.c' 'documentation/source/conf.py');
@@ -28,7 +28,6 @@ fi
 echo "Updating project to v$version..."
 for fn in ${VERSION_FILES[@]}; do 
     echo "- $fn";
-    #echo $cmd
     sed -i '' "s/$VERSION_LAST/$version/g" $fn
 done
 

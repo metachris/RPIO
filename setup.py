@@ -27,7 +27,7 @@ setup(
     author="Chris Hager",
     author_email="chris@linuxuser.at",
 
-    license="MIT",
+    license="LGPLv3+",
     keywords=["raspberry", "raspberry pi", "interrupts", "gpio", "rpio"],
     classifiers=[
         "Development Status :: 4 - Beta",
