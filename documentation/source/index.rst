@@ -117,6 +117,7 @@ Changes
 
   * Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)
   * Bugfix in cpuinfo.c: correctly trim over-voltage header
+  * rpio-curses: help shows raspberry sysinfo
 
 * v0.9.6
 
