@@ -113,7 +113,10 @@ License & Copyright
 Changes
 -------
 
-* v0.10.0: Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)
+* v0.10.0
+
+  * Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)
+  * Bugfix in cpuinfo.c: correctly trim over-voltage header
 
 * v0.9.6
 
