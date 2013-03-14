@@ -21,13 +21,12 @@ when the state on a specific GPIO input changes. TCP interrupts happen when a TC
 sends a message.
 
 
-.. method:: RPIO.wait_for_interrupts(epoll_timeout=1, threaded=False)
+.. method:: RPIO.wait_for_interrupts(threaded=False, epoll_timeout=1)
 
    This is the main blocking loop which, while active, will listen for interrupts and start
    your custom callbacks. At some point in your script you need to start this to receive interrupt
    callbacks. This blocking method is perfectly suited as "the endless loop that keeps your script
    running". 
-
 
    With the argument ``threaded=True``, this method starts in the background while your script
    continues in the main thread (RPIO will automatically shut down the thread when your script exits)::
@@ -238,6 +237,6 @@ Interrupt Handling
 * ``RPIO.add_tcp_callback(port, callback, threaded_callback=False)``
 * ``RPIO.del_interrupt_callback(gpio_id)``
 * ``RPIO.close_tcp_client(fileno)``
-* ``RPIO.wait_for_interrupts(epoll_timeout=1, threaded=False)``
+* ``RPIO.wait_for_interrupts(threaded=False, epoll_timeout=1)``
 * ``RPIO.stop_waiting_for_interrupts()``
 *  implemented with ``epoll``

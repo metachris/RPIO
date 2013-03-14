@@ -21,6 +21,9 @@
 #
 #     http://pythonhosted.org/RPIO
 #
+"""
+This module contains all the exceptions used by the C GPIO wrapper.
+"""
 import RPIO._GPIO as _GPIO
 
 WrongDirectionException = _GPIO.WrongDirectionException

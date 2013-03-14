@@ -118,6 +118,7 @@ Changes
   * Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)
   * Bugfix in cpuinfo.c: correctly trim over-voltage header
   * rpio-curses: help shows raspberry sysinfo
+  * switched argument ordering of wait_for_interrupts to (``wait_for_interrupts(threaded=False, epoll_timeout=1)``)
 
 * v0.9.6
 

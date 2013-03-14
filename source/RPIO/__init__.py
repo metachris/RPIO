@@ -26,6 +26,8 @@
 """
 RPIO extends RPi.GPIO with GPIO interrupts, TCP socket interrupts and more.
 
+Example of how to listen for interrupts with RPIO:
+
     import RPIO
 
     def gpio_callback(gpio_id, val):
@@ -33,7 +35,7 @@ RPIO extends RPi.GPIO with GPIO interrupts, TCP socket interrupts and more.
 
     def socket_callback(socket, val):
         print("socket %s: '%s'" % (socket.fileno(), val))
-        socket.send("echo: %s\n" % val)
+        socket.send("echo: %s" % val)
 
     # Three GPIO interrupt callbacks
     RPIO.add_interrupt_callback(7, gpio_callback)
@@ -225,7 +227,7 @@ def close_tcp_client(fileno):
     _rpio.close_tcp_client(fileno)
 
 
-def wait_for_interrupts(epoll_timeout=1, threaded=False):
+def wait_for_interrupts(threaded=False, epoll_timeout=1):
     """
     Blocking loop to listen for GPIO interrupts and distribute them to
     associated callbacks. epoll_timeout is an easy way to shutdown the
