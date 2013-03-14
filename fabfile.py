@@ -80,7 +80,7 @@ def build_deb():
         run("dpkg-buildpackage -i -I -rfakeroot")
 
 
-def upload_deb():
+def grab_deb():
     # Custom github upload
     v = _get_cur_version()
     t = ("/Users/chris/Projects/private/web/metachris.github.com/"
@@ -94,7 +94,7 @@ def upload_deb():
     print ""
     print "    $ cd %s.." % t
     print "    $ ./gen_version_index.sh %s" % v
-    print "    $ ./gen_index.sh"
+    print "    $ ./gen_index.sh %s" % v
     print "    $ git status"
     print "    $ git add ."
     print "    $ git commit -am 'Debian packages for RPIO %s" % v
