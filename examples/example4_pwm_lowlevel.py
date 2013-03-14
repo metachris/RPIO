@@ -1,5 +1,9 @@
 """
-This example uses lower-level PWM control methods.
+This example uses lower-level PWM control methods of RPIO.PWM. The default
+settings include a subcycle time of 20ms and a pulse-width increment
+granularity of 10us.
+
+RPIO Documentation: http://pythonhosted.org/RPIO
 """
 import RPIO.PWM as PWM
 

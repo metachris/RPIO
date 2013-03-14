@@ -58,7 +58,7 @@ Or from Github but without Git::
     $ cd RPIO-master
     $ sudo python setup.py install
 
-Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
+Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/>`_.
 
 After the installation you can use ``import RPIO`` as well as the command-line tool ``rpio``.
 
