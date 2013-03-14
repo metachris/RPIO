@@ -63,7 +63,7 @@ get_cpuinfo_revision(char *revision_hex)
     // If over-voltage is present, remove it
     char* pos = strstr(revision_hex, "1000");
     if (pos && pos - revision_hex == 0 && strlen(revision_hex) > 5) {
-        strcpy(revision_hex, revision_hex+4);
+        strcpy(revision_hex, revision_hex+(strlen(revision_hex) - 4));
     }
 
     // Returns revision
