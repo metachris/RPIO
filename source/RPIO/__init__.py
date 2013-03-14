@@ -238,10 +238,13 @@ def wait_for_interrupts(epoll_timeout=1, threaded=False):
     callbacks again before using `wait_for_interrupts(..)` again.
 
     If the argument `threaded` is True, wait_for_interrupts will be
-    started in a Thread. To quit it, call `RPIO.stop_waiting_for_interrupts()`.
+    started in a daemon Thread. To quit it, call
+    `RPIO.stop_waiting_for_interrupts()`.
     """
     if threaded:
-        Thread(target=_rpio.wait_for_interrupts, args=(epoll_timeout,)).start()
+        t = Thread(target=_rpio.wait_for_interrupts, args=(epoll_timeout,))
+        t.daemon = True
+        t.start()
     else:
         _rpio.wait_for_interrupts(epoll_timeout)
 
@@ -258,7 +261,7 @@ def cleanup_interrupts():
     """
     Removes all callbacks and closes used GPIO interfaces and sockets. After
     this you'll need to re-add the interrupt callbacks before waiting for
-    interrupts again. Since RPIO 0.10.0-rc.2 this is done automatically on exit.
+    interrupts again. Since RPIO v0.10.0 this is done automatically on exit.
     """
     _rpio.cleanup_interrupts()
 

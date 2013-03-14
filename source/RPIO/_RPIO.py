@@ -44,8 +44,13 @@ _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
 
 def _threaded_callback(callback, *args):
-    """ Internal wrapper to start a callback in threaded mode """
-    Thread(target=callback, args=args).start()
+    """
+    Internal wrapper to start a callback in threaded mode. Using the
+    daemon mode to not block the main thread from exiting.
+    """
+    t = Thread(target=callback, args=args)
+    t.daemon = True
+    t.start()
 
 
 def exit_handler():

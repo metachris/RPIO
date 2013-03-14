@@ -113,6 +113,8 @@ License & Copyright
 Changes
 -------
 
+* v0.10.0: Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)
+
 * v0.9.6
 
   * Added ``debounce_timeout_ms`` argument to ``RPIO.add_interrupt_callback(..)``
