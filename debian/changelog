@@ -1,25 +1,7 @@
 rpio (0.9.6) unstable; urgency=low
 
-  * Fixed bugs in 0.9.5
-
- -- Chris Hager <chris@linuxuser.at>  Wed, 13 Mar 2013 21:30:14 +0100
-
-rpio (0.9.5) unstable; urgency=low
-
-  * Cleanup
-
- -- Chris Hager <chris@linuxuser.at>  Wed, 13 Mar 2013 02:24:08 +0100
-
-rpio (0.9.4) unstable; urgency=low
-
-  * Debounce timeout for interrupts (Closes: #XXXXXX)
+  * Debounce timeout for interrupts
   * Threaded argument for wait_for_interrupts()
   * Refactoring
 
- -- Chris Hager <chris@linuxuser.at>  Tue, 12 Mar 2013 22:34:04 +0100
-
-rpio (0.9.2) unstable; urgency=low
-
-  * Initial PWM release. (Closes: #XXXXXX)
-
- -- Chris Hager <chris@linuxuser.at>  Tue, 12 Mar 2013 17:59:56 +0100
+ -- Chris Hager <chris@linuxuser.at>  Wed, 13 Mar 2013 21:30:14 +0100
