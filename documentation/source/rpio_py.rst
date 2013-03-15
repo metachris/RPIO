@@ -51,7 +51,7 @@ or pull-down resistor.
    * Possible edges are ``rising``, ``falling`` and ``both`` (default).
    * Possible ``pull_up_down`` values are ``RPIO.PUD_UP``, ``RPIO.PUD_DOWN`` and ``RPIO.PUD_OFF`` (default).  
    * If ``threaded_callback`` is ``True``, the callback will be started inside a thread. Else the callback will block RPIO from waiting for interrupts until it has finished (in the meantime no further callbacks are dispatched).
-   * If ``debounce_timeout_ms`` is set, interrupt callbacks will not be started until the specified milliseconds have passed since the last interrupt. Adjust this to your needs (typically between 10ms and 100ms).
+   * If ``debounce_timeout_ms`` is set, interrupt callbacks will not be started until the specified milliseconds have passed since the last interrupt. Adjust this to your needs (typically between 10ms and 1000ms.).
 
    The callback receives two arguments: the gpio number and the value (an integer, either ``0`` (Low) or ``1`` (High)). A callback typically looks like this::
 
