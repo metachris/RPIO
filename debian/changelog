@@ -1,3 +1,9 @@
+rpio (0.10.1) unstable; urgency=low
+
+  * Updated debian/control Standards-Version to 3.9.3.1
+
+ -- Chris Hager <chris@linuxuser.at>  Fri, 15 Mar 2013 13:58:49 +0100
+
 rpio (0.10.0) unstable; urgency=low
 
   * Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)

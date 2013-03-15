@@ -80,7 +80,7 @@ def build_deb():
         run("dpkg-buildpackage -i -I -rfakeroot")
 
 
-def upload_deb():
+def grab_deb():
     # Custom github upload
     v = _get_cur_version()
     t = ("/Users/chris/Projects/private/web/metachris.github.com/"
@@ -94,7 +94,7 @@ def upload_deb():
     print ""
     print "    $ cd %s.." % t
     print "    $ ./gen_version_index.sh %s" % v
-    print "    $ ./gen_index.sh"
+    print "    $ ./gen_index.sh %s" % v
     print "    $ git status"
     print "    $ git add ."
     print "    $ git commit -am 'Debian packages for RPIO %s" % v
@@ -180,14 +180,9 @@ def test3_pwm():
 #
 def upload_to_pypi():
     """ Upload sdist and bdist_eggs to pypi """
-    # DO_UPLOAD provides a safety mechanism to avoid accidental pushes to pypi.
-    # Set it to "upload" to actually push to pypi; else it only does a dry-run.
-    DO_UPLOAD = "upload"
-
     # One more safety input and then we are ready to go :)
     x = prompt("Are you sure to upload the current version to pypi?")
     if not x or not x.lower() in ["y", "yes"]:
-        print("Error: no build found in dist/")
         return
 
     local("rm -rf dist")
@@ -198,7 +193,7 @@ def upload_to_pypi():
     with cd("/tmp"):
         run("tar -xf /tmp/%s" % fn)
     with cd("/tmp/RPIO-%s" % version):
-        run("python2.6 setup.py bdist_egg %s" % DO_UPLOAD)
-        run("python2.7 setup.py bdist_egg %s" % DO_UPLOAD)
-        run("python3.2 setup.py bdist_egg %s" % DO_UPLOAD)
-    local("python setup.py sdist %s" % DO_UPLOAD)
+        run("python2.6 setup.py bdist_egg upload")
+        run("python2.7 setup.py bdist_egg upload")
+        run("python3.2 setup.py bdist_egg upload")
+    local("python setup.py sdist upload")
