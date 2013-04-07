@@ -1,6 +1,6 @@
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
-* PWM via DMA (up to 1µs resolution)
+* PWM via DMA (up to 1us resolution)
 * GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO interrupts (callbacks when events occur on input gpios)
 * TCP socket interrupts (callbacks when tcp socket clients send data)
