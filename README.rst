@@ -24,6 +24,8 @@ After the installation you can use ``import RPIO`` as well as the command-line t
 
 Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
 
+An Arch Linux PKGBUILD is available at `aur.archlinux.org/packages/rpio <https://aur.archlinux.org/packages/rpio/>`_.
+
 
 Examples
 --------
