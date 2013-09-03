@@ -459,7 +459,7 @@ add_channel_pulse(int channel, int gpio, int width_start, int width)
     if (!channels[channel].virtbase)
         return fatal("Error: channel %d has not been initialized with 'init_channel(..)'\n", channel);
     if (width_start + width > channels[channel].width_max || width_start < 0)
-        return fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channels[channel].width_max);
+        return fatal("Error: cannot add pulse to channel %d: width_start+width exceed max_width of %d\n", channel, channels[channel].width_max);
 
     if ((gpio_setup & 1<<gpio) == 0)
         init_gpio(gpio);
