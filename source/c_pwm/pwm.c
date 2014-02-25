@@ -306,6 +306,9 @@ static void
 terminate(void)
 {
     shutdown();
+    if (soft_fatal) {
+        return;
+    }
     exit(EXIT_SUCCESS);
 }
 
