@@ -60,7 +60,8 @@ Special Thanks
 
     `csegit <https://github.com/csegit>`_, `waveform80 <https://github.com/waveform80>`_,
     `nils-werner <https://github.com/nils-werner>`_, `friedcell <https://github.com/friedcell>`_,
-    `zejn <https://github.com/zejn>`_, `dbeal <https://github.com/dbeal>~_,
+    `zejn <https://github.com/zejn>`_, `dbeal <https://github.com/dbeal>`_,
+    `paul-1 <https://github.com/paul-1>`_
 
 
 Copyright
