@@ -55,6 +55,14 @@ License
     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
 
 
+Special Thanks
+--------------
+
+    `csegit <https://github.com/csegit>`_, `waveform80 <https://github.com/waveform80>`_,
+    `nils-werner <https://github.com/nils-werner>`_, `friedcell <https://github.com/friedcell>`_,
+    `zejn <https://github.com/zejn>`_, `dbeal <https://github.com/dbeal>~_,
+
+
 Copyright
 ---------
 
