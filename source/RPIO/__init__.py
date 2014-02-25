@@ -263,7 +263,7 @@ def cleanup_interrupts():
     """
     Removes all callbacks and closes used GPIO interfaces and sockets. After
     this you'll need to re-add the interrupt callbacks before waiting for
-    interrupts again. Since RPIO v0.10.1 this is done automatically on exit.
+    interrupts again. Since RPIO v0.10.0 this is done automatically on exit.
     """
     _rpio.cleanup_interrupts()
 
