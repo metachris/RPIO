@@ -131,8 +131,8 @@ class Interruptor:
             raise AttributeError("'%s' is not a valid pull_up_down." % edge)
 
         # Make sure the gpio_id is valid
-        if not gpio_id in (RPIO.GPIO_LIST_R1 if _GPIO.RPI_REVISION == 1 else \
-                RPIO.GPIO_LIST_R2):
+        if not gpio_id in set(chain(RPIO.GPIO_LIST_R1, RPIO.GPIO_LIST_R2, \
+                              RPIO.GPIO_LIST_R3)):
             raise AttributeError("GPIO %s is not a valid gpio-id." % gpio_id)
 
         # Require INPUT pin setup; and set the correct PULL_UPDN
