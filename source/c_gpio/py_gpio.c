@@ -62,7 +62,7 @@ static const int (*pin_to_gpio)[41];
 #define HEADER_P5 5<<8
 static const int gpio_to_pin_rev1[32] = {3, 5, -1, -1, 7, -1, -1, 26, 24, 21, 19, 23, -1, -1, 8, 10, -1, 11, 12, -1, -1, 13, 15, 16, 18, 22, -1, -1, -1, -1, -1, -1};
 static const int gpio_to_pin_rev2[32] = {-1, -1, 3, 5, 7, -1, -1, 26, 24, 21, 19, 23, -1, -1, 8, 10, -1, 11, 12, -1, -1, -1, 15, 16, 18, 22, -1, 15, 3 | HEADER_P5, 4 | HEADER_P5, 5 | HEADER_P5, 6 | HEADER_P5};
-static const int gpio_to_pin_rev3[32] = {-1, -1, 3, 5, 7, 29, 31, 26, 24, 21, 19, 23, 32, 33, 8, 10, 36, 11, 12, 35, 38, 40, 15, 16, 18, 22, 37, 13, -1, -1, -1, -1}
+static const int gpio_to_pin_rev3[32] = {-1, -1, 3, 5, 7, 29, 31, 26, 24, 21, 19, 23, 32, 33, 8, 10, 36, 11, 12, 35, 38, 40, 15, 16, 18, 22, 37, 13, -1, -1, -1, -1};
 static const int (*gpio_to_pin)[32];
 
 // Flag whether to show warnings
