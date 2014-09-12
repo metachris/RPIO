@@ -32,6 +32,7 @@ import atexit
 from logging import debug, info, warn, error
 from threading import Thread
 from functools import partial
+from itertools import chain
 
 import RPIO
 import RPIO._GPIO as _GPIO
