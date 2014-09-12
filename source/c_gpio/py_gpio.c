@@ -169,7 +169,7 @@ channel_to_gpio(int channel)
     }
 
    if ( (gpio_mode == BCM && (channel < 0 || channel > 31)) ||
-        (gpio_mode == BOARD && (channel < 1 || channel > 26)) ) {
+        (gpio_mode == BOARD && (channel < 1 || channel > 41)) ) {
         PyErr_SetString(InvalidChannelException, "The channel sent is invalid on a Raspberry Pi (outside of range)");
         return -2;
     }
