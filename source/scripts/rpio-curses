@@ -176,6 +176,7 @@ class Drawer(object):
 
         pos_y = POS_GPIOLIST_Y
         for gpio in self.gpios:
+            
             gpio_id, func, state = gpio
             screen.addstr(pos_y, POS_GPIOLIST_X, "GPIO %s: " % (gpio_id))
             screen.addstr(pos_y, POS_GPIOLIST_X+9, "%s     " % (GPIO_FUNCTIONS[func]), curses.color_pair(3) if func == 4 else 0)
@@ -439,7 +440,7 @@ def main():
         screen = curses.initscr()
 
         # Check that the screen size is within minimum limits
-        min_h, min_w = (25, 70)
+        min_h, min_w = (len(GPIO_LIST) + 5, 70)
         win_h, win_w = screen.getmaxyx()
         if win_w > min_w and win_h == min_h - 1:
             # We can cut one line
@@ -447,8 +448,8 @@ def main():
             POS_GPIOLIST_Y -= 1
         elif win_h < min_h or win_w < min_w:
             exit_msg = ("Your terminal window is too small. `rpio-curses` "
-                    "needs 24 lines and 70 columns (you have %s lines, %s "
-                    "columns).") % (win_h, win_w)
+                    "needs %s lines and 70 columns (you have %s lines, %s "
+                    "columns).") % (len(GPIO_LIST) + 5, win_h, win_w)
             exit(-1)
 
         # Start the fun
