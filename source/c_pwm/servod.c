@@ -272,7 +272,20 @@ static void
 setup_sighandlers(void)
 {
     int i;
-    for (i = 0; i < 64; i++) {
+    for (i = 1; i < 32; i++) {
+        // whitelist non-terminating signals
+        if (i == SIGCHLD ||
+            i == SIGCONT ||
+            i == SIGTSTP ||
+            i == SIGTTIN ||
+            i == SIGTTOU ||
+            i == SIGURG ||
+            i == SIGWINCH ||
+            i == SIGPIPE || // Python handles this
+            i == SIGINT || // Python handles this
+            i == SIGIO) {
+            continue;
+        }
         struct sigaction sa;
         memset(&sa, 0, sizeof(sa));
         sa.sa_handler = terminate;
