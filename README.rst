@@ -1,6 +1,6 @@
 RPIO is an advanced GPIO module for the Raspberry Pi.
 
-* PWM via DMA (up to 1µs resolution)
+* PWM via DMA (up to 1us resolution)
 * GPIO input and output (drop-in replacement for `RPi.GPIO <http://pypi.python.org/pypi/RPi.GPIO>`_)
 * GPIO interrupts (callbacks when events occur on input gpios)
 * TCP socket interrupts (callbacks when tcp socket clients send data)
@@ -23,6 +23,8 @@ The easiest way to install/update RPIO on a Raspberry Pi is with either ``easy_i
 After the installation you can use ``import RPIO`` as well as the command-line tools ``rpio`` and ``rpio-curses``.
 
 Debian packages are available at `metachris.github.com/rpio/download <http://metachris.github.com/rpio/download/latest/>`_.
+
+An Arch Linux PKGBUILD is available at `aur.archlinux.org/packages/rpio <https://aur.archlinux.org/packages/rpio/>`_.
 
 
 Examples
@@ -51,6 +53,15 @@ License
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details at
     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
+
+
+Special Thanks
+--------------
+
+    `csegit <https://github.com/csegit>`_, `waveform80 <https://github.com/waveform80>`_,
+    `nils-werner <https://github.com/nils-werner>`_, `friedcell <https://github.com/friedcell>`_,
+    `zejn <https://github.com/zejn>`_, `dbeal <https://github.com/dbeal>`_,
+    `paul-1 <https://github.com/paul-1>`_
 
 
 Copyright

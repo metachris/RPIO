@@ -113,6 +113,11 @@ License & Copyright
 Changes
 -------
 
+* v0.11.0
+
+  * Merged various pull requests: Arch package link, bugfixes, allow Pi to control
+    camera LED (GPIO 5 in BCM), Dont exit when soft_fatal in effect [`source <https://github.com/dbeal/RPIO/commit/fde45bc2842e56cd3341a596d029a8f8d58e9518>`_],
+
 * v0.10.0
 
   * Auto-cleanup on exit (also shuts down ``wait_for_interrupts(threaded=True)``)

@@ -1,0 +1,71 @@
+#
+# RPIO Release Instructions
+# -------------------------
+#
+# These instructions assume that:
+#
+# - all changes are working (test suites have been run)
+# - all commited in the dev branch (no uncommited changes)
+#
+
+# Upload fresh source, build and test (also manually)
+# ---------------------------------------------------
+fab clean upload build test_gpio test3_gpio test_pwm
+sudo python rpio-curses
+
+
+# Create the final version (remove -rc..)
+# ---------------------------------------
+bash version_update.sh
+
+
+# Double check documentation
+# --------------------------
+# - all changes for new version added to 'Updates'
+
+
+# Build documentation
+# -------------------
+make doc
+
+
+# Commit dev branch
+# -----------------
+git status
+gcnv -am "RPIO v"`cat VERSION`
+
+
+# Merge into master (or staging)
+# ------------------------------
+git checkout master
+git merge -Xtheirs dev --squash
+git status
+git diff dev
+
+
+# Commit to master (overwrite commit msg and then adjust with --amend)
+# --------------------------------------------------------------------
+gcnv -am "RPIO v"`cat VERSION`
+git commit --amend
+
+
+# Push to Github
+# --------------
+git push
+
+
+# Add Git tag and push
+# --------------------
+git tag -a v`cat VERSION` -m v`cat VERSION`
+git push --tags
+
+
+# Build Debian packages
+# ---------------------
+fab build_deb grab_deb 
+
+
+# Upload to PyPi
+# --------------
+fab upload_to_pypi
+make doc_upload

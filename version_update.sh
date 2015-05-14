@@ -3,6 +3,8 @@
 # This script updates the version number in all necessary places throughout
 # the project, and can add a new entry to debian/changelog.
 #
+# TODO: sed replaces all occurences (eg in RPIO/__init__.py). update to only update the right ones.
+#
 DATE_STR=`date +"%a, %d %b %Y %H:%M:%S +0100"`
 VERSION_FILES=('setup.py' 'source/RPIO/__init__.py' 'source/c_gpio/py_gpio.c' 'source/c_pwm/pwm_py.c' 'documentation/source/conf.py');
 VERSION_LAST=`cat VERSION`
