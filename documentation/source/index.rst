@@ -83,7 +83,7 @@ Links
 * http://pypi.python.org/pypi/RPIO
 * http://pypi.python.org/pypi/RPi.GPIO
 * http://www.raspberrypi.org/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
-* http://www.kernel.org/doc/Documentation/gpio.txt
+* https://www.kernel.org/doc/Documentation/gpio/gpio.txt
 * `semver versioning standard <http://semver.org/>`_
 
 
@@ -112,6 +112,11 @@ License & Copyright
 
 Changes
 -------
+
+* v0.11.0
+
+  * Merged various pull requests: Arch package link, bugfixes, allow Pi to control
+    camera LED (GPIO 5 in BCM), Dont exit when soft_fatal in effect [`source <https://github.com/dbeal/RPIO/commit/fde45bc2842e56cd3341a596d029a8f8d58e9518>`_],
 
 * v0.10.0
 

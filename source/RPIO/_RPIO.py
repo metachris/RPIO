@@ -40,7 +40,8 @@ import RPIO._GPIO as _GPIO
 # Internals
 _SYS_GPIO_ROOT = '/sys/class/gpio/'
 _TCP_SOCKET_HOST = "0.0.0.0"
-GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 7: "-"}
+GPIO_FUNCTIONS = {0: "OUTPUT", 1: "INPUT", 4: "ALT0", 6:"ALT2", 7: "-"}
+
 _PULL_UPDN = ("PUD_OFF", "PUD_DOWN", "PUD_UP")
 
 

@@ -169,7 +169,6 @@ class Servo:
     """
     _subcycle_time_us = None
     _dma_channel = None
-    _gpios_used = 0  # bitfield to keep track of already added GPIOs
 
     def __init__(self, dma_channel=0, subcycle_time_us=20000, \
             pulse_incr_us=10):
@@ -207,14 +206,10 @@ class Servo:
             if _subcycle_us != self._subcycle_time_us:
                 raise AttributeError(("Error: DMA channel %s is setup with a "
                         "subcycle_time of %sus (instead of %sus)") % \
-                        (_subcycle_us, self._subcycle_time_us))
+                        (self._dma_channel, _subcycle_us, 
+                            self._subcycle_time_us))
         else:
             init_channel(self._dma_channel, self._subcycle_time_us)
-
-        # If this GPIO is already used, clear it first
-        if self._gpios_used & 1 << gpio:
-            clear_channel_gpio(self._dma_channel, gpio)
-        self._gpios_used |= 1 << gpio
 
         # Add pulse for this GPIO
         add_channel_pulse(self._dma_channel, gpio, 0, \
