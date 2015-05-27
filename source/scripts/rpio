@@ -148,8 +148,12 @@ def main():
     RPIO.setwarnings(False)
 
     def is_valid_gpio_id(gpio_id):
-        return gpio_id in (RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
-                     else RPIO.GPIO_LIST_R2)
+        if RPIO.sysinfo()[1] == 'B+':
+            return gpio_id in RPIO.GPIO_LIST_R3
+        elif RPIO.RPI_REVISION == 1:
+            return gpio_id in RPIO.GPIO_LIST_R1
+        else:
+            return gpio_id in RPIO.GPIO_LIST_R2
 
     def validate_gpio_id_or_die(gpio_id):
         if not is_valid_gpio_id(gpio_id):
@@ -201,8 +205,12 @@ def main():
         show_help = False
         ids = options.show
         if options.inspect_all:
-            pins = RPIO.GPIO_LIST_R1 if RPIO.RPI_REVISION == 1 \
-                    else RPIO.GPIO_LIST_R2
+            if RPIO.sysinfo()[1] == 'B+':
+                pins = RPIO.GPIO_LIST_R3
+            elif RPIO.RPI_REVISION == 1:
+                pins = RPIO.GPIO_LIST_R1
+            else:
+                pins = RPIO.GPIO_LIST_R2
             id_list = list(pins)
             id_list.sort()
             ids = ",".join([str(gpio) for gpio in id_list if gpio >= 0])

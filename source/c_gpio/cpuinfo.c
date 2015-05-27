@@ -70,6 +70,9 @@ get_cpuinfo_revision(char *revision_hex)
     if ((strcmp(revision_hex, "0002") == 0) ||
         (strcmp(revision_hex, "0003") == 0)) {
         return 1;
+    } else if ((strcmp(revision_hex, "0010") == 0)) {
+        // We'll call Model B+ (0010) rev3
+        return 3;
     } else {
         // assume rev 2 (0004 0005 0006 ...)
         return 2;
