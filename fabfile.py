@@ -14,7 +14,8 @@ env.use_ssh_config = True
 
 # Set default hosts
 if not env.hosts:
-    env.hosts = ["raspberry_dev_local"]
+    # env.hosts = ["raspberry_dev_local"]
+    env.hosts = ["omxdev"]
 
 
 def _get_cur_version():

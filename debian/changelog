@@ -1,3 +1,9 @@
+rpio (2.0.0-beta1) unstable; urgency=low
+
+  * Support for Raspberry Pi 0, 2, 3 (thanks to Andy Baker and Reik Hua)
+
+ -- Chris Hager <chris@linuxuser.at>  Thu, 02 Jun 2016 21:32:58 +0100
+
 rpio (0.10.1) unstable; urgency=low
 
   * Updated debian/control Standards-Version to 3.9.3.1

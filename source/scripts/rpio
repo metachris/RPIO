@@ -95,7 +95,7 @@ def main():
                 "GPIOs separate ids with commas (eg. `-i 17,18,19`) "
                 "or specify a range (eg. `-i 2-20`)"), metavar="gpio-id")
 
-    parser.add_option("-I", "--inspect-all", dest="inspect_all", 
+    parser.add_option("-I", "--inspect-all", dest="inspect_all",
             help="Inspect all available GPIOs", action="store_true")
 
     parser.add_option("-w", "--wait_for_interrupts", dest="interrupt",

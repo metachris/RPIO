@@ -28,9 +28,9 @@ if [ "$confirm" != "y" ]; then
 fi
 
 echo "Updating project to v$version..."
-for fn in ${VERSION_FILES[@]}; do 
+for fn in ${VERSION_FILES[@]}; do
     echo "- $fn";
-    sed -i '' "s/$VERSION_LAST/$version/" $fn
+    sed -i "s/$VERSION_LAST/$version/" $fn
 done
 
 echo $version > VERSION

@@ -55,8 +55,25 @@ License
     <http://www.gnu.org/licenses/lgpl-3.0-standalone.html>
 
 
+Building for Development
+------------------------
+
+On the Raspberry Pi:
+
+    sudo apt-get install python-dev python3 python3.2-dev
+
+On the developer machine::
+
+    fab upload
+    fab build_gpio
+    fab build_pwm
+
+
 Special Thanks
 --------------
+
+    Andy Baker and Reik Hua for supplying compatibility updates for the
+    Raspberry Pi 0, 2 and 3.
 
     `csegit <https://github.com/csegit>`_, `waveform80 <https://github.com/waveform80>`_,
     `nils-werner <https://github.com/nils-werner>`_, `friedcell <https://github.com/friedcell>`_,

@@ -31,6 +31,7 @@ Documentation
 News
 ----
 
+* v2.0.0-beta1: RPIO works with Raspberry Pi Zero, 2 and 3 (Thanks to Andy Baker and Reik Hua)
 * v0.9.2: :ref:`PWM via DMA <ref-rpio-pwm-py>`
 * v0.8.4: ``rpio-curses``
 * v0.8.2: Socket server callbacks with :ref:`RPIO.add_tcp_callback(port, callback, threaded_callback=False) <ref-rpio-py>`
@@ -113,6 +114,10 @@ License & Copyright
 Changes
 -------
 
+* v2.0.0-beta1
+
+  * RPIO works with Raspberry Pi Zero, 2 and 3 (Thanks to Andy Baker and Reik Hua)
+
 * v0.11.0
 
   * Merged various pull requests: Arch package link, bugfixes, allow Pi to control
@@ -157,9 +162,9 @@ Changes
 * v0.8.2
 
   * Added TCP socket callbacks
-  * ``RPIO`` does not auto-clean interfaces on exceptions anymore, but will auto-clean them 
+  * ``RPIO`` does not auto-clean interfaces on exceptions anymore, but will auto-clean them
     as needed. This means you should now call ``RPIO.cleanup_interrupts()`` to properly close
-    the sockets and unexport the interfaces. 
+    the sockets and unexport the interfaces.
   * Renamed ``RPIO.rpi_sysinfo()`` to ``RPIO.sysinfo()``
 
 
@@ -176,7 +181,7 @@ Changes
 
 
 * v0.7.1
-  
+
   * Refactoring and cleanup of c_gpio
   * Added new constants and methods (see documentation above)
   * Bugfixes

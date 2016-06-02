@@ -176,7 +176,7 @@ class Drawer(object):
 
         pos_y = POS_GPIOLIST_Y
         for gpio in self.gpios:
-            
+
             gpio_id, func, state = gpio
             screen.addstr(pos_y, POS_GPIOLIST_X, "GPIO %s: " % (gpio_id))
             screen.addstr(pos_y, POS_GPIOLIST_X+9, "%s     " % (GPIO_FUNCTIONS[func]), curses.color_pair(3) if func == 4 else 0)

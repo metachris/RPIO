@@ -23,7 +23,7 @@
  *     http://pythonhosted.org/RPIO
  *
  * py_gpio.c is based on RPi.GPIO by Ben Croston, and provides a Python interface to
- * interact with the gpio-related C methods. 
+ * interact with the gpio-related C methods.
  */
 #include "Python.h"
 #include "c_gpio.h"
@@ -547,7 +547,7 @@ PyMODINIT_FUNC init_GPIO(void)
     rpi_revision_hex = Py_BuildValue("s", revision_hex);
     PyModule_AddObject(module, "RPI_REVISION_HEX", rpi_revision_hex);
 
-    version = Py_BuildValue("s", "0.10.1/0.4.2a");
+    version = Py_BuildValue("s", "2.0.0-beta1/0.4.2a");
     PyModule_AddObject(module, "VERSION_GPIO", version);
 
     // set up mmaped areas

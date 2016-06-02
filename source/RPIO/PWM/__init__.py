@@ -206,7 +206,7 @@ class Servo:
             if _subcycle_us != self._subcycle_time_us:
                 raise AttributeError(("Error: DMA channel %s is setup with a "
                         "subcycle_time of %sus (instead of %sus)") % \
-                        (self._dma_channel, _subcycle_us, 
+                        (self._dma_channel, _subcycle_us,
                             self._subcycle_time_us))
         else:
             init_channel(self._dma_channel, self._subcycle_time_us)
