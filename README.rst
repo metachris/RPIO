@@ -11,6 +11,7 @@ RPIO is an advanced GPIO module for the Raspberry Pi.
 
 `Visit pythonhosted.org/RPIO for the documentation. <http://pythonhosted.org/RPIO>`_
 
+**This repository is not actively maintained anymore!** Check out the dev branch for latest commits. If you are interested in taking over maintainence of RPIO, I would be happy to hand it over. Drop me a line at https://twitter.com/metachris
 
 Installation
 ------------
